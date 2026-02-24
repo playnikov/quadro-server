@@ -1,4 +1,4 @@
-rootProject.name = "quadro-server"
+rootProject.name = "ktor"
 
 dependencyResolutionManagement {
     repositories {

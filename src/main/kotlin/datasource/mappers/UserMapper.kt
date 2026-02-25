@@ -11,6 +11,7 @@ object UserMapper {
         id = entity.id.value,
         email = entity.email,
         username = entity.username,
+        avatar = entity.avatar,
         passwordHash = entity.passwordHash,
         firstName = entity.firstName,
         lastName = entity.lastName,
@@ -32,6 +33,7 @@ object UserMapper {
     private fun applyDomainToEntity(entity: UserEntity, domain: User) {
         entity.email = domain.email
         entity.username = domain.username
+        entity.avatar = domain.avatar
         entity.passwordHash = domain.passwordHash
         entity.firstName = domain.firstName
         entity.lastName = domain.lastName

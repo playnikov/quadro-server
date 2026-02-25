@@ -11,6 +11,7 @@ import java.util.UUID
 object UsersTable : UUIDTable("users") {
     val email = varchar("email", 255).uniqueIndex()
     val username = varchar("username", 100).uniqueIndex()
+    val avatar = varchar("avatar", 500).nullable()
     val passwordHash = varchar("password_hash", 255)
     val firstName = varchar("first_name", 100).nullable()
     val lastName = varchar("last_name", 100).nullable()
@@ -30,6 +31,7 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
 
     var email by UsersTable.email
     var username by UsersTable.username
+    var avatar by UsersTable.avatar
     var passwordHash by UsersTable.passwordHash
     var firstName by UsersTable.firstName
     var lastName by UsersTable.lastName

@@ -6,6 +6,7 @@ data class User(
     val id: UUID,
     val email: String,
     val username: String,
+    val avatar: String?,
     val firstName: String?,
     val lastName: String?,
     val passwordHash: String,

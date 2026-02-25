@@ -1,5 +1,8 @@
 package com.quadro.datasource.database
 
+import com.quadro.datasource.entities.CompaniesTable
+import com.quadro.datasource.entities.CompanyInvitationsTable
+import com.quadro.datasource.entities.CompanyMembersTable
 import com.quadro.datasource.entities.UsersTable
 import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariConfig
@@ -41,7 +44,10 @@ object DatabaseFactory {
             addLogger(StdOutSqlLogger)
 
             SchemaUtils.create(
-                UsersTable
+                UsersTable,
+                CompaniesTable,
+                CompanyMembersTable,
+                CompanyInvitationsTable
             )
         }
 

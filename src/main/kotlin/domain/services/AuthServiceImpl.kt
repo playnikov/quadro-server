@@ -38,7 +38,8 @@ class AuthServiceImpl(
                 lastName = request.lastName,
                 role = request.role,
                 isEmailVerified = false,
-                isActive = true
+                isActive = true,
+                avatar = null,
             )
 
             val createdUser = userRepository.create(user)

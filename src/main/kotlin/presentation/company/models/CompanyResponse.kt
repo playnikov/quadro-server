@@ -1,5 +1,6 @@
 package com.quadro.presentation.company.models
 
+import com.quadro.domain.models.CompanyResult
 import com.quadro.domain.models.CompanyRole
 import com.quadro.domain.models.CompanyStatus
 import kotlinx.serialization.Serializable
@@ -18,7 +19,7 @@ data class CompanyResponse(
     val phone: String?,
     val address: String?,
     val taxId: String?,
-    val status: CompanyStatus,
+    val status: String,
     val ownerId: String,
     val settings: CompanySettings,
     val createdAt: String
@@ -30,8 +31,8 @@ data class CompanyResponse(
                 .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"))
         }
 
-        fun fromCompany(company: com.quadro.domain.models.CompanyResult): CompanyResponse = CompanyResponse(
-            id = company.id.toString(),
+        fun fromCompany(company: CompanyResult): CompanyResponse = CompanyResponse(
+            id = company.id,
             name = company.name,
             description = company.description,
             logo = company.logo,
@@ -41,7 +42,7 @@ data class CompanyResponse(
             address = company.address,
             taxId = company.taxId,
             status = company.status,
-            ownerId = company.ownerId.toString(),
+            ownerId = company.ownerId,
             settings = CompanySettings(
                 allowGuestAccess = company.settings.allowGuestAccess,
                 requireEmailVerification = company.settings.requireEmailVerification,
@@ -49,7 +50,8 @@ data class CompanyResponse(
                 teamCreationRole = company.settings.teamCreationRole,
                 invitationExpiryDays = company.settings.invitationExpiryDays,
                 maxUsersPerTeam = company.settings.maxUsersPerTeam,
-                maxTeamsPerProject = company.settings.maxTeamsPerProject
+                maxTeamsPerProject = company.settings.maxTeamsPerProject,
+                projectCreationRole = company.settings.projectCreationRole
             ),
             createdAt = formattedTime(company.createdAt)
         )
@@ -58,12 +60,12 @@ data class CompanyResponse(
 
 @Serializable
 data class CompanySettings(
-    val allowGuestAccess: Boolean = false,
-    val requireEmailVerification: Boolean = true,
-    val defaultUserRole: CompanyRole = CompanyRole.MEMBER,
-    val projectCreationRole: CompanyRole = CompanyRole.MANAGER,
-    val teamCreationRole: CompanyRole = CompanyRole.MANAGER,
-    val invitationExpiryDays: Int = 7,
-    val maxTeamsPerProject: Int = 10,
-    val maxUsersPerTeam: Int = 50
+    val allowGuestAccess: Boolean,
+    val requireEmailVerification: Boolean,
+    val defaultUserRole: String,
+    val projectCreationRole: String,
+    val teamCreationRole: String,
+    val invitationExpiryDays: Int,
+    val maxTeamsPerProject: Int,
+    val maxUsersPerTeam: Int
 )

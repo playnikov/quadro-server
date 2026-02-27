@@ -79,7 +79,7 @@ data class CompanyUpdate(
 )
 
 data class CompanyResult(
-    val id: UUID,
+    val id: String,
     val name: String,
     val description: String?,
     val logo: String?,
@@ -88,14 +88,14 @@ data class CompanyResult(
     val phone: String?,
     val address: String?,
     val taxId: String?,
-    val status: CompanyStatus,
-    val ownerId: UUID,
-    val settings: CompanySettings,
-    val createdAt: Long = System.currentTimeMillis()
+    val status: String,
+    val ownerId: String,
+    val settings: CompanySettingsResult,
+    val createdAt: Long
 ) {
     companion object {
         fun fromCompany(company: Company): CompanyResult = CompanyResult(
-            id = company.id,
+            id = company.id.toString(),
             name = company.name,
             description = company.description,
             logo = company.logo,
@@ -104,9 +104,9 @@ data class CompanyResult(
             phone = company.phone,
             address = company.address,
             taxId = company.taxId,
-            status = company.companyStatus,
-            ownerId = company.ownerId,
-            settings = company.companySettings,
+            status = company.companyStatus.toString(),
+            ownerId = company.ownerId.toString(),
+            settings = CompanySettingsResult.fromCompanySettings(company.companySettings),
             createdAt = company.createdAt
         )
     }

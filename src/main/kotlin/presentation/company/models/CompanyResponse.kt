@@ -1,13 +1,11 @@
 package com.quadro.presentation.company.models
 
-import com.quadro.domain.models.Company
 import com.quadro.domain.models.CompanyRole
 import com.quadro.domain.models.CompanyStatus
 import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 @Serializable
 data class CompanyResponse(
@@ -32,7 +30,7 @@ data class CompanyResponse(
                 .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"))
         }
 
-        fun fromCompany(company: com.quadro.domain.models.CompanyResponse): CompanyResponse = CompanyResponse(
+        fun fromCompany(company: com.quadro.domain.models.CompanyResult): CompanyResponse = CompanyResponse(
             id = company.id.toString(),
             name = company.name,
             description = company.description,

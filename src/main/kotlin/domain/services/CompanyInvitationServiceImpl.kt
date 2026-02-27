@@ -5,12 +5,11 @@ import com.quadro.datasource.repositories.CompanyMemberRepository
 import com.quadro.datasource.repositories.CompanyRepository
 import com.quadro.datasource.repositories.UserRepository
 import com.quadro.domain.models.AcceptInvitation
-import com.quadro.domain.models.CompanyResponse
+import com.quadro.domain.models.CompanyResult
 import com.quadro.domain.models.CompanyRole
 import com.quadro.domain.models.InvitationCreate
-import com.quadro.domain.models.InvitationResponse
+import com.quadro.domain.models.InvitationResult
 import org.slf4j.LoggerFactory
-import java.time.Instant
 import java.util.UUID
 
 class CompanyInvitationServiceImpl(
@@ -25,7 +24,7 @@ class CompanyInvitationServiceImpl(
         companyId: UUID,
         userId: UUID,
         request: InvitationCreate
-    ): Result<InvitationResponse> {
+    ): Result<InvitationResult> {
         TODO()
 //        return try {
 //            val company = companyRepository.findById(companyId)
@@ -54,14 +53,14 @@ class CompanyInvitationServiceImpl(
     override suspend fun acceptInvitation(
         userId: UUID,
         request: AcceptInvitation
-    ): Result<CompanyResponse> {
+    ): Result<CompanyResult> {
         TODO("Not yet implemented")
     }
 
     override suspend fun getInvitations(
         companyId: UUID,
         userId: UUID
-    ): Result<List<InvitationResponse>> {
+    ): Result<List<InvitationResult>> {
         TODO("Not yet implemented")
     }
 
@@ -77,7 +76,7 @@ class CompanyInvitationServiceImpl(
         companyId: UUID,
         userId: UUID,
         invitationId: UUID
-    ): Result<InvitationResponse> {
+    ): Result<InvitationResult> {
         TODO("Not yet implemented")
     }
 

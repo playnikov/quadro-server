@@ -1,11 +1,10 @@
 package com.quadro.domain.services
 
 import com.quadro.datasource.repositories.UserRepository
-import com.quadro.domain.models.AuthResponse
+import com.quadro.domain.models.AuthResult
 import com.quadro.domain.models.User
 import com.quadro.domain.models.UserCreate
 import com.quadro.domain.models.UserLogin
-import com.quadro.security.BCryptPasswordEncoder
 import com.quadro.security.JwtTokenService
 import com.quadro.security.PasswordEncoder
 import org.slf4j.LoggerFactory
@@ -18,7 +17,7 @@ class AuthServiceImpl(
 ) : AuthService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override suspend fun register(request: UserCreate): Result<AuthResponse> {
+    override suspend fun register(request: UserCreate): Result<AuthResult> {
         return try {
             validateRegistration(request)
 
@@ -49,7 +48,7 @@ class AuthServiceImpl(
             val refreshToken = jwtTokenService.generateRefreshToken(createdUser)
 
             Result.success(
-                AuthResponse(
+                AuthResult(
                     token = accessToken,
                     refreshToken = refreshToken
                 )
@@ -60,7 +59,7 @@ class AuthServiceImpl(
         }
     }
 
-    override suspend fun login(request: UserLogin): Result<AuthResponse> {
+    override suspend fun login(request: UserLogin): Result<AuthResult> {
         return try {
             val user = request.username?.let {
                 userRepository.findByUsername(request.username)
@@ -82,7 +81,7 @@ class AuthServiceImpl(
 
 
             Result.success(
-                AuthResponse(
+                AuthResult(
                     token = accessToken,
                     refreshToken = refreshToken
                 )

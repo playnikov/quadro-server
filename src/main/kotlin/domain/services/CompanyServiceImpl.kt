@@ -20,7 +20,7 @@ class CompanyServiceImpl(
     override suspend fun createCompany(
         userId: UUID,
         request: CompanyCreate
-    ): Result<CompanyResponse> {
+    ): Result<CompanyResult> {
         return try {
             if (companyRepository.existsByName(request.name)) {
                 return Result.failure(Exception("Company with this name already exists"))
@@ -57,7 +57,7 @@ class CompanyServiceImpl(
 
             logger.info("Company created: ${createdCompany.name} by user: $userId")
 
-            Result.success(CompanyResponse.fromCompany(createdCompany))
+            Result.success(CompanyResult.fromCompany(createdCompany))
         } catch (e: Exception) {
             logger.error("Failed to create company", e)
             Result.failure(e)
@@ -67,7 +67,7 @@ class CompanyServiceImpl(
     override suspend fun getCompany(
         companyId: UUID,
         userId: UUID
-    ): Result<CompanyResponse> {
+    ): Result<CompanyResult> {
         return try {
             val company = companyRepository.findById(companyId)
                 ?: return Result.failure(Exception("Company not found"))
@@ -76,7 +76,7 @@ class CompanyServiceImpl(
                 return Result.failure(Exception("Access denied"))
             }
 
-            Result.success(CompanyResponse.fromCompany(company))
+            Result.success(CompanyResult.fromCompany(company))
         } catch (e: Exception) {
             logger.error("Failed to get company", e)
             Result.failure(e)
@@ -87,7 +87,7 @@ class CompanyServiceImpl(
         companyId: UUID,
         userId: UUID,
         request: CompanyUpdate
-    ): Result<CompanyResponse> {
+    ): Result<CompanyResult> {
         return try {
             val company = companyRepository.findById(companyId)
                 ?: return Result.failure(Exception("Company not found"))
@@ -121,7 +121,7 @@ class CompanyServiceImpl(
             val savedCompany = companyRepository.update(updatedCompany)
             logger.info("Company updated: ${savedCompany.name} by user: $userId")
 
-            Result.success(CompanyResponse.fromCompany(savedCompany))
+            Result.success(CompanyResult.fromCompany(savedCompany))
         } catch (e: Exception) {
             logger.error("Failed to update company", e)
             Result.failure(e)
@@ -151,11 +151,11 @@ class CompanyServiceImpl(
         userId: UUID,
         page: Int,
         size: Int
-    ): Result<List<CompanyResponse>> {
+    ): Result<List<CompanyResult>> {
         return try {
             val offset = (page - 1) * size
             val companies = companyRepository.findByUser(userId, size, offset)
-            Result.success(companies.map { CompanyResponse.fromCompany(it) })
+            Result.success(companies.map { CompanyResult.fromCompany(it) })
         } catch (e: Exception) {
             logger.error("Failed to get user companies", e)
             Result.failure(e)
@@ -167,7 +167,7 @@ class CompanyServiceImpl(
         userId: UUID,
         page: Int,
         size: Int
-    ): Result<List<CompanyMemberResponse>> {
+    ): Result<List<CompanyMemberResult>> {
         return try {
             if (!companyMemberRepository.exists(companyId, userId)) {
                 return Result.failure(Exception("Access denied"))
@@ -182,7 +182,7 @@ class CompanyServiceImpl(
 
                 val invitedBy = userRepository.findById(member.invitedBy)
 
-                CompanyMemberResponse(
+                CompanyMemberResult(
                     id = member.id,
                     companyId = member.companyId,
                     userId = member.userId,

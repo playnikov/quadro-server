@@ -36,17 +36,17 @@ data class UserLogin(
     val password: String,
 )
 
-data class UserResponse(
+data class UserResult(
     val id: UUID,
     val email: String,
     val username: String,
     val firstName: String?,
     val lastName: String?,
     val role: DomainUserRole,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long
 ) {
     companion object {
-        fun fromUser(user: User): UserResponse = UserResponse(
+        fun fromUser(user: User): UserResult = UserResult(
             id = user.id,
             email = user.email,
             username = user.username,
@@ -58,7 +58,7 @@ data class UserResponse(
     }
 }
 
-data class AuthResponse(
+data class AuthResult(
     val token: String,
     val refreshToken: String,
     val tokenType: String = "Bearer"

@@ -23,7 +23,7 @@ data class InvitationCreate(
     val expiresInDays: Int? = null
 )
 
-data class InvitationResponse(
+data class InvitationResult(
     val id: UUID,
     val companyId: UUID,
     val companyName: String,

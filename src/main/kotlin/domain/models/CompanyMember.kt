@@ -13,7 +13,7 @@ data class CompanyMember(
     val isActive: Boolean
 )
 
-data class CompanyMemberResponse(
+data class CompanyMemberResult(
     val id: UUID,
     val companyId: UUID,
     val userId: UUID,

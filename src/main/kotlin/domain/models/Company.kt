@@ -78,7 +78,7 @@ data class CompanyUpdate(
     val status: CompanyStatus? = null
 )
 
-data class CompanyResponse(
+data class CompanyResult(
     val id: UUID,
     val name: String,
     val description: String?,
@@ -94,7 +94,7 @@ data class CompanyResponse(
     val createdAt: Long = System.currentTimeMillis()
 ) {
     companion object {
-        fun fromCompany(company: Company): CompanyResponse = CompanyResponse(
+        fun fromCompany(company: Company): CompanyResult = CompanyResult(
             id = company.id,
             name = company.name,
             description = company.description,
@@ -108,6 +108,30 @@ data class CompanyResponse(
             ownerId = company.ownerId,
             settings = company.companySettings,
             createdAt = company.createdAt
+        )
+    }
+}
+
+data class CompanySettingsResult(
+    val allowGuestAccess: Boolean,
+    val requireEmailVerification: Boolean,
+    val defaultUserRole: String,
+    val projectCreationRole: String,
+    val teamCreationRole: String,
+    val invitationExpiryDays: Int,
+    val maxTeamsPerProject: Int,
+    val maxUsersPerTeam: Int
+) {
+    companion object {
+        fun fromCompanySettings(settings: CompanySettings): CompanySettingsResult = CompanySettingsResult(
+            allowGuestAccess = settings.allowGuestAccess,
+            requireEmailVerification = settings.requireEmailVerification,
+            defaultUserRole = settings.defaultUserRole.toString(),
+            projectCreationRole = settings.projectCreationRole.toString(),
+            teamCreationRole = settings.teamCreationRole.toString(),
+            invitationExpiryDays = settings.invitationExpiryDays,
+            maxTeamsPerProject = settings.maxTeamsPerProject,
+            maxUsersPerTeam = settings.maxUsersPerTeam
         )
     }
 }

@@ -50,14 +50,14 @@ object CompanyMembersTable : UUIDTable("company_members") {
 object CompanyInvitationsTable : UUIDTable("company_invitations") {
     val companyId = uuid("company_id").references(CompaniesTable.id)
     val invitedBy = uuid("invited_by").references(UsersTable.id)
-    val identifier = varchar("identifier", 255)
+    val teamId = uuid("team_id").references(TeamTable.id).nullable()
     val role = enumerationByName("role", 50, CompanyRole::class)
     val status = enumerationByName("status", 50, InvitationStatus::class)
-    val token = varchar("token", 255).nullable().uniqueIndex()
+    val token = varchar("token", 500).uniqueIndex()
     val expiresAt = timestamp("expires_at")
     val createdAt = timestamp("created_at").default(Instant.now())
     val acceptedAt = timestamp("accepted_at").nullable()
-    val acceptedBy = uuid("accepted_by").nullable()
+    val acceptedBy = uuid("accepted_by").references(UsersTable.id).nullable()
     val message = text("message").nullable()
 }
 
@@ -107,7 +107,7 @@ class CompanyInvitationEntity(id: EntityID<UUID>) : UUIDEntity(id) {
 
     var companyId by CompanyInvitationsTable.companyId
     var invitedBy by CompanyInvitationsTable.invitedBy
-    var identifier by CompanyInvitationsTable.identifier
+    var teamId by CompanyInvitationsTable.teamId
     var role by CompanyInvitationsTable.role
     var status by CompanyInvitationsTable.status
     var token by CompanyInvitationsTable.token

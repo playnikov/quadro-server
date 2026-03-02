@@ -1,6 +1,5 @@
 package com.quadro.datasource.mappers
 
-import com.quadro.datasource.entities.CompaniesTable
 import com.quadro.datasource.entities.CompanyEntity
 import com.quadro.datasource.entities.CompanyInvitationEntity
 import com.quadro.datasource.entities.CompanyMemberEntity
@@ -107,15 +106,16 @@ object CompanyInvitationMapper {
     fun toDomain(entity: CompanyInvitationEntity): CompanyInvitation = CompanyInvitation(
         id = entity.id.value,
         companyId = entity.companyId,
+        teamId = entity.teamId,
         invitedBy = entity.invitedBy,
-        identifier = entity.identifier,
         role = entity.role,
         status = entity.status,
         token = entity.token,
         expiresAt = entity.expiresAt.toEpochMilli(),
         createdAt = entity.createdAt.toEpochMilli(),
         acceptedAt = entity.acceptedAt?.toEpochMilli(),
-        message = entity.message
+        message = entity.message,
+        acceptedBy = entity.acceptedBy
     )
 
     fun toEntity(domain: CompanyInvitation): CompanyInvitationEntity =
@@ -130,7 +130,7 @@ object CompanyInvitationMapper {
     private fun applyDomainToEntity(entity: CompanyInvitationEntity, domain: CompanyInvitation) {
         entity.companyId = domain.companyId
         entity.invitedBy = domain.invitedBy
-        entity.identifier = domain.identifier
+        entity.teamId = domain.teamId
         entity.role = domain.role
         entity.status = domain.status
         entity.token = domain.token
@@ -138,5 +138,6 @@ object CompanyInvitationMapper {
         entity.createdAt = Instant.ofEpochMilli(domain.createdAt)
         entity.acceptedAt = domain.acceptedAt?.let { Instant.ofEpochMilli(it) }
         entity.message = domain.message
+        entity.acceptedBy = domain.acceptedBy
     }
 }

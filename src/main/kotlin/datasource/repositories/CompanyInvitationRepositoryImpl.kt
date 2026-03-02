@@ -16,6 +16,13 @@ class CompanyInvitationRepositoryImpl : CompanyInvitationRepository {
         CompanyInvitationMapper.toDomain(entity)
     }
 
+    override suspend fun update(invitation: CompanyInvitation): CompanyInvitation = newSuspendedTransaction {
+        val entity = CompanyInvitationEntity.findById(invitation.id)
+            ?: throw IllegalArgumentException("Company invitation not found with id: ${invitation.id}")
+        CompanyInvitationMapper.updateEntity(entity, invitation)
+        CompanyInvitationMapper.toDomain(entity)
+    }
+
     override suspend fun findById(id: UUID): CompanyInvitation? = newSuspendedTransaction {
         CompanyInvitationEntity.findById(id)?.let { CompanyInvitationMapper.toDomain(it) }
     }
@@ -35,28 +42,6 @@ class CompanyInvitationRepositoryImpl : CompanyInvitationRepository {
             query.filter { it.status == status }
         } else query
         filtered.map { CompanyInvitationMapper.toDomain(it) }
-    }
-
-    override suspend fun findPendingByEmail(
-        email: String,
-        companyId: UUID
-    ): CompanyInvitation? = newSuspendedTransaction {
-        CompanyInvitationEntity.find {
-            (CompanyInvitationsTable.companyId eq companyId) and
-                    (CompanyInvitationsTable.identifier eq email) and
-                    (CompanyInvitationsTable.status eq InvitationStatus.PENDING)
-        }.firstOrNull()?.let { CompanyInvitationMapper.toDomain(it) }
-    }
-
-    override suspend fun findPendingByUsername(
-        username: String,
-        companyId: UUID
-    ): CompanyInvitation? = newSuspendedTransaction {
-        CompanyInvitationEntity.find {
-            (CompanyInvitationsTable.companyId eq companyId) and
-                    (CompanyInvitationsTable.identifier eq username) and
-                    (CompanyInvitationsTable.status eq InvitationStatus.PENDING)
-        }.firstOrNull()?.let { CompanyInvitationMapper.toDomain(it) }
     }
 
     override suspend fun updateStatus(

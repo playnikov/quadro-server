@@ -17,13 +17,6 @@ enum class CompanyStatus {
     PENDING
 }
 
-enum class InvitationStatus {
-    PENDING,
-    ACCEPTED,
-    EXPIRED,
-    CANCELLED
-}
-
 data class Company(
     val id: UUID,
     val name: String,
@@ -77,6 +70,66 @@ data class CompanyUpdate(
     val settings: CompanySettings? = null,
     val status: CompanyStatus? = null
 )
+
+data class CompanyPermissions(
+    val canEdit: Boolean,
+    val canDelete: Boolean,
+    val canManageMembers: Boolean,
+    val canCreateProjects: Boolean,
+    val canCreateTeams: Boolean,
+    val canChangeSettings: Boolean,
+    val canInvite: Boolean
+) {
+    companion object {
+        fun fromRole(role: CompanyRole): CompanyPermissions = when (role) {
+            CompanyRole.OWNER -> CompanyPermissions(
+                canEdit = true,
+                canDelete = true,
+                canManageMembers = true,
+                canCreateProjects = true,
+                canCreateTeams = true,
+                canChangeSettings = true,
+                canInvite = true
+            )
+            CompanyRole.ADMIN -> CompanyPermissions(
+                canEdit = true,
+                canDelete = false,
+                canManageMembers = true,
+                canCreateProjects = true,
+                canCreateTeams = true,
+                canChangeSettings = true,
+                canInvite = true
+            )
+            CompanyRole.MANAGER -> CompanyPermissions(
+                canEdit = false,
+                canDelete = false,
+                canManageMembers = false,
+                canCreateProjects = true,
+                canCreateTeams = true,
+                canChangeSettings = false,
+                canInvite = true
+            )
+            CompanyRole.MEMBER -> CompanyPermissions(
+                canEdit = false,
+                canDelete = false,
+                canManageMembers = false,
+                canCreateProjects = false,
+                canCreateTeams = false,
+                canChangeSettings = false,
+                canInvite = false
+            )
+            CompanyRole.GUEST -> CompanyPermissions(
+                canEdit = false,
+                canDelete = false,
+                canManageMembers = false,
+                canCreateProjects = false,
+                canCreateTeams = false,
+                canChangeSettings = false,
+                canInvite = false
+            )
+        }
+    }
+}
 
 data class CompanyResult(
     val id: String,

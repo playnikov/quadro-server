@@ -1,9 +1,11 @@
 package com.quadro.presentation.company
 
-import com.quadro.domain.models.CompanyCreate
-import com.quadro.domain.models.CompanyUpdate
-import com.quadro.domain.services.CompanyInvitationService
-import com.quadro.domain.services.CompanyService
+import com.quadro.domain.models.company.CompanyCreate
+import com.quadro.domain.models.company.CompanyRole
+import com.quadro.domain.models.company.CompanyUpdate
+import com.quadro.domain.models.company.InvitationCreate
+import com.quadro.domain.services.company.CompanyInvitationService
+import com.quadro.domain.services.company.CompanyService
 import com.quadro.plugins.getUserId
 import com.quadro.presentation.company.models.CompanyResponse
 import com.quadro.presentation.company.models.CreateCompanyRequest
@@ -15,9 +17,6 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import org.slf4j.LoggerFactory
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 class CompanyController(
@@ -191,16 +190,16 @@ class CompanyController(
             val request = call.receive<CreateInvitationRequest>()
             logger.info("[$requestId] Creating invitation for company: $companyId")
 
-            val invitationCreate = com.quadro.domain.models.InvitationCreate(
+            val invitationCreate = InvitationCreate(
                 teamId = if (!request.teamId.isNullOrBlank()) {
                     UUID.fromString(request.teamId)
                 } else {
                     null
                 },
                 role = try {
-                    com.quadro.domain.models.CompanyRole.valueOf(request.role.uppercase())
+                    CompanyRole.valueOf(request.role.uppercase())
                 } catch (e: Exception) {
-                    com.quadro.domain.models.CompanyRole.MEMBER
+                    CompanyRole.MEMBER
                 },
                 message = request.message,
                 expiresInDays = request.expiresInDays

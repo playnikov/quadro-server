@@ -1,8 +1,6 @@
 package com.quadro.presentation.company.models
 
-import com.quadro.domain.models.CompanyResult
-import com.quadro.domain.models.CompanyRole
-import com.quadro.domain.models.CompanyStatus
+import com.quadro.domain.models.company.CompanyResult
 import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.ZoneId

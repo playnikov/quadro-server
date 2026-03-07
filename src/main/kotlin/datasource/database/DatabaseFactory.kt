@@ -3,7 +3,17 @@ package com.quadro.datasource.database
 import com.quadro.datasource.entities.CompaniesTable
 import com.quadro.datasource.entities.CompanyInvitationsTable
 import com.quadro.datasource.entities.CompanyMembersTable
-import com.quadro.datasource.entities.TeamTable
+import com.quadro.datasource.entities.ProjectMembersTable
+import com.quadro.datasource.entities.ProjectTeamsTable
+import com.quadro.datasource.entities.ProjectsTable
+import com.quadro.datasource.entities.TaskAttachmentsTable
+import com.quadro.datasource.entities.TaskCommentsTable
+import com.quadro.datasource.entities.TaskHistoryTable
+import com.quadro.datasource.entities.TaskTimeLogsTable
+import com.quadro.datasource.entities.TaskWatchersTable
+import com.quadro.datasource.entities.TasksTable
+import com.quadro.datasource.entities.TeamMembersTable
+import com.quadro.datasource.entities.TeamsTable
 import com.quadro.datasource.entities.UsersTable
 import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariConfig
@@ -48,8 +58,18 @@ object DatabaseFactory {
                 UsersTable,
                 CompaniesTable,
                 CompanyMembersTable,
-                TeamTable,
-                CompanyInvitationsTable
+                CompanyInvitationsTable,
+                TeamsTable,
+                TeamMembersTable,
+                ProjectsTable,
+                ProjectMembersTable,
+                ProjectTeamsTable,
+                TasksTable,
+                TaskCommentsTable,
+                TaskAttachmentsTable,
+                TaskWatchersTable,
+                TaskTimeLogsTable,
+                TaskHistoryTable
             )
         }
 

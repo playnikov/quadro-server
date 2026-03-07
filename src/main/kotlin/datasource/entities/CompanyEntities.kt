@@ -1,8 +1,8 @@
 package com.quadro.datasource.entities
 
-import com.quadro.domain.models.CompanyRole
-import com.quadro.domain.models.CompanyStatus
-import com.quadro.domain.models.InvitationStatus
+import com.quadro.domain.models.company.CompanyRole
+import com.quadro.domain.models.company.CompanyStatus
+import com.quadro.domain.models.company.InvitationStatus
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -22,15 +22,7 @@ object CompaniesTable : UUIDTable("companies") {
     val taxId = varchar("tax_id", 50).nullable()
     val status = enumerationByName("status", 50, CompanyStatus::class)
     val ownerId = uuid("owner_id").references(UsersTable.id)
-
-    val allowGuestAccess = bool("allow_guest_access").default(false)
-    val requireEmailVerification = bool("require_email_verification").default(true)
-    val defaultUserRole = enumerationByName("default_user_role", 50, CompanyRole::class).default(CompanyRole.MEMBER)
-    val projectCreationRole = enumerationByName("project_creation_role", 50, CompanyRole::class).default(CompanyRole.MANAGER)
-    val teamCreationRole = enumerationByName("team_creation_role", 50, CompanyRole::class).default(CompanyRole.MANAGER)
-    val invitationExpiryDays = integer("invitation_expiry_days").default(7)
-    val maxTeamsPerProject = integer("max_teams_per_project").default(10)
-    val maxUsersPerTeam = integer("max_users_per_team").default(50)
+    val settings = text("settings")
 
     val createdAt = timestamp("created_at").default(Instant.now())
     val updatedAt = timestamp("updated_at").default(Instant.now())
@@ -45,12 +37,16 @@ object CompanyMembersTable : UUIDTable("company_members") {
     val invitedBy = uuid("invited_by").references(UsersTable.id)
     val invitedAt = timestamp("invited_at").default(Instant.now())
     val isActive = bool("is_active").default(true)
+
+    init {
+        uniqueIndex(companyId, userId)
+    }
 }
 
 object CompanyInvitationsTable : UUIDTable("company_invitations") {
     val companyId = uuid("company_id").references(CompaniesTable.id)
     val invitedBy = uuid("invited_by").references(UsersTable.id)
-    val teamId = uuid("team_id").references(TeamTable.id).nullable()
+    val teamId = uuid("team_id").references(TeamsTable.id).nullable()
     val role = enumerationByName("role", 50, CompanyRole::class)
     val status = enumerationByName("status", 50, InvitationStatus::class)
     val token = varchar("token", 500).uniqueIndex()
@@ -74,17 +70,7 @@ class CompanyEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var taxId by CompaniesTable.taxId
     var status by CompaniesTable.status
     var ownerId by CompaniesTable.ownerId
-
-    var allowGuestAccess by CompaniesTable.allowGuestAccess
-    var requireEmailVerification by CompaniesTable.requireEmailVerification
-    var defaultUserRole by CompaniesTable.defaultUserRole
-    var projectCreationRole by CompaniesTable.projectCreationRole
-    var teamCreationRole by CompaniesTable.teamCreationRole
-    var invitationExpiryDays by CompaniesTable.invitationExpiryDays
-    var maxTeamsPerProject by CompaniesTable.maxTeamsPerProject
-    var maxUsersPerTeam by CompaniesTable.maxUsersPerTeam
-
-
+    var settings by CompaniesTable.settings
     var createdAt by CompaniesTable.createdAt
     var updatedAt by CompaniesTable.updatedAt
     var deletedAt by CompaniesTable.deletedAt

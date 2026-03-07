@@ -1,7 +1,7 @@
 package com.quadro.security
 
-import com.quadro.domain.models.TokenValidationResult
-import com.quadro.domain.models.User
+import com.quadro.domain.models.user.TokenValidationResult
+import com.quadro.domain.models.user.User
 
 interface JwtTokenService {
     fun generateAccessToken(user: User): String

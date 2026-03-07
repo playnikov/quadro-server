@@ -1,6 +1,6 @@
 package com.quadro.presentation.company.models
 
-import com.quadro.domain.models.InvitationResult
+import com.quadro.domain.models.company.InvitationResult
 import kotlinx.serialization.Serializable
 
 @Serializable

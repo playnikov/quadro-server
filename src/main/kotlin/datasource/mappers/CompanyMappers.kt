@@ -3,13 +3,16 @@ package com.quadro.datasource.mappers
 import com.quadro.datasource.entities.CompanyEntity
 import com.quadro.datasource.entities.CompanyInvitationEntity
 import com.quadro.datasource.entities.CompanyMemberEntity
-import com.quadro.domain.models.Company
-import com.quadro.domain.models.CompanyInvitation
-import com.quadro.domain.models.CompanyMember
-import com.quadro.domain.models.CompanySettings
+import com.quadro.domain.models.company.Company
+import com.quadro.domain.models.company.CompanyInvitation
+import com.quadro.domain.models.company.CompanyMember
+import com.quadro.domain.models.company.CompanySettings
+import kotlinx.serialization.json.Json
 import java.time.Instant
 
 object CompanyMapper  {
+    private val json = Json { ignoreUnknownKeys = true }
+
     fun toDomain(entity: CompanyEntity): Company = Company(
         id = entity.id.value,
         name = entity.name,
@@ -22,16 +25,7 @@ object CompanyMapper  {
         taxId = entity.taxId,
         companyStatus = entity.status,
         ownerId = entity.ownerId,
-        companySettings = CompanySettings(
-            allowGuestAccess = entity.allowGuestAccess,
-            requireEmailVerification = entity.requireEmailVerification,
-            defaultUserRole = entity.defaultUserRole,
-            projectCreationRole = entity.projectCreationRole,
-            teamCreationRole = entity.teamCreationRole,
-            invitationExpiryDays = entity.invitationExpiryDays,
-            maxTeamsPerProject = entity.maxTeamsPerProject,
-            maxUsersPerTeam = entity.maxUsersPerTeam
-        ),
+        companySettings = json.decodeFromString(entity.settings),
         createdAt = entity.createdAt.toEpochMilli(),
         updatedAt = entity.updatedAt.toEpochMilli(),
         deletedAt = entity.updatedAt.toEpochMilli()
@@ -60,14 +54,7 @@ object CompanyMapper  {
         entity.updatedAt = Instant.ofEpochMilli(domain.updatedAt)
         entity.deletedAt = domain.deletedAt?.let { Instant.ofEpochMilli(it) }
 
-        entity.allowGuestAccess = domain.companySettings.allowGuestAccess
-        entity.requireEmailVerification = domain.companySettings.requireEmailVerification
-        entity.defaultUserRole = domain.companySettings.defaultUserRole
-        entity.projectCreationRole = domain.companySettings.projectCreationRole
-        entity.teamCreationRole = domain.companySettings.teamCreationRole
-        entity.invitationExpiryDays = domain.companySettings.invitationExpiryDays
-        entity.maxTeamsPerProject = domain.companySettings.maxTeamsPerProject
-        entity.maxUsersPerTeam = domain.companySettings.maxUsersPerTeam
+        entity.settings = json.encodeToString(entity.settings)
     }
 }
 
@@ -79,7 +66,8 @@ object CompanyMemberMapper {
         role = entity.role,
         joinedAt = entity.joinedAt.toEpochMilli(),
         invitedBy = entity.invitedBy,
-        isActive = entity.isActive
+        isActive = entity.isActive,
+        invitedAt = entity.invitedAt.toEpochMilli()
     )
 
     fun toEntity(domain: CompanyMember): CompanyMemberEntity =

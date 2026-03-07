@@ -1,6 +1,6 @@
 package com.quadro.security
 
-import com.quadro.domain.models.InvitationValidationResult
+import com.quadro.domain.models.company.InvitationValidationResult
 import java.util.UUID
 
 interface JwtInvitationTokenService {

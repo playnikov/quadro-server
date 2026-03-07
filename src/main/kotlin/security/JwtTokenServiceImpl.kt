@@ -4,8 +4,8 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.exceptions.TokenExpiredException
-import com.quadro.domain.models.TokenValidationResult
-import com.quadro.domain.models.User
+import com.quadro.domain.models.user.TokenValidationResult
+import com.quadro.domain.models.user.User
 import com.typesafe.config.ConfigFactory
 import org.slf4j.LoggerFactory
 import java.util.Date

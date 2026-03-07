@@ -1,9 +1,9 @@
-package com.quadro.datasource.repositories
+package com.quadro.datasource.repositories.users
 
 import com.quadro.datasource.entities.UserEntity
 import com.quadro.datasource.entities.UsersTable
 import com.quadro.datasource.mappers.UserMapper
-import com.quadro.domain.models.User
+import com.quadro.domain.models.user.User
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 

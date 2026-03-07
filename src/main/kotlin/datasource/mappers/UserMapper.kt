@@ -2,8 +2,8 @@ package com.quadro.datasource.mappers
 
 import com.quadro.datasource.entities.DbUserRole
 import com.quadro.datasource.entities.UserEntity
-import com.quadro.domain.models.DomainUserRole
-import com.quadro.domain.models.User
+import com.quadro.domain.models.user.DomainUserRole
+import com.quadro.domain.models.user.User
 import java.time.Instant
 
 object UserMapper {

@@ -1,4 +1,4 @@
-package com.quadro.domain.models
+package com.quadro.domain.models.company
 
 import java.util.UUID
 

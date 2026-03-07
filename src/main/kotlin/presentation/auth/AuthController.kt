@@ -1,8 +1,8 @@
 package com.quadro.presentation.auth
 
-import com.quadro.domain.models.UserCreate
-import com.quadro.domain.models.UserLogin
-import com.quadro.domain.services.AuthService
+import com.quadro.domain.models.user.UserCreate
+import com.quadro.domain.models.user.UserLogin
+import com.quadro.domain.services.auth.AuthService
 import com.quadro.presentation.auth.models.AuthResponse
 import com.quadro.presentation.auth.models.ErrorResponse
 import com.quadro.presentation.auth.models.LoginRequest

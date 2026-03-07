@@ -1,4 +1,4 @@
-package com.quadro.domain.models
+package com.quadro.domain.models.company
 
 import java.util.UUID
 
@@ -9,7 +9,7 @@ data class CompanyMember(
     val role: CompanyRole,
     val joinedAt: Long,
     val invitedBy: UUID,
-    val invitedAt: Long = System.currentTimeMillis(),
+    val invitedAt: Long,
     val isActive: Boolean
 )
 
@@ -27,6 +27,6 @@ data class CompanyMemberResult(
     val isActive: Boolean
 )
 
-data class UpdateMemberRole(
+data class UpdateCompanyMemberRole(
     val role: CompanyRole
 )

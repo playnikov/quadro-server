@@ -1,9 +1,8 @@
-package com.quadro.domain.services
+package com.quadro.domain.services.company
 
-import com.quadro.domain.models.CompanyResult
-import com.quadro.domain.models.CompanyRole
-import com.quadro.domain.models.InvitationCreate
-import com.quadro.domain.models.InvitationResult
+import com.quadro.domain.models.company.CompanyResult
+import com.quadro.domain.models.company.InvitationCreate
+import com.quadro.domain.models.company.InvitationResult
 import java.util.UUID
 
 interface CompanyInvitationService {

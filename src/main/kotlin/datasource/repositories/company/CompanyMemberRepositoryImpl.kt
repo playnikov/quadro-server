@@ -1,10 +1,10 @@
-package com.quadro.datasource.repositories
+package com.quadro.datasource.repositories.company
 
 import com.quadro.datasource.entities.CompanyMemberEntity
 import com.quadro.datasource.entities.CompanyMembersTable
 import com.quadro.datasource.mappers.CompanyMemberMapper
-import com.quadro.domain.models.CompanyMember
-import com.quadro.domain.models.CompanyRole
+import com.quadro.domain.models.company.CompanyMember
+import com.quadro.domain.models.company.CompanyRole
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID

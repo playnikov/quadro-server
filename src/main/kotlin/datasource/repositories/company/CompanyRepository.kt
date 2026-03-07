@@ -1,7 +1,7 @@
-package com.quadro.datasource.repositories
+package com.quadro.datasource.repositories.company
 
-import com.quadro.domain.models.Company
-import com.quadro.domain.models.CompanyStatus
+import com.quadro.domain.models.company.Company
+import com.quadro.domain.models.company.CompanyStatus
 import java.util.UUID
 
 interface CompanyRepository {

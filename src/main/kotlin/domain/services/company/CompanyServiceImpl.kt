@@ -1,10 +1,19 @@
-package com.quadro.domain.services
+package com.quadro.domain.services.company
 
-import com.quadro.datasource.repositories.CompanyInvitationRepository
-import com.quadro.datasource.repositories.CompanyMemberRepository
-import com.quadro.datasource.repositories.CompanyRepository
-import com.quadro.datasource.repositories.UserRepository
-import com.quadro.domain.models.*
+import com.quadro.datasource.repositories.company.CompanyInvitationRepository
+import com.quadro.datasource.repositories.company.CompanyMemberRepository
+import com.quadro.datasource.repositories.company.CompanyRepository
+import com.quadro.datasource.repositories.users.UserRepository
+import com.quadro.domain.models.company.Company
+import com.quadro.domain.models.company.CompanyCreate
+import com.quadro.domain.models.company.CompanyMember
+import com.quadro.domain.models.company.CompanyMemberResult
+import com.quadro.domain.models.company.CompanyResult
+import com.quadro.domain.models.company.CompanyRole
+import com.quadro.domain.models.company.CompanySettings
+import com.quadro.domain.models.company.CompanyStatus
+import com.quadro.domain.models.company.CompanyUpdate
+import com.quadro.domain.models.company.UpdateCompanyMemberRole
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.*
@@ -50,6 +59,7 @@ class CompanyServiceImpl(
                 role = CompanyRole.OWNER,
                 joinedAt = Instant.now().toEpochMilli(),
                 invitedBy = userId,
+                invitedAt = Instant.now().toEpochMilli(),
                 isActive = true
             )
 
@@ -208,7 +218,7 @@ class CompanyServiceImpl(
         companyId: UUID,
         userId: UUID,
         targetUserId: UUID,
-        request: UpdateMemberRole
+        request: UpdateCompanyMemberRole
     ): Result<Unit> {
         return try {
             val currentUserMember = companyMemberRepository.findByCompanyAndUser(companyId, userId)

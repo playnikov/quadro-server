@@ -1,6 +1,6 @@
-package com.quadro.datasource.repositories
+package com.quadro.datasource.repositories.users
 
-import com.quadro.domain.models.User
+import com.quadro.domain.models.user.User
 import java.util.UUID
 
 interface UserRepository {

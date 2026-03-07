@@ -1,10 +1,10 @@
-package com.quadro.datasource.repositories
+package com.quadro.datasource.repositories.company
 
 import com.quadro.datasource.entities.CompanyInvitationEntity
 import com.quadro.datasource.entities.CompanyInvitationsTable
 import com.quadro.datasource.mappers.CompanyInvitationMapper
-import com.quadro.domain.models.CompanyInvitation
-import com.quadro.domain.models.InvitationStatus
+import com.quadro.domain.models.company.CompanyInvitation
+import com.quadro.domain.models.company.InvitationStatus
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.Instant

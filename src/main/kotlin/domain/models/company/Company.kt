@@ -1,6 +1,6 @@
-package com.quadro.domain.models
+package com.quadro.domain.models.company
 
-import java.util.UUID
+import java.util.*
 
 enum class CompanyRole {
     OWNER,
@@ -43,7 +43,11 @@ data class CompanySettings(
     val teamCreationRole: CompanyRole = CompanyRole.MANAGER,
     val invitationExpiryDays: Int = 7,
     val maxTeamsPerProject: Int = 10,
-    val maxUsersPerTeam: Int = 50
+    val maxUsersPerTeam: Int = 50,
+    val allowExternalInvites: Boolean = true,
+    val requireInviteApproval: Boolean = false,
+    val defaultTeamRole: CompanyRole = CompanyRole.MEMBER,
+    val autoJoinDomain: String? = null
 )
 
 data class CompanyCreate(
@@ -91,6 +95,7 @@ data class CompanyPermissions(
                 canChangeSettings = true,
                 canInvite = true
             )
+
             CompanyRole.ADMIN -> CompanyPermissions(
                 canEdit = true,
                 canDelete = false,
@@ -100,6 +105,7 @@ data class CompanyPermissions(
                 canChangeSettings = true,
                 canInvite = true
             )
+
             CompanyRole.MANAGER -> CompanyPermissions(
                 canEdit = false,
                 canDelete = false,
@@ -109,6 +115,7 @@ data class CompanyPermissions(
                 canChangeSettings = false,
                 canInvite = true
             )
+
             CompanyRole.MEMBER -> CompanyPermissions(
                 canEdit = false,
                 canDelete = false,
@@ -118,6 +125,7 @@ data class CompanyPermissions(
                 canChangeSettings = false,
                 canInvite = false
             )
+
             CompanyRole.GUEST -> CompanyPermissions(
                 canEdit = false,
                 canDelete = false,

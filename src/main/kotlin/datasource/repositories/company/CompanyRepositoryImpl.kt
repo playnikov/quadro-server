@@ -1,11 +1,11 @@
-package com.quadro.datasource.repositories
+package com.quadro.datasource.repositories.company
 
 import com.quadro.datasource.entities.CompaniesTable
 import com.quadro.datasource.entities.CompanyEntity
 import com.quadro.datasource.entities.CompanyMembersTable
 import com.quadro.datasource.mappers.CompanyMapper
-import com.quadro.domain.models.Company
-import com.quadro.domain.models.CompanyStatus
+import com.quadro.domain.models.company.Company
+import com.quadro.domain.models.company.CompanyStatus
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.selectAll
@@ -46,6 +46,7 @@ class CompanyRepositoryImpl : CompanyRepository {
     ): List<Company>  = newSuspendedTransaction {
         CompanyEntity.find { CompaniesTable.ownerId eq ownerId }
             .limit(limit).offset(offset.toLong())
+            .orderBy(CompaniesTable.createdAt to SortOrder.DESC)
             .map { CompanyMapper.toDomain(it) }
     }
 

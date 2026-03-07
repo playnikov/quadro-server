@@ -1,10 +1,10 @@
-package com.quadro.domain.services
+package com.quadro.domain.services.auth
 
-import com.quadro.datasource.repositories.UserRepository
-import com.quadro.domain.models.AuthResult
-import com.quadro.domain.models.User
-import com.quadro.domain.models.UserCreate
-import com.quadro.domain.models.UserLogin
+import com.quadro.datasource.repositories.users.UserRepository
+import com.quadro.domain.models.user.AuthResult
+import com.quadro.domain.models.user.User
+import com.quadro.domain.models.user.UserCreate
+import com.quadro.domain.models.user.UserLogin
 import com.quadro.security.JwtTokenService
 import com.quadro.security.PasswordEncoder
 import org.slf4j.LoggerFactory

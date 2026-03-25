@@ -1,0 +1,40 @@
+package com.quadro.auth
+
+import com.quadro.auth.config.AppConfig
+import com.quadro.auth.di.authModule
+import com.quadro.auth.plugins.configureDatabase
+import com.quadro.shared.plugins.configureMonitoring
+import com.quadro.auth.plugins.configureRouting
+import com.quadro.auth.plugins.configureSecurity
+import com.quadro.auth.plugins.configureSerialization
+import com.quadro.shared.plugins.configureStatusPages
+import io.ktor.server.application.*
+import org.koin.ktor.plugin.Koin
+import org.koin.logger.slf4jLogger
+import org.slf4j.LoggerFactory
+import kotlin.system.exitProcess
+
+fun main(args: Array<String>) {
+    val logger = LoggerFactory.getLogger("Application")
+    try {
+        logger.info("Starting Auth Service...")
+        io.ktor.server.netty.EngineMain.main(args)
+    } catch (e: Exception) {
+        logger.error("Failed to start Auth Service", e)
+        exitProcess(1)
+    }
+}
+
+fun Application.module() {
+    val appConfig = AppConfig.fromEnvironment()
+    install(Koin) {
+        slf4jLogger()
+        modules(authModule(appConfig))
+    }
+    configureSecurity()
+    configureSerialization()
+    configureMonitoring()
+    configureStatusPages()
+    configureDatabase()
+    configureRouting()
+}

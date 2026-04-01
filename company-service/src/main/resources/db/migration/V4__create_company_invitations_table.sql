@@ -1,7 +1,6 @@
 CREATE TABLE company_invitations (
      id UUID PRIMARY KEY,
      company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-     team_id UUID,
      invited_by UUID NOT NULL,
      invite_type VARCHAR(50) NOT NULL,
      identifier VARCHAR(255) NOT NULL,

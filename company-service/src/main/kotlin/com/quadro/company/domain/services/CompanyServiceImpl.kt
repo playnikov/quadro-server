@@ -11,6 +11,7 @@ import com.quadro.company.domain.models.CompanyStatus
 import com.quadro.company.domain.models.CompanyUpdate
 import com.quadro.company.domain.repositories.CompanyMemberRepository
 import com.quadro.company.domain.repositories.CompanyRepository
+import com.quadro.company.domain.repositories.UserRepository
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -19,7 +20,8 @@ import kotlin.time.Clock
 class CompanyServiceImpl(
     private val companyRepository: CompanyRepository,
     private val companyMemberRepository: CompanyMemberRepository,
-//    private val eventProducer: CompanyEventProducer
+    private val userRepository: UserRepository,
+    private val eventPublisher: EventPublisher
 ) : CompanyService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -28,6 +30,8 @@ class CompanyServiceImpl(
         request: CompanyCreate
     ): Result<CompanyResponse> {
         return try {
+            val user = userRepository.findById(userId) ?: return Result.failure(Exception("User not found"))
+
             if (companyRepository.existsByName(request.name)) {
                 return Result.failure(Exception("Company with this name already exists"))
             }
@@ -52,6 +56,7 @@ class CompanyServiceImpl(
             )
 
             val createdCompany = companyRepository.create(company)
+            eventPublisher.publishCompanyCreated(createdCompany)
 
             val member = CompanyMember(
                 id = UUID.randomUUID(),
@@ -67,7 +72,7 @@ class CompanyServiceImpl(
             companyMemberRepository.add(member)
 
             logger.info("Company created: ${createdCompany.name} by user: $userId")
-            Result.success(CompanyResponse.fromCompany(createdCompany))
+            Result.success(CompanyResponse.fromCompany(createdCompany, user))
         } catch (e: Exception) {
             logger.error("Failed to create company", e)
             Result.failure(e)
@@ -79,12 +84,13 @@ class CompanyServiceImpl(
         userId: UUID
     ): Result<CompanyResponse> {
         return try {
+            val user = userRepository.findById(userId) ?: return Result.failure(Exception("User not found"))
             val company = companyRepository.findById(companyId) ?: return Result.failure(Exception("Company not found"))
             if (!companyMemberRepository.exists(companyId, userId)) {
                 return Result.failure(Exception("Access denied"))
             }
 
-            Result.success(CompanyResponse.fromCompany(company))
+            Result.success(CompanyResponse.fromCompany(company, user))
         } catch (e: Exception) {
             logger.error("Failed to get company", e)
             Result.failure(e)
@@ -97,6 +103,7 @@ class CompanyServiceImpl(
         request: CompanyUpdate
     ): Result<CompanyResponse> {
         return try {
+            val user = userRepository.findById(userId) ?: return Result.failure(Exception("User not found"))
             val company = companyRepository.findById(companyId) ?: return Result.failure(Exception("Company not found"))
             val member = companyMemberRepository.findByCompanyAndUser(companyId, userId)
                 ?: return Result.failure(Exception("Access denied"))
@@ -124,8 +131,10 @@ class CompanyServiceImpl(
                 updatedAt = now
             )
             val saved = companyRepository.update(updatedCompany)
+            eventPublisher.publishCompanyUpdated(updatedCompany)
+
             logger.info("Company updated: ${saved.name}")
-            Result.success(CompanyResponse.fromCompany(saved))
+            Result.success(CompanyResponse.fromCompany(saved, user))
         } catch (e: Exception) {
             logger.error("Failed to update company", e)
             Result.failure(e)
@@ -138,7 +147,8 @@ class CompanyServiceImpl(
             if (company.ownerId != userId) {
                 return Result.failure(Exception("Only owner can delete company"))
             }
-            companyRepository.updateStatus(companyId, CompanyStatus.CLOSED)
+            companyRepository.delete(companyId)
+            eventPublisher.publishCompanyDeleted(companyId.toString(), Clock.System.now())
 
             logger.info("Company deleted: $companyId")
             Result.success(Unit)
@@ -154,10 +164,11 @@ class CompanyServiceImpl(
         size: Int
     ): Result<List<CompanyResponse>> {
         return try {
+            val user = userRepository.findById(userId) ?: return Result.failure(Exception("User not found"))
             val offset = (page - 1) * size
             val companies = companyRepository.findByUser(userId, size, offset)
             val result = companies.map { companies ->
-                CompanyResponse.fromCompany(companies)
+                CompanyResponse.fromCompany(companies, user)
             }
             Result.success(result)
         } catch (e: Exception) {

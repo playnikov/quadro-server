@@ -58,8 +58,8 @@ data class InvitationResponse(
     val link: String?,
 ) {
     companion object {
-        fun fromCompanyInvitation(company: Company, companyInvitation: CompanyInvitation, link: String): InvitationResponse  = InvitationResponse(
-            company = CompanyResponse.fromCompany(company),
+        fun fromCompanyInvitation(company: Company, companyInvitation: CompanyInvitation, link: String, user: User? = null): InvitationResponse  = InvitationResponse(
+            company = CompanyResponse.fromCompany(company, user),
             teamId = companyInvitation.teamId.toString(),
             invitedBy = companyInvitation.invitedBy.toString(),
             inviteType = companyInvitation.inviteType,

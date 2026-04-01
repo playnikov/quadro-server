@@ -96,12 +96,12 @@ data class CompanyResponse(
     val address: String?,
     val taxId: String?,
     val status: String,
-    val ownerId: String,
     val settings: CompanySettingsResponse,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val owner: UserResponse? = null
 ) {
     companion object {
-        fun fromCompany(company: Company): CompanyResponse = CompanyResponse(
+        fun fromCompany(company: Company, user: User? = null): CompanyResponse = CompanyResponse(
             id = company.id.toString(),
             name = company.name,
             description = company.description,
@@ -112,9 +112,9 @@ data class CompanyResponse(
             address = company.address,
             taxId = company.taxId,
             status = company.companyStatus.name,
-            ownerId = company.ownerId.toString(),
             settings = CompanySettingsResponse.fromSettings(company.companySettings),
-            createdAt = company.createdAt
+            createdAt = company.createdAt,
+            owner = user?.let { UserResponse.fromUser(it) }
         )
     }
 }

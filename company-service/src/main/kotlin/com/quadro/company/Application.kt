@@ -2,7 +2,9 @@ package com.quadro.company
 
 import com.quadro.company.config.AppConfig
 import com.quadro.company.di.companyModules
+import com.quadro.company.di.kafkaModule
 import com.quadro.company.plugins.configureDatabase
+import com.quadro.company.plugins.configureKafka
 import com.quadro.company.plugins.configureRouting
 import com.quadro.company.plugins.configureSecurity
 import com.quadro.company.plugins.configureSerialization
@@ -29,12 +31,16 @@ fun Application.module() {
     val appConfig = AppConfig.fromEnvironment()
     install(Koin) {
         slf4jLogger()
-        modules(companyModules(appConfig))
+        modules(
+            companyModules(appConfig),
+            kafkaModule
+        )
     }
     configureSerialization()
     configureMonitoring()
     configureStatusPages()
     configureDatabase()
     configureSecurity()
+    configureKafka()
     configureRouting()
 }

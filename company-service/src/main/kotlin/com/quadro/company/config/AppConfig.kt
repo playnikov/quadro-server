@@ -13,7 +13,6 @@ data class AppConfig(
 ) {
     companion object {
         fun fromEnvironment(): AppConfig {
-            val config = ConfigFactory.load()
             return AppConfig(
                 environment = System.getenv("ENVIRONMENT") ?: "development",
                 server = ServerConfig(
@@ -35,7 +34,7 @@ data class AppConfig(
                 ),
                 kafka = KafkaConfig(
                     brokers = System.getenv("KAFKA_BROKERS") ?: "localhost:9092",
-                    groupId = "auth-service"
+                    groupId = "company-service"
                 ),
                 jwt = JwtConfig(
                     secret = System.getenv("JWT_SECRET") ?: "default-secret",

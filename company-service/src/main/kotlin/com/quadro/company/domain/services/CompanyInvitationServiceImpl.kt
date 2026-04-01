@@ -12,6 +12,7 @@ import com.quadro.company.domain.models.InvitationStatus
 import com.quadro.company.domain.repositories.CompanyInvitationRepository
 import com.quadro.company.domain.repositories.CompanyMemberRepository
 import com.quadro.company.domain.repositories.CompanyRepository
+import com.quadro.company.domain.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.time.Clock
@@ -23,6 +24,7 @@ class CompanyInvitationServiceImpl(
     private val companyRepository: CompanyRepository,
     private val companyMemberRepository: CompanyMemberRepository,
     private val invitationTokenService: InvitationTokenService,
+    private val userRepository: UserRepository,
     private val appConfig: AppConfig
 ) : CompanyInvitationService {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -79,8 +81,8 @@ class CompanyInvitationServiceImpl(
             companyInvitationRepository.create(finalInvitation)
 
             val inviteLink = "${appConfig.server.domain}/invite?token=$token"
-
-            val result = InvitationResponse.fromCompanyInvitation(company, finalInvitation, inviteLink)
+            val ownerUser = userRepository.findById(company.ownerId)
+            val result = InvitationResponse.fromCompanyInvitation(company, finalInvitation, inviteLink, ownerUser)
 
             logger.info("Invitation created: ${invitation.id} for company: $companyId by user: $userId")
             Result.success(result)
@@ -113,10 +115,10 @@ class CompanyInvitationServiceImpl(
             }
 
             val company = companyRepository.findById(invitation.companyId)!!
-
+            val ownerUser = userRepository.findById(company.ownerId)
             if (companyMemberRepository.exists(invitation.companyId, userId)) {
                 logger.info("User $userId is already a member of company ${company.id}, invitation remains PENDING")
-                return Result.success(CompanyResponse.fromCompany(company))
+                return Result.success(CompanyResponse.fromCompany(company, ownerUser))
             }
 
             val member = CompanyMember(
@@ -141,7 +143,7 @@ class CompanyInvitationServiceImpl(
             companyInvitationRepository.acceptInvitation(invitation.id, userId)
 
             logger.info("Invitation accepted: ${invitation.id} by user: $userId")
-            Result.success(CompanyResponse.fromCompany(company))
+            Result.success(CompanyResponse.fromCompany(company, ownerUser))
         } catch (e: Exception) {
             logger.error("Failed to accept invitation", e)
             Result.failure(e)
@@ -162,10 +164,10 @@ class CompanyInvitationServiceImpl(
                 ?: return Result.failure(Exception("Company not found"))
 
             val invitations = companyInvitationRepository.findByCompany(companyId, null)
-
+            val ownerUser = userRepository.findById(company.ownerId)
             val results = invitations.map { invitation ->
                 val inviteLink = "${appConfig.server.domain}/invite?token=${invitation.token}"
-                InvitationResponse.fromCompanyInvitation(company, invitation, inviteLink)
+                InvitationResponse.fromCompanyInvitation(company, invitation, inviteLink, ownerUser)
             }
             Result.success(results)
         } catch (e: Exception) {

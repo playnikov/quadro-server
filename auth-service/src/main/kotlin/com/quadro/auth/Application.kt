@@ -2,7 +2,9 @@ package com.quadro.auth
 
 import com.quadro.auth.config.AppConfig
 import com.quadro.auth.di.authModule
+import com.quadro.auth.di.kafkaModule
 import com.quadro.auth.plugins.configureDatabase
+import com.quadro.auth.plugins.configureKafka
 import com.quadro.shared.plugins.configureMonitoring
 import com.quadro.auth.plugins.configureRouting
 import com.quadro.auth.plugins.configureSecurity
@@ -29,12 +31,16 @@ fun Application.module() {
     val appConfig = AppConfig.fromEnvironment()
     install(Koin) {
         slf4jLogger()
-        modules(authModule(appConfig))
+        modules(
+            authModule(appConfig),
+            kafkaModule
+        )
     }
     configureSecurity()
     configureSerialization()
     configureMonitoring()
     configureStatusPages()
     configureDatabase()
+    configureKafka()
     configureRouting()
 }

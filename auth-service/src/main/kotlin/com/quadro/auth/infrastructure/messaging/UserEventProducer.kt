@@ -1,8 +1,6 @@
 package com.quadro.auth.infrastructure.messaging
 
 import com.quadro.auth.config.KafkaConfig
-import com.quadro.auth.domain.models.User
-import com.quadro.shared.events.UserCreatedEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -22,10 +20,6 @@ class UserEventProducer(config: KafkaConfig) {
         ),
         StringSerializer(),
         StringSerializer()
-    )
-
-    suspend fun userCreated(user: User) = send("user-events", user.id.toString(),
-        UserCreatedEvent(user.id.toString(), user.email, user.username)
     )
 
     private suspend inline fun <reified T> send(topic: String, key: String, event: T) = withContext(Dispatchers.IO) {

@@ -32,8 +32,7 @@ data class AppConfig(
                     password = System.getenv("REDIS_PASSWORD")
                 ),
                 kafka = KafkaConfig(
-                    brokers = System.getenv("KAFKA_BROKERS") ?: "localhost:9092",
-                    groupId = "auth-service"
+                    brokers = System.getenv("KAFKA_BROKERS") ?: "localhost:9092"
                 ),
                 jwt = JwtConfig(
                     secret = System.getenv("JWT_SECRET") ?: "default-secret",
@@ -67,7 +66,7 @@ data class DatabaseConfig(
     val jdbcUrl: String get() = "jdbc:postgresql://$host:$port/$name"
 }
 data class RedisConfig(val host: String, val port: Int, val password: String?)
-data class KafkaConfig(val brokers: String, val groupId: String)
+data class KafkaConfig(val brokers: String)
 data class JwtConfig(
     val secret: String,
     val issuer: String,

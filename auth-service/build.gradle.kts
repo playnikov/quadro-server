@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.ktor.server.host.common)
     implementation("io.ktor:ktor-server-cors:3.4.0")
     implementation("io.ktor:ktor-server-rate-limit:3.4.0")
+    implementation(libs.kafka.clients)
 
     // Database
     implementation(libs.postgresql)

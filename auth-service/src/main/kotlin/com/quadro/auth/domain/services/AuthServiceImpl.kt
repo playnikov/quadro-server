@@ -1,6 +1,5 @@
 package com.quadro.auth.domain.services
 
-import com.quadro.auth.config.AppConfig
 import com.quadro.auth.domain.models.AuthResult
 import com.quadro.auth.domain.models.User
 import com.quadro.auth.domain.models.UserCreate
@@ -14,7 +13,6 @@ import com.quadro.shared.security.JwtValidator
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 class AuthServiceImpl(
     private val userRepository: UserRepository,
@@ -22,7 +20,7 @@ class AuthServiceImpl(
     private val jwtProvider: JwtProvider,
     private val jwtValidator: JwtValidator,
 //    private val sessionCache: SessionCache,
-//    private val eventProducer: UserEventProducer,
+    private val eventProducer: EventPublisher,
 ) : AuthService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -55,6 +53,7 @@ class AuthServiceImpl(
 
             val createdUser = userRepository.create(user)
             logger.info("User registered: ${createdUser.email}")
+            eventProducer.publishUserCreated(createdUser)
             val accessToken = jwtProvider.generateAccessToken(createdUser)
             val refreshToken = jwtProvider.generateRefreshToken(createdUser)
 

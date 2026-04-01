@@ -31,7 +31,7 @@ fun authModule(appConfig: AppConfig) = module {
 
     single<UserRepository> { UserRepositoryImpl() }
 
-    single<AuthService> { AuthServiceImpl(get(), get(), get(), get()) }
+    single<AuthService> { AuthServiceImpl(get(), get(), get(), get(), get()) }
 
     factory { AuthController(get()) }
     factory { AuthRoutes(get()) }

@@ -19,7 +19,7 @@ fun main(args: Array<String>)  {
     val logger = LoggerFactory.getLogger("Application")
     try {
         logger.info("Starting API Gateway...")
-        embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
+        embeddedServer(Netty, port = 8080) {
             module()
         }.start(wait = true)
 

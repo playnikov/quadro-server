@@ -22,8 +22,8 @@ data class AppConfig(
                     password = System.getenv("REDIS_PASSWORD")
                 ),
                 serviceUrls = ServiceUrls(
-                    auth = System.getenv("AUTH_SERVICE_URL") ?: "http://127.0.0.1:8081",
-                    company = System.getenv("COMPANY_SERVICE_URL") ?: "http://127.0.0.1:8082",
+                    auth = System.getenv("AUTH_SERVICE_URL") ?: "http://localhost:8081",
+                    company = System.getenv("COMPANY_SERVICE_URL") ?: "http://localhost:8082",
                     team = System.getenv("TEAM_SERVICE_URL") ?: "http://team-service:8083",
                     project = System.getenv("PROJECT_SERVICE_URL") ?: "http://project-service:8084",
                     task = System.getenv("TASK_SERVICE_URL") ?: "http://task-service:8085",

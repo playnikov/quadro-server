@@ -23,6 +23,9 @@ dependencies {
     implementation(libs.ktor.server.host.common)
     implementation("io.ktor:ktor-server-cors:3.4.0")
     implementation("io.ktor:ktor-server-rate-limit:3.4.0")
+    implementation(libs.ktor.server.metrics)
+    implementation(libs.ktor.server.metrics.micrometer)
+    implementation(libs.micrometer.registry.prometheus)
 
     // HTTP Client
     implementation(libs.ktor.client.core)

@@ -97,11 +97,11 @@ services:
       JWT_REALM: ${JWT_REALM:-quadro}
     depends_on:
       - auth-service
-      - company-service
-      - project-service
-      - task-service
-      - team-service
-      - notification-service
-      - redis
+#      - company-service
+#      - project-service
+#      - task-service
+#      - team-service
+#      - notification-service
+#      - redis
     networks:
       - quadro-net

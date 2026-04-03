@@ -76,11 +76,11 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER}}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD}}
-#          AUTH_DB=${{ secrets.AUTH_DB }}
-#          COMPANY_DB=${{ secrets.COMPANY_DB }}
-#          PROJECT_DB=${{ secrets.PROJECT_DB }}
-#          TASK_DB=${{ secrets.TASK_DB }}
-#          TEAM_DB=${{ secrets.TEAM_DB }}
+          AUTH_DB=${{ secrets.AUTH_DB }}
+          COMPANY_DB=${{ secrets.COMPANY_DB }}
+          PROJECT_DB=${{ secrets.PROJECT_DB }}
+          TASK_DB=${{ secrets.TASK_DB }}
+          TEAM_DB=${{ secrets.TEAM_DB }}
           NOTIFICATION_DB=${{ secrets.NOTIFICATION_DB }}
           KAFKA_VERSION=latest
           KAFKA_PORT_INTERNAL=29092

@@ -58,3 +58,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
 }
+
+kotlin {
+    jvmToolchain(21)
+}

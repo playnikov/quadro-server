@@ -20,7 +20,8 @@ data class AppConfig(
                 database = DatabaseConfig(
                     host = System.getenv("DB_HOST") ?: "localhost",
                     port = (System.getenv("DB_PORT") ?: "5432").toInt(),
-                    name = System.getenv("DB_NAME") ?: "company",
+                    name = System.getenv("DB_NAME") ?: "company_db",
+                    schema = System.getenv("DB_SCHEMA") ?: "company_schema",
                     user = System.getenv("DB_USER") ?: "postgres",
                     password = System.getenv("DB_PASSWORD") ?: "postgres",
                     poolSize = (System.getenv("DB_POOL_SIZE") ?: "10").toInt()

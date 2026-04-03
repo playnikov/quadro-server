@@ -4,13 +4,13 @@ networks:
     driver: bridge
 
 x-common-env: &common-env
-  DB_HOST: ${DB_HOST:-postgres}
-  DB_PORT: ${DB_PORT:-5432}
+  DB_HOST: ${DB_HOST}
+  DB_PORT: ${DB_PORT}
   DB_USER: ${DB_USER}
-  DB_PASSWORD: ${DB_PASSWORD:-postgres}
-  POSTGRES_USER: ${POSTGRES_USER:-postgres}
-  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-  POSTGRES_DB: ${DB_NAME:-quadro_db}
+  DB_PASSWORD: ${DB_PASSWORD}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${DB_NAME}
   DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
   KAFKA_BROKERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
   JWT_SECRET: ${JWT_SECRET}
@@ -49,6 +49,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
     environment:
+      <<: *common-env
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
@@ -110,21 +111,21 @@ services:
         condition: service_healthy
     networks:
       - quadro-net
-#
-#  company-service:
-#    build: ./company-service
-#    image: ${DOCKERHUB_USERNAME}/quadro-platform:company-service-${VERSION:-latest}
-#    container_name: company-service
-#    environment:
-#      <<: *common-env
-#      DB_SCHEMA: ${DB_SCHEMA:-company_schema}
-#    ports:
-#      - "8082:8082"
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#    networks:
-#      - quadro-net
+
+  company-service:
+    build: ./company-service
+    image: ${DOCKERHUB_USERNAME}/quadro-platform:company-service-${VERSION:-latest}
+    container_name: company-service
+    environment:
+      <<: *common-env
+      DB_SCHEMA: ${DB_SCHEMA:-company_schema}
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quadro-net
 
   api-gateway:
     image: ${DOCKERHUB_USERNAME}/quadro-platform:api-gateway-${VERSION:-latest}
@@ -134,7 +135,7 @@ services:
       - "${API_GATEWAY_PORT:-80}:8080"
     depends_on:
       - auth-service
-#      - company-service
+      - company-service
 #      - project-service
 #      - task-service
 #      - team-service

@@ -19,10 +19,10 @@ import kotlin.system.exitProcess
 fun main(args: Array<String>) {
     val logger = LoggerFactory.getLogger("Application")
     try {
-        logger.info("Starting Auth Service...")
+        logger.info("Starting Company Service...")
         io.ktor.server.netty.EngineMain.main(args)
     } catch (e: Exception) {
-        logger.error("Failed to start Auth Service", e)
+        logger.error("Failed to start Company Service", e)
         exitProcess(1)
     }
 }

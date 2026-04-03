@@ -33,10 +33,9 @@ jobs:
 
       - name: Build JAR for ${{ matrix.service }}
         run: |
-          cd ./${{ matrix.service }}
           gradle wrapper
           chmod +x gradlew
-          ./gradlew build -x test
+          ./gradlew :${{ matrix.service }}:build -x test
           cd ..
 
       - name: Set up Docker Buildx

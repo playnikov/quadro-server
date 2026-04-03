@@ -14,7 +14,6 @@ data class AppConfig(
 ) {
     companion object {
         fun fromEnvironment(): AppConfig {
-            val config = ConfigFactory.load()
             return AppConfig(
                 environment = System.getenv("ENVIRONMENT") ?: "development",
                 server = ServerConfig(port = (System.getenv("PORT") ?: "8081").toInt()),

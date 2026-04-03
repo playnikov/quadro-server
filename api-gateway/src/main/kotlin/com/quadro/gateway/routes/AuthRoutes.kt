@@ -3,10 +3,12 @@ package com.quadro.gateway.routes
 import com.quadro.gateway.clients.AuthServiceClient
 import com.quadro.gateway.plugins.principalUserId
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -20,20 +22,34 @@ class AuthRoutes(
             post("/register") {
                 val body = call.receiveText()
                 val response = authClient.register(body)
-                call.respond(response.status, response.bodyAsText())
+                call.respondText(
+                    text = response.bodyAsText(),
+                    contentType = ContentType.Application.Json,
+                    status = response.status
+                )
             }
 
             post("/login") {
                 val body = call.receiveText()
                 val response = authClient.login(body)
-                call.respond(response.status, response.bodyAsText())
+                call.respondText(
+                    text = response.bodyAsText(),
+                    contentType = ContentType.Application.Json,
+                    status = response.status
+                )
             }
 
             post("/refresh") {
                 val body = call.receiveText()
                 val response = authClient.refreshToken(body)
-                call.respond(response.status, response.bodyAsText())
+                call.respondText(
+                    text = response.bodyAsText(),
+                    contentType = ContentType.Application.Json,
+                    status = response.status
+                )
             }
+
+
         }
     }
 
@@ -42,20 +58,32 @@ class AuthRoutes(
             get("/me") {
                 val userId = call.principalUserId() ?: return@get call.respond(HttpStatusCode.Forbidden)
                 val response = authClient.getUser(userId)
-                call.respond(response.status, response.bodyAsText())
+                call.respondText(
+                    text = response.bodyAsText(),
+                    contentType = ContentType.Application.Json,
+                    status = response.status
+                )
             }
 
             post("/logout") {
                 val userId = call.principalUserId() ?: return@post call.respond(HttpStatusCode.Forbidden)
                 val response = authClient.logout(userId)
-                call.respond(response.status, response.bodyAsText())
+                call.respondText(
+                    text = response.bodyAsText(),
+                    contentType = ContentType.Application.Json,
+                    status = response.status
+                )
             }
 
             post("/change-password") {
                 val userId = call.principalUserId()?: return@post call.respond(HttpStatusCode.Forbidden)
                 val body = call.receiveText()
                 val response = authClient.changePassword(userId, body)
-                call.respond(response.status, response.bodyAsText())
+                call.respondText(
+                    text = response.bodyAsText(),
+                    contentType = ContentType.Application.Json,
+                    status = response.status
+                )
             }
         }
     }

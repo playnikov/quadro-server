@@ -73,7 +73,6 @@ object TeamMapper {
 }
 
 object TeamMemberMapper {
-    private val json = Json { ignoreUnknownKeys = true }
 
     fun toDomain(entity: TeamMemberEntity): TeamMember = TeamMember(
         id = entity.id.value,
@@ -90,4 +89,27 @@ object TeamMemberMapper {
         invitedAt = entity.invitedAt.toEpochMilli(),
         isActive = entity.isActive
     )
+
+    fun toEntity(domain: TeamMember): TeamMemberEntity = TeamMemberEntity.findById(domain.id) ?: TeamMemberEntity.new(domain.id) {
+        applyDomainToEntity(this, domain)
+    }
+
+    fun updateEntity(entity: TeamMemberEntity, domain: TeamMember) {
+        applyDomainToEntity(entity, domain)
+    }
+
+    private fun applyDomainToEntity(entity: TeamMemberEntity, domain: TeamMember) {
+        entity.teamId = domain.teamId
+        entity.userId = domain.userId
+        entity.role = when (domain.role) {
+            TeamRole.LEAD -> TeamRoleDb.LEAD
+            TeamRole.ADMIN -> TeamRoleDb.ADMIN
+            TeamRole.MEMBER -> TeamRoleDb.MEMBER
+            TeamRole.GUEST -> TeamRoleDb.GUEST
+        }
+        entity.joinedAt = Instant.ofEpochMilli(domain.joinedAt)
+        entity.invitedBy = domain.invitedBy
+        entity.invitedAt = Instant.ofEpochMilli(domain.invitedAt)
+        entity.isActive = domain.isActive
+    }
 }

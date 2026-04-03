@@ -1,5 +1,6 @@
 package com.quadro.domain.models.task
 
+import com.quadro.domain.models.project.ProjectRole
 import java.util.UUID
 
 enum class TaskStatus {
@@ -22,6 +23,11 @@ enum class NotificationLevel {
     ALL,                // Все уведомления
     MENTIONS_ONLY,      // Только упоминания
     NONE                // Без уведомлений
+}
+
+enum class HistoryField {
+    STATUS, PRIORITY, TYPE, ASSIGNEE, TITLE, DESCRIPTION,
+    STORY_POINTS, TIME_ESTIMATE, DUE_DATE, PARENT, TAGS
 }
 
 data class Task(
@@ -123,7 +129,7 @@ data class TaskHistory(
     val id: UUID,
     val taskId: UUID,
     val userId: UUID,
-    val field: String,
+    val field: HistoryField,
     val oldValue: String?,
     val newValue: String?,
     val createdAt: Long
@@ -156,3 +162,69 @@ data class TaskTimeStats(
     val timeSpentThisWeek: Long,
     val logsCount: Int
 )
+
+data class TaskTimeLogCreate(
+    val timeSpent: Long,
+    val description: String? = null
+)
+
+data class TaskPermissions(
+    val canEdit: Boolean,
+    val canDelete: Boolean,
+    val canAssign: Boolean,
+    val canChangeStatus: Boolean,
+    val canAddComments: Boolean,
+    val canAddAttachments: Boolean,
+    val canAddSubtasks: Boolean,
+    val canLogTime: Boolean,
+    val canWatch: Boolean
+) {
+    companion object {
+        fun fromRole(role: ProjectRole?, isAssignee: Boolean): TaskPermissions = when (role) {
+            ProjectRole.OWNER, ProjectRole.LEAD, ProjectRole.ADMIN -> TaskPermissions(
+                canEdit = true,
+                canDelete = true,
+                canAssign = true,
+                canChangeStatus = true,
+                canAddComments = true,
+                canAddAttachments = true,
+                canAddSubtasks = true,
+                canLogTime = true,
+                canWatch = true
+            )
+            ProjectRole.MEMBER -> TaskPermissions(
+                canEdit = isAssignee,
+                canDelete = false,
+                canAssign = false,
+                canChangeStatus = isAssignee,
+                canAddComments = true,
+                canAddAttachments = true,
+                canAddSubtasks = false,
+                canLogTime = true,
+                canWatch = true
+            )
+            ProjectRole.VIEWER -> TaskPermissions(
+                canEdit = false,
+                canDelete = false,
+                canAssign = false,
+                canChangeStatus = false,
+                canAddComments = false,
+                canAddAttachments = false,
+                canAddSubtasks = false,
+                canLogTime = false,
+                canWatch = true
+            )
+            else -> TaskPermissions(
+                canEdit = false,
+                canDelete = false,
+                canAssign = false,
+                canChangeStatus = false,
+                canAddComments = false,
+                canAddAttachments = false,
+                canAddSubtasks = false,
+                canLogTime = false,
+                canWatch = false
+            )
+        }
+    }
+}

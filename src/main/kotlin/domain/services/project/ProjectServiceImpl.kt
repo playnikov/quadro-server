@@ -9,15 +9,20 @@ import com.quadro.datasource.repositories.team.TeamMemberRepository
 import com.quadro.datasource.repositories.team.TeamRepository
 import com.quadro.datasource.repositories.users.UserRepository
 import com.quadro.domain.models.company.CompanyRole
+import com.quadro.domain.models.project.AddProjectMembers
+import com.quadro.domain.models.project.AssignTeam
 import com.quadro.domain.models.project.Project
 import com.quadro.domain.models.project.ProjectCreate
 import com.quadro.domain.models.project.ProjectMember
+import com.quadro.domain.models.project.ProjectPermissions
 import com.quadro.domain.models.project.ProjectRole
 import com.quadro.domain.models.project.ProjectSettings
+import com.quadro.domain.models.project.ProjectStats
 import com.quadro.domain.models.project.ProjectStatus
 import com.quadro.domain.models.project.ProjectTeam
 import com.quadro.domain.models.project.ProjectUpdate
 import com.quadro.domain.models.project.ProjectVisibility
+import com.quadro.domain.models.project.UpdateTeamRole
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -35,18 +40,17 @@ class ProjectServiceImpl(
     private val logger = LoggerFactory.getLogger(javaClass)
     private val json = Json { ignoreUnknownKeys = true }
 
-    override suspend fun createProject(
-        userId: UUID,
-        request: ProjectCreate
-    ): Result<Project> {
+    // ============== Project CRUD ==============
+
+    override suspend fun createProject(userId: UUID, request: ProjectCreate): Result<Project> {
         return try {
             val company = companyRepository.findById(request.companyId)
                 ?: return Result.failure(Exception("Company not found"))
 
-            val companyMember =
-                companyMemberRepository.findByCompanyAndUser(request.companyId, userId) ?: return Result.failure(
-                    Exception("User is not a member of this company")
-                )
+            val companyMember = companyMemberRepository.findByCompanyAndUser(request.companyId, userId)
+            if (companyMember == null) {
+                return Result.failure(Exception("User is not a member of this company"))
+            }
 
             if (!canCreateProject(companyMember.role)) {
                 return Result.failure(Exception("Insufficient permissions to create project"))
@@ -105,36 +109,32 @@ class ProjectServiceImpl(
             logger.info("Project created: ${createdProject.key} in company: ${request.companyId} by user: $userId")
 
             Result.success(createdProject)
-        }  catch (e: Exception) {
+
+        } catch (e: Exception) {
             logger.error("Failed to create project", e)
             Result.failure(e)
         }
     }
 
-    override suspend fun getProject(
-        projectId: UUID,
-        userId: UUID
-    ): Result<Project> {
+    override suspend fun getProject(projectId: UUID, userId: UUID): Result<Project> {
         return try {
             val project = projectRepository.findById(projectId)
                 ?: return Result.failure(Exception("Project not found"))
 
+            // Проверяем доступ
             if (!canViewProject(project, userId)) {
                 return Result.failure(Exception("Access denied"))
             }
 
             Result.success(project)
+
         } catch (e: Exception) {
             logger.error("Failed to get project", e)
             Result.failure(e)
         }
     }
 
-    override suspend fun getProjectByKey(
-        companyId: UUID,
-        key: String,
-        userId: UUID
-    ): Result<Project> {
+    override suspend fun getProjectByKey(companyId: UUID, key: String, userId: UUID): Result<Project> {
         return try {
             val project = projectRepository.findByKey(companyId, key)
                 ?: return Result.failure(Exception("Project not found"))
@@ -151,11 +151,7 @@ class ProjectServiceImpl(
         }
     }
 
-    override suspend fun updateProject(
-        projectId: UUID,
-        userId: UUID,
-        request: ProjectUpdate
-    ): Result<Project> {
+    override suspend fun updateProject(projectId: UUID, userId: UUID, request: ProjectUpdate): Result<Project> {
         return try {
             val project = projectRepository.findById(projectId)
                 ?: return Result.failure(Exception("Project not found"))
@@ -177,7 +173,7 @@ class ProjectServiceImpl(
                 status = request.status ?: project.status,
                 priority = request.priority ?: project.priority,
                 visibility = request.visibility ?: project.visibility,
-                settings = request.settings?: project.settings,
+                settings = request.settings ?: project.settings,
                 leadId = request.leadId ?: project.leadId,
                 startDate = request.startDate ?: project.startDate,
                 endDate = request.endDate ?: project.endDate,
@@ -202,7 +198,7 @@ class ProjectServiceImpl(
 
     override suspend fun deleteProject(projectId: UUID, userId: UUID): Result<Unit> {
         return try {
-            projectRepository.findById(projectId)
+            val project = projectRepository.findById(projectId)
                 ?: return Result.failure(Exception("Project not found"))
 
             val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
@@ -217,6 +213,7 @@ class ProjectServiceImpl(
 
             logger.info("Project deleted: $projectId by user: $userId")
             Result.success(Unit)
+
         } catch (e: Exception) {
             logger.error("Failed to delete project", e)
             Result.failure(e)
@@ -237,6 +234,7 @@ class ProjectServiceImpl(
             logger.info("Project archived: $projectId by user: $userId")
 
             Result.success(Unit)
+
         } catch (e: Exception) {
             logger.error("Failed to archive project", e)
             Result.failure(e)
@@ -257,18 +255,16 @@ class ProjectServiceImpl(
             logger.info("Project restored: $projectId by user: $userId")
 
             Result.success(Unit)
+
         } catch (e: Exception) {
             logger.error("Failed to restore project", e)
             Result.failure(e)
         }
     }
 
-    override suspend fun getCompanyProjects(
-        companyId: UUID,
-        userId: UUID,
-        page: Int,
-        size: Int
-    ): Result<List<Project>> {
+    // ============== Project Listing ==============
+
+    override suspend fun getCompanyProjects(companyId: UUID, userId: UUID, page: Int, size: Int): Result<List<Project>> {
         return try {
             if (!companyMemberRepository.exists(companyId, userId)) {
                 return Result.failure(Exception("User is not a member of this company"))
@@ -284,10 +280,7 @@ class ProjectServiceImpl(
         }
     }
 
-    override suspend fun getUserProjects(
-        userId: UUID,
-        companyId: UUID?
-    ): Result<List<Project>> {
+    override suspend fun getUserProjects(userId: UUID, companyId: UUID?): Result<List<Project>> {
         return try {
             val projects = projectRepository.findByUser(userId, companyId)
             Result.success(projects)
@@ -297,10 +290,7 @@ class ProjectServiceImpl(
         }
     }
 
-    override suspend fun getTeamProjects(
-        teamId: UUID,
-        userId: UUID
-    ): Result<List<Project>> {
+    override suspend fun getTeamProjects(teamId: UUID, userId: UUID): Result<List<Project>> {
         return try {
             teamRepository.findById(teamId)
                 ?: return Result.failure(Exception("Team not found"))
@@ -317,11 +307,7 @@ class ProjectServiceImpl(
         }
     }
 
-    override suspend fun searchProjects(
-        companyId: UUID,
-        userId: UUID,
-        query: String
-    ): Result<List<Project>> {
+    override suspend fun searchProjects(companyId: UUID, userId: UUID, query: String): Result<List<Project>> {
         return try {
             if (!companyMemberRepository.exists(companyId, userId)) {
                 return Result.failure(Exception("User is not a member of this company"))
@@ -335,7 +321,343 @@ class ProjectServiceImpl(
         }
     }
 
+    // ============== Teams Management ==============
+
+    override suspend fun assignTeam(projectId: UUID, userId: UUID, request: AssignTeam): Result<ProjectTeam> {
+        return try {
+            val project = projectRepository.findById(projectId)
+                ?: return Result.failure(Exception("Project not found"))
+
+            val team = teamRepository.findById(request.teamId)
+                ?: return Result.failure(Exception("Team not found"))
+
+            if (team.companyId != project.companyId) {
+                return Result.failure(Exception("Team does not belong to the same company"))
+            }
+
+            val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+            if (!canManageTeams(member?.role)) {
+                return Result.failure(Exception("Insufficient permissions"))
+            }
+
+            if (projectTeamRepository.exists(projectId, request.teamId)) {
+                return Result.failure(Exception("Team already assigned to this project"))
+            }
+
+            val now = System.currentTimeMillis()
+            val projectTeam = assignTeamToProject(
+                projectId = projectId,
+                assignedBy = userId,
+                teamId = request.teamId,
+                role = request.role,
+                isLeadTeam = request.isLeadTeam,
+                now = now
+            )
+
+            syncTeamMembers(projectId, userId, request.teamId)
+//            updateProjectTeamStats(projectId)
+
+            logger.info("Team ${team.name} assigned to project: $projectId")
+
+            Result.success(projectTeam)
+
+        } catch (e: Exception) {
+            logger.error("Failed to assign team to project", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getAssignedTeams(projectId: UUID, userId: UUID): Result<List<ProjectTeam>> {
+        return try {
+            val project = projectRepository.findById(projectId)
+                ?: return Result.failure(Exception("Project not found"))
+
+            if (!canViewProject(project, userId)) {
+                return Result.failure(Exception("Access denied"))
+            }
+
+            val teams = projectTeamRepository.findByProject(projectId)
+            Result.success(teams)
+
+        } catch (e: Exception) {
+            logger.error("Failed to get assigned teams", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateTeamRole(projectId: UUID, userId: UUID, teamId: UUID, request: UpdateTeamRole): Result<Unit> {
+        return try {
+            val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+            if (!canManageTeams(member?.role)) {
+                return Result.failure(Exception("Insufficient permissions"))
+            }
+
+            val projectTeam = projectTeamRepository.findByProjectAndTeam(projectId, teamId)
+                ?: return Result.failure(Exception("Team is not assigned to this project"))
+
+            projectTeamRepository.updateRole(projectTeam.id, request.role)
+
+            request.isLeadTeam?.let { isLeadTeam ->
+                if (isLeadTeam) {
+                    val leadTeams = projectTeamRepository.findByProject(projectId)
+                        .filter { it.isLeadTeam && it.id != projectTeam.id }
+                    leadTeams.forEach {
+                        projectTeamRepository.updateLeadTeam(it.id, false)
+                    }
+                }
+                projectTeamRepository.updateLeadTeam(projectTeam.id, isLeadTeam)
+            }
+
+            syncTeamMembers(projectId, userId, teamId)
+
+            logger.info("Team role updated for team: $teamId in project: $projectId")
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            logger.error("Failed to update team role", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun unassignTeam(projectId: UUID, userId: UUID, teamId: UUID): Result<Unit> {
+        return try {
+            projectRepository.findById(projectId)
+                ?: return Result.failure(Exception("Project not found"))
+
+            val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+            if (!canManageTeams(member?.role)) {
+                return Result.failure(Exception("Insufficient permissions"))
+            }
+
+            val team = teamRepository.findById(teamId)
+                ?: return Result.failure(Exception("Team not found"))
+
+            projectTeamRepository.removeByProjectAndTeam(projectId, teamId)
+
+            val removed = projectMemberRepository.removeAllByTeam(teamId, projectId)
+
+//            updateProjectTeamStats(projectId)
+
+            logger.info("Team ${team.name} unassigned from project: $projectId, removed $removed members")
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            logger.error("Failed to unassign team from project", e)
+            Result.failure(e)
+        }
+    }
+
+    // ============== Members Management ==============
+
+    override suspend fun addMembers(projectId: UUID, userId: UUID, request: AddProjectMembers): Result<List<ProjectMember>> {
+        return try {
+            val project = projectRepository.findById(projectId)
+                ?: return Result.failure(Exception("Project not found"))
+
+            val currentUserMember = projectMemberRepository.findByProjectAndUser(projectId, userId)
+            if (!canAddMembers(currentUserMember?.role)) {
+                return Result.failure(Exception("Insufficient permissions"))
+            }
+
+            val now = System.currentTimeMillis()
+            val addedMembers = mutableListOf<ProjectMember>()
+
+            for (targetUserId in request.userIds) {
+                if (!companyMemberRepository.exists(project.companyId, targetUserId)) {
+                    return Result.failure(Exception("User $targetUserId is not a member of the company"))
+                }
+
+                if (projectMemberRepository.exists(projectId, targetUserId)) {
+                    continue
+                }
+
+                val newMember = ProjectMember(
+                    id = UUID.randomUUID(),
+                    projectId = projectId,
+                    userId = targetUserId,
+                    role = request.role,
+                    joinedAt = now,
+                    invitedBy = userId,
+                    invitedAt = now,
+                    sourceTeamId = null
+                )
+                addedMembers.add(newMember)
+            }
+
+            val createdMembers = projectMemberRepository.addAll(addedMembers)
+
+//            updateProjectMemberStats(projectId)
+
+            logger.info("Added ${createdMembers.size} members to project: $projectId")
+
+            Result.success(createdMembers)
+
+        } catch (e: Exception) {
+            logger.error("Failed to add members to project", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getProjectMembers(projectId: UUID, userId: UUID, page: Int, size: Int): Result<List<ProjectMember>> {
+        return try {
+            val project = projectRepository.findById(projectId)
+                ?: return Result.failure(Exception("Project not found"))
+
+            if (!canViewProject(project, userId)) {
+                return Result.failure(Exception("Access denied"))
+            }
+
+            val offset = (page - 1) * size
+            val members = projectMemberRepository.findByProject(projectId, size, offset)
+
+            Result.success(members)
+        } catch (e: Exception) {
+            logger.error("Failed to get project members", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getProjectMember(projectId: UUID, userId: UUID, targetUserId: UUID): Result<ProjectMember> {
+        return try {
+            val project = projectRepository.findById(projectId)
+                ?: return Result.failure(Exception("Project not found"))
+
+            if (!canViewProject(project, userId)) {
+                return Result.failure(Exception("Access denied"))
+            }
+
+            val member = projectMemberRepository.findByProjectAndUser(projectId, targetUserId)
+                ?: return Result.failure(Exception("User is not a member of this project"))
+
+            Result.success(member)
+        } catch (e: Exception) {
+            logger.error("Failed to get project member", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateMemberRole(projectId: UUID, userId: UUID, targetUserId: UUID, role: ProjectRole): Result<Unit> {
+        return try {
+            val currentUserMember = projectMemberRepository.findByProjectAndUser(projectId, userId)
+                ?: return Result.failure(Exception("User is not a member of this project"))
+
+            if (!canChangeRole(currentUserMember.role)) {
+                return Result.failure(Exception("Insufficient permissions"))
+            }
+
+            val targetMember = projectMemberRepository.findByProjectAndUser(projectId, targetUserId)
+                ?: return Result.failure(Exception("Target user is not a member of this project"))
+
+            if (targetMember.role == ProjectRole.OWNER) {
+                return Result.failure(Exception("Cannot change owner's role"))
+            }
+
+            if (currentUserMember.role == ProjectRole.ADMIN && targetMember.role == ProjectRole.ADMIN) {
+                return Result.failure(Exception("Admin cannot change another admin's role"))
+            }
+
+            if (targetMember.sourceTeamId != null) {
+                return Result.failure(Exception("Member from team must be managed through team settings"))
+            }
+
+            projectMemberRepository.updateRole(targetMember.id, role)
+
+            logger.info("Member role updated: $targetUserId to $role in project: $projectId")
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logger.error("Failed to update member role", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun removeMember(projectId: UUID, userId: UUID, targetUserId: UUID): Result<Unit> {
+        return try {
+            projectRepository.findById(projectId)
+                ?: return Result.failure(Exception("Project not found"))
+
+            val currentUserMember = projectMemberRepository.findByProjectAndUser(projectId, userId)
+                ?: return Result.failure(Exception("User is not a member of this project"))
+
+            val targetMember = projectMemberRepository.findByProjectAndUser(projectId, targetUserId)
+                ?: return Result.failure(Exception("Target user is not a member of this project"))
+
+            if (targetMember.role == ProjectRole.OWNER) {
+                return Result.failure(Exception("Cannot remove project owner"))
+            }
+
+            if (targetMember.sourceTeamId != null) {
+                return Result.failure(Exception("Member from team must be removed by unassigning the team"))
+            }
+
+            if (!canRemoveMember(currentUserMember.role, targetMember.role)) {
+                return Result.failure(Exception("Insufficient permissions"))
+            }
+
+            projectMemberRepository.remove(targetMember.id)
+
+//            updateProjectMemberStats(projectId)
+
+            logger.info("Member removed: $targetUserId from project: $projectId")
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            logger.error("Failed to remove member from project", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun leaveProject(projectId: UUID, userId: UUID): Result<Unit> {
+        return try {
+            val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+                ?: return Result.failure(Exception("User is not a member of this project"))
+
+            if (member.role == ProjectRole.OWNER) {
+                return Result.failure(Exception("Owner cannot leave the project. Transfer ownership first."))
+            }
+
+            if (member.sourceTeamId != null) {
+                return Result.failure(Exception("Member from team cannot leave individually. Remove from team instead."))
+            }
+
+            projectMemberRepository.remove(member.id)
+
+//            updateProjectMemberStats(projectId)
+
+            logger.info("User $userId left project: $projectId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logger.error("Failed to leave project", e)
+            Result.failure(e)
+        }
+    }
+
+    // ============== Stats ==============
+
+    override suspend fun getProjectStats(projectId: UUID, userId: UUID): Result<ProjectStats> {
+        TODO("Not yet implemented getProjectStats")
+    }
+
+    override suspend fun getProjectPermissions(projectId: UUID, userId: UUID): Result<ProjectPermissions> {
+        return try {
+            val project = projectRepository.findById(projectId)
+                ?: return Result.failure(Exception("Project not found"))
+
+            if (!canViewProject(project, userId)) {
+                return Result.failure(Exception("Access denied"))
+            }
+
+            val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+            Result.success(ProjectPermissions.fromRole(member?.role))
+
+        } catch (e: Exception) {
+            logger.error("Failed to get project permissions", e)
+            Result.failure(e)
+        }
+    }
+
     // ============== Private Methods ==============
+
     private suspend fun addProjectMember(
         projectId: UUID,
         targetUserId: UUID,
@@ -387,6 +709,50 @@ class ProjectServiceImpl(
         return projectTeamRepository.assign(projectTeam)
     }
 
+    private suspend fun syncTeamMembers(projectId: UUID, userId: UUID, teamId: UUID): Pair<Int, Int> {
+        val projectTeam = projectTeamRepository.findByProjectAndTeam(projectId, teamId)
+            ?: return Pair(0, 0)
+
+        val teamMembers = teamMemberRepository.findByTeam(teamId, Int.MAX_VALUE, 0)
+        val existingProjectMembers = projectMemberRepository.findByProject(projectId, Int.MAX_VALUE, 0)
+            .filter { it.sourceTeamId == teamId }
+            .associateBy { it.userId }
+
+        var added = 0
+        val now = System.currentTimeMillis()
+
+        for (teamMember in teamMembers) {
+            if (!existingProjectMembers.containsKey(teamMember.userId)) {
+                val newMember = ProjectMember(
+                    id = UUID.randomUUID(),
+                    projectId = projectId,
+                    userId = teamMember.userId,
+                    role = projectTeam.role,
+                    joinedAt = now,
+                    invitedBy = userId,
+                    invitedAt = now,
+                    sourceTeamId = teamId
+                )
+                projectMemberRepository.add(newMember)
+                added++
+            }
+        }
+
+        var removed = 0
+        for ((userId, member) in existingProjectMembers) {
+            if (!teamMembers.any { it.userId == userId }) {
+                projectMemberRepository.remove(member.id)
+                removed++
+            }
+        }
+
+//        updateProjectMemberStats(projectId)
+
+        logger.info("Synced team $teamId to project $projectId: +$added, -$removed")
+
+        return Pair(added, removed)
+    }
+
     private suspend fun updateProjectLead(projectId: UUID, newLeadId: UUID, updatedBy: UUID) {
         val now = System.currentTimeMillis()
 
@@ -396,13 +762,21 @@ class ProjectServiceImpl(
                 projectMemberRepository.updateRole(it.id, ProjectRole.ADMIN)
             }
         }
-        val newLead = projectMemberRepository.findByProjectAndUser(projectId, newLeadId)
 
+        val newLead = projectMemberRepository.findByProjectAndUser(projectId, newLeadId)
         if (newLead != null) {
             projectMemberRepository.updateRole(newLead.id, ProjectRole.LEAD)
         } else {
             addProjectMember(projectId, newLeadId, updatedBy, ProjectRole.LEAD, now)
         }
+    }
+
+    private suspend fun updateProjectMemberStats(projectId: UUID) {
+        TODO("Not yet implemented updateProjectMemberStats")
+    }
+
+    private suspend fun updateProjectTeamStats(projectId: UUID) {
+        TODO("Not yet implemented updateProjectTeamStats")
     }
 
     private fun canCreateProject(companyRole: CompanyRole): Boolean {

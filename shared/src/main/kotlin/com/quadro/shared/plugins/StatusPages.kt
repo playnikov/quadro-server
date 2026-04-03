@@ -6,6 +6,8 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
+import javax.security.sasl.AuthenticationException
+import kotlin.time.Clock
 
 fun Application.configureStatusPages() {
     install(StatusPages) {
@@ -14,7 +16,17 @@ fun Application.configureStatusPages() {
                 HttpStatusCode.InternalServerError,
                 ErrorResponse(
                     message = cause.message ?: "Internal server error",
-                    code = "INTERNAL_ERROR"
+                    code = "INTERNAL_ERROR",
+                    timestamp = Clock.System.now()
+                )
+            )
+        }
+        exception<AuthenticationException> { call, cause ->
+            call.respond(
+                status = HttpStatusCode.Unauthorized,
+                message = ErrorResponse(
+                    message = cause.message ?: "Invalid credentials",
+                    timestamp = Clock.System.now()
                 )
             )
         }

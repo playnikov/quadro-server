@@ -1,7 +1,5 @@
 package com.quadro.company.config
 
-import com.typesafe.config.ConfigFactory
-
 data class AppConfig(
     val environment: String,
     val server: ServerConfig,

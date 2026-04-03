@@ -1,5 +1,6 @@
 package com.quadro.datasource.entities
 
+import com.quadro.domain.models.task.NotificationLevel
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -41,7 +42,7 @@ object TaskCommentsTable : UUIDTable("task_comments") {
     val authorId = uuid("author_id").references(UsersTable.id)
     val content = text("content")
     val createdAt = timestamp("created_at").default(Instant.now())
-    val updatedAt = timestamp("updated_at").default(Instant.now())
+    val updatedAt = timestamp("updated_at").nullable()
 }
 
 object TaskAttachmentsTable : UUIDTable("task_attachments") {
@@ -58,6 +59,7 @@ object TaskWatchersTable : UUIDTable("task_watchers") {
     val taskId = uuid("task_id").references(TasksTable.id)
     val userId = uuid("user_id").references(UsersTable.id)
     val addedAt = timestamp("added_at").default(Instant.now())
+    val notificationLevel = enumerationByName("notification_level", 50, NotificationLevel::class)
 
     init {
         uniqueIndex(taskId, userId)
@@ -136,6 +138,7 @@ class TaskWatcherEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var taskId by TaskWatchersTable.taskId
     var userId by TaskWatchersTable.userId
     var addedAt by TaskWatchersTable.addedAt
+    var notificationLevel by TaskWatchersTable.notificationLevel
 }
 
 class TaskTimeLogEntity(id: EntityID<UUID>) : UUIDEntity(id) {

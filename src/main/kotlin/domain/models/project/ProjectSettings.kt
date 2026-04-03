@@ -1,11 +1,13 @@
 package com.quadro.domain.models.project
 
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
+@Serializable
 data class ProjectSettings(
     val taskPrefix: String? = null,
     val defaultTaskPriority: String = "MEDIUM",
-    val defaultAssignee: UUID? = null,
+    val defaultAssignee: String? = null,
     val allowGuestAccess: Boolean = false,
     val requireTaskApproval: Boolean = false,
     val requireTimeTracking: Boolean = false,

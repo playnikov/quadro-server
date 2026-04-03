@@ -16,7 +16,7 @@ jobs:
         service:
           - api-gateway
           - auth-service
-#          - company-service
+          - company-service
     #          - project-service
     #          - task-service
     #          - team-service

@@ -24,6 +24,7 @@ object DatabaseFactory {
             jdbcUrl = config.jdbcUrl
             username = config.user
             password = config.password
+            schema = config.schema
 
             maximumPoolSize = config.poolSize
             minimumIdle = 2

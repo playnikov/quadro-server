@@ -18,3 +18,7 @@ dependencies {
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.mockk)
 }
+
+kotlin {
+    jvmToolchain(21)
+}

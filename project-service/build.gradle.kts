@@ -53,3 +53,7 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.mockk)
 }
+
+kotlin {
+    jvmToolchain(21)
+}

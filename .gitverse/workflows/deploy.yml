@@ -15,8 +15,8 @@ jobs:
       matrix:
         service:
           - api-gateway
-    #          - auth-service
-    #          - company-service
+          - auth-service
+#          - company-service
     #          - project-service
     #          - task-service
     #          - team-service

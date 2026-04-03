@@ -3,6 +3,26 @@ networks:
   quadro-net:
     driver: bridge
 
+x-common-env: &common-env
+  DB_HOST: ${DB_HOST:-postgres}
+  DB_PORT: ${DB_PORT:-5432}
+  DB_USER: ${DB_USER}
+  DB_PASSWORD: ${DB_PASSWORD}
+  DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+  KAFKA_BROKERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
+  JWT_SECRET: ${JWT_SECRET}
+  JWT_ISSUER: ${JWT_ISSUER:-quadro}
+  JWT_AUDIENCE: ${JWT_AUDIENCE:-quadro-api}
+  JWT_REALM: ${JWT_REALM:-quadro}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  AUTH_SERVICE_URL: http://auth-service:8081
+  COMPANY_SERVICE_URL: http://company-service:8082
+  TEAM_SERVICE_URL: http://team-service:8083
+  PROJECT_SERVICE_URL: http://project-service:8084
+  TASK_SERVICE_URL: http://task-service:8085
+  NOTIFICATION_SERVICE_URL: http://notification-service:8086
+  ACTIVITY_SERVICE_URL: ${ACTIVITY_SERVICE_URL:-http://activity-service:8087}
+
 volumes:
   postgres_data:
     name: ${POSTGRES_VOLUME:-postgres_data}
@@ -72,29 +92,27 @@ services:
   # ========== MinIO ==========
 
   # ========== API Gateway ==========
+  auth-service:
+    build: ./auth-service
+    image: ${REGISTRY}/auth-service:${VERSION}
+    container_name: auth-service
+    environment:
+      <<: *common-env
+      DB_SCHEMA: ${DB_SCHEMA:-auth_schema}
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quadro-net
+
   api-gateway:
     image: ${DOCKERHUB_USERNAME}/quadro-platform:api-gateway-${VERSION:-latest}
     container_name: api-gateway
     restart: unless-stopped
     ports:
       - "${API_GATEWAY_PORT:-80}:8080"
-    environment:
-      ENVIRONMENT: ${ENVIRONMENT:-production}
-      PORT: 8080
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      AUTH_SERVICE_URL: http://auth-service:8081
-      COMPANY_SERVICE_URL: http://company-service:8082
-      TEAM_SERVICE_URL: http://team-service:8083
-      PROJECT_SERVICE_URL: http://project-service:8084
-      TASK_SERVICE_URL: http://task-service:8085
-      NOTIFICATION_SERVICE_URL: http://notification-service:8086
-      ACTIVITY_SERVICE_URL: ${ACTIVITY_SERVICE_URL:-http://activity-service:8087}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER:-quadro}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-quadro-api}
-      JWT_REALM: ${JWT_REALM:-quadro}
     depends_on:
       - auth-service
 #      - company-service

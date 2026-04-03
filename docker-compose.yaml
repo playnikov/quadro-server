@@ -94,7 +94,7 @@ services:
   # ========== API Gateway ==========
   auth-service:
     build: ./auth-service
-    image: ${REGISTRY}/auth-service:${VERSION}
+    image: ${DOCKERHUB_USERNAME}/quadro-platform:auth-service-${VERSION:-latest}
     container_name: auth-service
     environment:
       <<: *common-env

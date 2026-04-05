@@ -31,7 +31,6 @@ x-common-env: &common-env
 volumes:
   postgres_data:
     name: ${POSTGRES_VOLUME:-postgres_data}
-  init_scripts:
   kafka_data:
     name: ${KAFKA_VOLUME:-kafka_data}
   redis_data:
@@ -42,14 +41,13 @@ volumes:
 services:
   # ========== PostgreSQL ==========
   postgres:
-    image: postgres:16
+    image: postgres-with-init:latest
     container_name: postgres
     restart: unless-stopped
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init_scripts:/docker-entrypoint-initdb.d
     environment:
       <<: *common-env
       POSTGRES_USER: ${POSTGRES_USER}

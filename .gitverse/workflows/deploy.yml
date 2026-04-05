@@ -22,6 +22,11 @@ jobs:
     #          - team-service
     #          - notification-service
     steps:
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.11'
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -31,12 +36,19 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
       - name: Build JAR for ${{ matrix.service }}
         run: |
           gradle wrapper
           chmod +x gradlew
           ./gradlew :${{ matrix.service }}:build -x test
-          cd ..
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

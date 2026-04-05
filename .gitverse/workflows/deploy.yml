@@ -10,7 +10,7 @@ env:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: img-ubuntu-22.04
     strategy:
       matrix:
         service:
@@ -57,7 +57,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}-latest
 
   deploy:
-    runs-on: self-hosted
+    runs-on: img-ubuntu-22.04
     needs: build
     steps:
       - name: Checkout code
@@ -93,11 +93,11 @@ jobs:
           MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
           MINIO_BUCKET=quadro
           JWT_SECRET=${{ secrets.JWT_SECRET }}
-          JWT_ISSUER=quadro
-          JWT_AUDIENCE=quadro-api
-          JWT_REALM=quadro
-          JWT_ACCESS_EXPIRATION=900000
-          JWT_REFRESH_EXPIRATION=604800000
+          JWT_ISSUER=${{ secrets.JWT_ISSUE }}
+          JWT_AUDIENCE=${{ secrets.JWT_AUDIENCE }}
+          JWT_REALM=${{ secrets.JWT_REALM }}
+          JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
+          JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
           API_GATEWAY_PORT=80
           EOF
 

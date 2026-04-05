@@ -99,8 +99,9 @@ services:
 
   # ========== API Gateway ==========
   auth-service:
-    build: ./auth-service
-    image: ${DOCKERHUB_USERNAME}/quadro-platform:auth-service-${VERSION:-latest}
+#    build: ./auth-service
+    image: ${DOCKERHUB_USERNAME}/quadro-platform:auth-service-latest}
+#    image: ${DOCKERHUB_USERNAME}/quadro-platform:auth-service-${VERSION:-latest}
     container_name: auth-service
     environment:
       <<: *common-env
@@ -114,8 +115,9 @@ services:
       - quadro-net
 
   company-service:
-    build: ./company-service
-    image: ${DOCKERHUB_USERNAME}/quadro-platform:company-service-${VERSION:-latest}
+#    build: ./company-service
+#    image: ${DOCKERHUB_USERNAME}/quadro-platform:company-service-${VERSION:-latest}
+    image: ${DOCKERHUB_USERNAME}/quadro-platform:company-service-latest}
     container_name: company-service
     environment:
       <<: *common-env
@@ -129,7 +131,8 @@ services:
       - quadro-net
 
   api-gateway:
-    image: ${DOCKERHUB_USERNAME}/quadro-platform:api-gateway-${VERSION:-latest}
+#    image: ${DOCKERHUB_USERNAME}/quadro-platform:api-gateway-${VERSION:-latest}
+    image: ${DOCKERHUB_USERNAME}/quadro-platform:api-gateway-latest}
     container_name: api-gateway
     restart: unless-stopped
     ports:

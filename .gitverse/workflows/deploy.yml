@@ -37,7 +37,9 @@ jobs:
           gradle-version: 8.11
 
       - name: Build JAR for ${{ matrix.service }}
-        run: ./gradlew :${{ matrix.service }}:build -x test
+        run: |
+          chmod +x gradlew
+          ./gradlew :${{ matrix.service }}:build -x test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

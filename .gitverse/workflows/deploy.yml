@@ -83,6 +83,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build PostgreSQL image with init scripts
         run: |
           docker build -f Dockerfile.postgres -t postgres-with-init:latest .
@@ -128,6 +129,5 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           docker compose down
-          docker compose pull
           docker compose up -d
           docker system prune -f

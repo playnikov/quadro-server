@@ -5,7 +5,8 @@ on:
     branches: [ "develop" ] # TODO: change to main when ready
 
 env:
-  VERSION: ${{ gitverse.sha }}
+  # VERSION: ${{ gitverse.sha }}
+  VERSION: 85eca62dadcf4194c7798afa05d471c03431a798
   REPOSITORY: ${{ vars.REPOSITORY }}
 
 jobs:
@@ -74,8 +75,8 @@ jobs:
   #         context: ./${{ matrix.service }}
   #         push: true
   #         tags: |
-  #           ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}-${{ matrix.service }}:${{ env.VERSION }}
-  #           ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}-${{ matrix.service }}:latest
+  #           ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ env.VERSION }}
+  #           ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}.latest
 
   deploy:
     runs-on: img-ubuntu-22.04

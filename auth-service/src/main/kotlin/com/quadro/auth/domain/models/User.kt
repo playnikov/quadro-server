@@ -36,8 +36,7 @@ data class UserCreate(
 )
 
 data class UserLogin(
-    val email: String? = null,
-    val username: String? = null,
+    val name: String,
     val password: String,
 )
 

@@ -56,8 +56,7 @@ class AuthController(private val authService: AuthService) {
             val request = call.receive<LoginRequest>()
 
             val userLogin = UserLogin(
-                email = request.email,
-                username = request.username,
+                name = request.name,
                 password = request.password
             )
 

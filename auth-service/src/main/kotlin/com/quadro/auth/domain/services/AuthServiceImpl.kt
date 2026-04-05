@@ -76,19 +76,18 @@ class AuthServiceImpl(
         userAgent: String?
     ): Result<AuthResult> {
         return try {
-            val user = request.username?.let {
-                userRepository.findByUsername(request.username)
-                    ?: return Result.failure(Exception("Invalid credentials"))
-            } ?: request.email?.let {
-                userRepository.findByEmail(request.email) ?: return Result.failure(Exception("Invalid credentials"))
-            } ?: return Result.failure(Exception("Invalid credentials"))
+            val user = if (request.name.contains('@') && request.name.contains(".")) {
+                userRepository.findByEmail(request.name)
+            } else {
+                userRepository.findByUsername(request.name)
+            }
+
+            if (user == null || !passwordEncoder.verify(request.password, user.passwordHash)) {
+                return Result.failure(Exception("Invalid login or password"))
+            }
 
             if (!user.isActive) {
                 return Result.failure(Exception("User is deactivated"))
-            }
-
-            if (!passwordEncoder.verify(request.password, user.passwordHash)) {
-                return Result.failure(Exception("Invalid login or password"))
             }
 
             val accessToken = jwtProvider.generateAccessToken(user)

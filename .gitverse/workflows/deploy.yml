@@ -122,6 +122,10 @@ jobs:
           API_GATEWAY_PORT=80
           EOF
 
+      - name: Prepare init-scripts volume
+        run: |
+          docker volume create init_scripts
+          docker run --rm -v init_scripts:/target -v $(pwd)/init-scripts:/source alpine cp -a /source/. /target/
       - name: Deploy with Docker Compose
         run: |
           docker compose down

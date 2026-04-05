@@ -31,27 +31,13 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Install Gradle 8.11
-        run: |
-          if [ ! -d "/opt/gradle-8.11" ]; then
-            wget https://services.gradle.org/distributions/gradle-8.11-bin.zip
-            sudo unzip -d /opt gradle-8.11-bin.zip
-          fi
-          sudo ln -sf /opt/gradle-8.11/bin/gradle /usr/local/bin/gradle
-          gradle --version
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-
+          gradle-version: 8.11
 
       - name: Build JAR for ${{ matrix.service }}
-        run: |
-          gradle wrapper
-          chmod +x gradlew
-          ./gradlew :${{ matrix.service }}:build -x test
+        run: ./gradlew :${{ matrix.service }}:build -x test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

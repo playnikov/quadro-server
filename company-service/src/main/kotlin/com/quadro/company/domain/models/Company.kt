@@ -43,7 +43,6 @@ data class Company(
     val currentProjects: Int = 0
 )
 
-@Serializable
 data class CompanySettings(
     val allowGuestAccess: Boolean = false,
     val requireEmailVerification: Boolean = true,
@@ -95,9 +94,15 @@ data class CompanyResponse(
     val phone: String?,
     val address: String?,
     val taxId: String?,
-    val status: String,
-    val settings: CompanySettingsResponse,
+    val companyStatus: String,
+    val companySettings: CompanySettingsResponse,
     val createdAt: Instant,
+    val updatedAt: Instant,
+    val deletedAt: Instant? = null,
+    val maxUsers: Int,
+    val currentUsers: Int,
+    val maxProjects: Int,
+    val currentProjects: Int,
     val owner: UserResponse? = null
 ) {
     companion object {
@@ -111,9 +116,15 @@ data class CompanyResponse(
             phone = company.phone,
             address = company.address,
             taxId = company.taxId,
-            status = company.companyStatus.name,
-            settings = CompanySettingsResponse.fromSettings(company.companySettings),
+            companyStatus = company.companyStatus.name,
+            companySettings = CompanySettingsResponse.fromSettings(company.companySettings),
             createdAt = company.createdAt,
+            updatedAt = company.updatedAt,
+            deletedAt = company.deletedAt,
+            maxUsers = company.maxUsers,
+            currentUsers = company.currentUsers,
+            maxProjects = company.maxProjects,
+            currentProjects = company.currentProjects,
             owner = user?.let { UserResponse.fromUser(it) }
         )
     }
@@ -123,24 +134,32 @@ data class CompanyResponse(
 data class CompanySettingsResponse(
     val allowGuestAccess: Boolean,
     val requireEmailVerification: Boolean,
-    val defaultUserRole: String,
-    val projectCreationRole: String,
-    val teamCreationRole: String,
+    val defaultUserRole: CompanyRole,
+    val projectCreationRole: CompanyRole,
+    val teamCreationRole: CompanyRole,
     val invitationExpiryDays: Int,
     val maxTeamsPerProject: Int,
-    val maxUsersPerTeam: Int
+    val maxUsersPerTeam: Int,
+    val allowExternalInvites: Boolean,
+    val requireInviteApproval: Boolean,
+    val defaultTeamRole: CompanyRole,
+    val autoJoinDomain: String?
 ) {
     companion object {
         fun fromSettings(settings: CompanySettings): CompanySettingsResponse {
             return CompanySettingsResponse(
                 allowGuestAccess = settings.allowGuestAccess,
                 requireEmailVerification = settings.requireEmailVerification,
-                defaultUserRole = settings.defaultUserRole.name,
-                projectCreationRole = settings.projectCreationRole.name,
-                teamCreationRole = settings.teamCreationRole.name,
+                defaultUserRole = settings.defaultUserRole,
+                projectCreationRole = settings.projectCreationRole,
+                teamCreationRole = settings.teamCreationRole,
                 invitationExpiryDays = settings.invitationExpiryDays,
                 maxTeamsPerProject = settings.maxTeamsPerProject,
-                maxUsersPerTeam = settings.maxUsersPerTeam
+                maxUsersPerTeam = settings.maxUsersPerTeam,
+                allowExternalInvites = settings.allowExternalInvites,
+                requireInviteApproval = settings.requireInviteApproval,
+                defaultTeamRole = settings.defaultTeamRole,
+                autoJoinDomain = settings.autoJoinDomain
             )
         }
     }

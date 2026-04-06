@@ -8,6 +8,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.Principal
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.bearer
 import io.ktor.server.auth.principal
@@ -15,9 +16,7 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import javax.naming.AuthenticationException
 
-data class UserRole(
-    val role: String
-)
+class UserPrincipal(val userId: UUID, val role: String) : Principal
 
 data class TokenValidationResult(
     val isValid: Boolean,
@@ -75,11 +74,8 @@ fun Application.configureSecurity(jwtValidator: JwtValidator) {
         bearer("auth-jwt") {
             authenticate { tokenCredential ->
                 val token = jwtValidator.validateToken(tokenCredential.token)
-                if (token.isValid) {
-                    val userId = token.userId
-                    val role = token.role
-                    UserIdPrincipal(userId.toString())
-                    UserRole(role.toString())
+                if (token.isValid && token.userId != null) {
+                    UserPrincipal(token.userId, token.role ?: "USER")
                 } else {
                     null
                 }
@@ -88,16 +84,5 @@ fun Application.configureSecurity(jwtValidator: JwtValidator) {
     }
 }
 
-fun ApplicationCall.getUserId(): UUID? {
-    val principal = principal<UserIdPrincipal>()
-    return principal?.name?.let { name ->
-        runCatching { UUID.fromString(name) }.getOrNull()
-    }
-}
-
-fun ApplicationCall.getRole(): String? {
-    val principal = principal<UserRole>()
-    return principal?.role?.let {
-        runCatching { it }.getOrNull()
-    }
-}
+fun ApplicationCall.getUserId(): UUID? = principal<UserPrincipal>()?.userId
+fun ApplicationCall.getRole(): String? = principal<UserPrincipal>()?.role

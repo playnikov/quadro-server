@@ -21,12 +21,12 @@ fun Application.configureStatusPages() {
                 )
             )
         }
-        exception<AuthenticationException> { call, cause ->
+        status(HttpStatusCode.Unauthorized) { call, _ ->
             call.respond(
-                status = HttpStatusCode.Unauthorized,
-                message = ErrorResponse(
-                    message = cause.message ?: "Invalid credentials",
-                    timestamp = Clock.System.now()
+                HttpStatusCode.Unauthorized,
+                ErrorResponse(
+                    message = "Invalid or missing authentication token",
+                    code = "UNAUTHORIZED",
                 )
             )
         }

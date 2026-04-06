@@ -1,6 +1,8 @@
 package com.quadro.gateway.routes
 
-import com.quadro.gateway.clients.InvitationServiceClient
+import com.quadro.gateway.config.ServiceUrls
+import com.quadro.gateway.plugins.proxyTo
+import io.ktor.client.HttpClient
 import io.ktor.client.statement.bodyAsText
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receiveText
@@ -13,44 +15,17 @@ import io.ktor.server.routing.route
 import kotlin.text.removePrefix
 
 class InvitationRoutes(
-    private val invitationServiceClient: InvitationServiceClient
+    private val client: HttpClient,
+    serviceBaseUrl: ServiceUrls
 ) {
-    private fun getToken(call: ApplicationCall): String {
-        return call.request.headers["Authorization"]?.removePrefix("Bearer ")
-            ?: throw IllegalArgumentException("Missing or invalid token")
-    }
-
+    private val companyServiceBaseUrl = serviceBaseUrl.company
     fun protectedRoutes(routing: Route) {
         routing.route("/api/companies/{companyId}/invitations/") {
-            post {
-                val token = getToken(call)
-                val companyId = call.parameters["companyId"] ?: throw IllegalArgumentException("Missing company id")
-                val response = invitationServiceClient.createInvitation(token, companyId, call.receiveText())
-                call.respond(response.status, response.bodyAsText())
-            }
-
-            get {
-                val token = getToken(call)
-                val companyId = call.parameters["companyId"] ?: throw IllegalArgumentException("Missing company id")
-                val response = invitationServiceClient.getInvitations(token, companyId)
-                call.respond(response.status, response.bodyAsText())
-            }
-
-            delete {
-                val token = getToken(call)
-                val companyId = call.parameters["companyId"] ?: throw IllegalArgumentException("Missing company id")
-                val response = invitationServiceClient.cancelInvitation(token, companyId)
-                call.respond(response.status, response.bodyAsText())
-            }
+            proxyTo(client, companyServiceBaseUrl)
         }
 
         routing.route("/invite/{token}") {
-            post {
-                val token = getToken(call)
-                val tokenAccept = call.parameters["token"] ?: throw IllegalArgumentException("Missing company id")
-                val response = invitationServiceClient.acceptInvitation(token, tokenAccept)
-                call.respond(response.status, response.bodyAsText())
-            }
+            proxyTo(client, companyServiceBaseUrl)
         }
     }
 }

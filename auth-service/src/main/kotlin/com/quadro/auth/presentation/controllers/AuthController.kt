@@ -7,6 +7,7 @@ import com.quadro.auth.presentation.models.LoginRequest
 import com.quadro.auth.presentation.models.RefreshTokenRequest
 import com.quadro.auth.presentation.models.RegisterRequest
 import com.quadro.shared.dto.ErrorResponse
+import com.quadro.shared.security.getUserId
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.origin
@@ -67,7 +68,7 @@ class AuthController(private val authService: AuthService) {
             )
         } catch (e: Exception) {
             logger.error("[$requestId] Login error", e)
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid request format"))
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Invalid request format"))
         }
     }
 
@@ -81,7 +82,33 @@ class AuthController(private val authService: AuthService) {
                 onFailure = { call.respond(HttpStatusCode.Unauthorized, ErrorResponse(it.message ?: "Token refresh failed")) }
             )
         } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid request"))
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Invalid request"))
+        }
+    }
+
+    suspend fun getMyProfile(call: ApplicationCall) {
+        return try {
+            val userId = call.getUserId() ?: throw IllegalStateException("No user logged in")
+            val result = authService.getUser(userId)
+            result.fold(
+                onSuccess = { call.respond(HttpStatusCode.OK, it) },
+                onFailure = { call.respond(HttpStatusCode.Unauthorized, ErrorResponse(it.message ?: "Token failed")) }
+            )
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Invalid request"))
+        }
+    }
+
+    suspend fun getUser(call: ApplicationCall) {
+        return try {
+            val userId = call.request.queryParameters["userId"]
+            val result = authService.getUser(UUID.fromString(userId))
+            result.fold(
+                onSuccess = { call.respond(HttpStatusCode.OK, it) },
+                onFailure = { call.respond(HttpStatusCode.Unauthorized, ErrorResponse(it.message ?: "Token failed")) }
+            )
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Invalid request"))
         }
     }
 }

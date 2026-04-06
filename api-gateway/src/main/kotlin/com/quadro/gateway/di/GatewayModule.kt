@@ -1,10 +1,8 @@
 package com.quadro.gateway.di
 
-import com.quadro.gateway.clients.AuthServiceClient
-import com.quadro.gateway.clients.CompanyServiceClient
-import com.quadro.gateway.clients.InvitationServiceClient
 import com.quadro.gateway.config.AppConfig
 import com.quadro.gateway.routes.*
+import com.quadro.shared.security.JwtValidator
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
@@ -19,6 +17,11 @@ fun gatewayModule(appConfig: AppConfig) = module {
     single { appConfig.serviceUrls }
     single { appConfig.jwt }
     single { appConfig.rateLimiting }
+    single { JwtValidator(
+        secretKey = get<AppConfig>().jwt.secret,
+        issuer = get<AppConfig>().jwt.issuer,
+        audience = get<AppConfig>().jwt.audience)
+    }
 
     single<HttpClient> {
         HttpClient(CIO) {
@@ -29,9 +32,9 @@ fun gatewayModule(appConfig: AppConfig) = module {
                 })
             }
             install(HttpTimeout) {
-                requestTimeoutMillis = 30000
+                requestTimeoutMillis = 3000
                 connectTimeoutMillis = 5000
-                socketTimeoutMillis = 30000
+                socketTimeoutMillis = 3000
             }
             install(DefaultRequest) {
                 header("User-Agent", "Quadro-API-Gateway/1.0")
@@ -39,12 +42,9 @@ fun gatewayModule(appConfig: AppConfig) = module {
         }
     }
 
-    single { AuthServiceClient(get(), get()) }
-    factory { AuthRoutes(get()) }
+    factory { AuthRoutes(get(), get()) }
 
-    single { CompanyServiceClient(get(), get()) }
-    factory { CompanyRoutes(get()) }
+    factory { CompanyRoutes(get(), get()) }
 
-    single { InvitationServiceClient(get(), get()) }
-    factory { InvitationRoutes(get()) }
+    factory { InvitationRoutes(get(), get()) }
 }

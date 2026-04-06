@@ -2,6 +2,7 @@ package com.quadro.auth.plugins
 
 import com.quadro.auth.presentation.routes.AuthRoutes
 import io.ktor.server.application.Application
+import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
@@ -27,6 +28,10 @@ fun Application.configureRouting() {
             ))
         }
 
-        authRoutes.init(this)
+        authRoutes.publicRoute(this)
+
+        authenticate("auth-jwt") {
+            authRoutes.protectedRoute(this)
+        }
     }
 }

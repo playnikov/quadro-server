@@ -136,7 +136,7 @@ class AuthServiceImpl(
         }
     }
 
-    override suspend fun validateToken(token: String): Result<User> {
+    override suspend fun validateToken(token: String): Result<UserResult> {
         return try {
             val validation  = jwtValidator.validateToken(token)
             if (!validation.isValid || validation.userId == null) {
@@ -150,7 +150,7 @@ class AuthServiceImpl(
                 return Result.failure(Exception("User is deactivated"))
             }
 
-            Result.success(user)
+            Result.success(UserResult.fromUser(user))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -246,6 +246,18 @@ class AuthServiceImpl(
 
     override suspend fun logout(userId: UUID): Result<Unit> {
         TODO("Not yet implemented")
+    }
+
+    override suspend fun getUser(userId: UUID): Result<UserResult> {
+        return try {
+            val user = userRepository.findById(userId)
+                ?: return Result.failure(Exception("User not found"))
+
+            Result.success(UserResult.fromUser(user))
+        } catch (e: Exception) {
+            logger.error("Failed get user info", e)
+            Result.failure(e)
+        }
     }
 
     private fun validateRegistration(request: UserCreate) {

@@ -7,10 +7,12 @@ import com.quadro.auth.plugins.configureDatabase
 import com.quadro.auth.plugins.configureKafka
 import com.quadro.shared.plugins.configureMonitoring
 import com.quadro.auth.plugins.configureRouting
-import com.quadro.auth.plugins.configureSecurity
 import com.quadro.auth.plugins.configureSerialization
 import com.quadro.shared.plugins.configureStatusPages
+import com.quadro.shared.security.JwtValidator
+import com.quadro.shared.security.configureSecurity
 import io.ktor.server.application.*
+import org.koin.ktor.ext.getKoin
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 import org.slf4j.LoggerFactory
@@ -36,7 +38,7 @@ fun Application.module() {
             kafkaModule
         )
     }
-    configureSecurity()
+    configureSecurity(getKoin().get<JwtValidator>())
     configureSerialization()
     configureMonitoring()
     configureStatusPages()

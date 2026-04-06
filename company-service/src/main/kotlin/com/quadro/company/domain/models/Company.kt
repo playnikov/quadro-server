@@ -43,6 +43,7 @@ data class Company(
     val currentProjects: Int = 0
 )
 
+@Serializable
 data class CompanySettings(
     val allowGuestAccess: Boolean = false,
     val requireEmailVerification: Boolean = true,

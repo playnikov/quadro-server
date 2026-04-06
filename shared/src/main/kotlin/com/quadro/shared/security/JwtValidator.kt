@@ -4,15 +4,25 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.exceptions.TokenExpiredException
+import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.bearer
 import io.ktor.server.auth.principal
+import org.slf4j.LoggerFactory
 import java.util.UUID
+import javax.naming.AuthenticationException
+
+data class UserRole(
+    val role: String
+)
 
 data class TokenValidationResult(
     val isValid: Boolean,
     val userId: UUID? = null,
-    val roles: List<String>? = null,
+    val role: String? = null,
     val error: String? = null,
     val isExpired: Boolean = false
 )
@@ -32,12 +42,12 @@ class JwtValidator(
             .verify(token)
         val userId = runCatching { UUID.fromString(decoded.subject) }.getOrNull()
 
-        val roles = decoded.getClaim("roles").asList(String::class.java)
+        val role = decoded.getClaim("role").toString()
 
         TokenValidationResult(
             isValid = true,
             userId = userId,
-            roles = roles,
+            role = role,
             error = null,
             isExpired = false
         )
@@ -45,7 +55,7 @@ class JwtValidator(
         TokenValidationResult(
             isValid = false,
             userId = null,
-            roles = null,
+            role = null,
             error = "Token expired",
             isExpired = true
         )
@@ -53,14 +63,41 @@ class JwtValidator(
         TokenValidationResult(
             isValid = false,
             userId = null,
-            roles = null,
+            role = null,
             error = "Invalid token",
             isExpired = false
         )
     }
 }
 
+fun Application.configureSecurity(jwtValidator: JwtValidator) {
+    install(Authentication) {
+        bearer("auth-jwt") {
+            authenticate { tokenCredential ->
+                val token = jwtValidator.validateToken(tokenCredential.token)
+                if (token.isValid) {
+                    val userId = token.userId
+                    val role = token.role
+                    UserIdPrincipal(userId.toString())
+                    UserRole(role.toString())
+                } else {
+                    null
+                }
+            }
+        }
+    }
+}
+
 fun ApplicationCall.getUserId(): UUID? {
     val principal = principal<UserIdPrincipal>()
-    return principal?.name?.let { UUID.fromString(it) }
+    return principal?.name?.let { name ->
+        runCatching { UUID.fromString(name) }.getOrNull()
+    }
+}
+
+fun ApplicationCall.getRole(): String? {
+    val principal = principal<UserRole>()
+    return principal?.role?.let {
+        runCatching { it }.getOrNull()
+    }
 }

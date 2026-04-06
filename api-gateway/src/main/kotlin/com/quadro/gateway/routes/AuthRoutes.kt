@@ -1,12 +1,14 @@
 package com.quadro.gateway.routes
 
-import com.quadro.gateway.clients.AuthServiceClient
-import com.quadro.gateway.plugins.principalUserId
+import com.quadro.gateway.config.ServiceUrls
+import com.quadro.gateway.plugins.proxyTo
+import com.quadro.shared.security.getUserId
+import io.ktor.client.HttpClient
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receiveText
+import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
@@ -15,75 +17,39 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
 class AuthRoutes(
-    private val authClient: AuthServiceClient
+    private val client: HttpClient,
+    serviceBaseUrl: ServiceUrls
 ) {
+    private val authServiceBaseUrl = serviceBaseUrl.auth
     fun publicRoutes(routing: Route) {
         routing.route("/api/auth") {
-            post("/register") {
-                val body = call.receiveText()
-                val response = authClient.register(body)
-                call.respondText(
-                    text = response.bodyAsText(),
-                    contentType = ContentType.Application.Json,
-                    status = response.status
-                )
+            route("/register") {
+                proxyTo(client, authServiceBaseUrl)
             }
 
-            post("/login") {
-                val body = call.receiveText()
-                val response = authClient.login(body)
-                call.respondText(
-                    text = response.bodyAsText(),
-                    contentType = ContentType.Application.Json,
-                    status = response.status
-                )
+            route("/login") {
+                proxyTo(client, authServiceBaseUrl)
             }
 
-            post("/refresh") {
-                val body = call.receiveText()
-                val response = authClient.refreshToken(body)
-                call.respondText(
-                    text = response.bodyAsText(),
-                    contentType = ContentType.Application.Json,
-                    status = response.status
-                )
+            route("/refresh") {
+                proxyTo(client, authServiceBaseUrl)
             }
-
-
         }
     }
 
     fun protectedRoutes(routing: Route) {
-        routing.route("/api/auth") {
-            get("/me") {
-                val userId = call.principalUserId() ?: return@get call.respond(HttpStatusCode.Forbidden)
-                val response = authClient.getUser(userId)
-                call.respondText(
-                    text = response.bodyAsText(),
-                    contentType = ContentType.Application.Json,
-                    status = response.status
-                )
+
+        routing.route("/api/users") {
+            route("/profile") {
+                proxyTo(client, authServiceBaseUrl)
             }
 
-            post("/logout") {
-                val userId = call.principalUserId() ?: return@post call.respond(HttpStatusCode.Forbidden)
-                val response = authClient.logout(userId)
-                call.respondText(
-                    text = response.bodyAsText(),
-                    contentType = ContentType.Application.Json,
-                    status = response.status
-                )
+            route("/logout") {
+                proxyTo(client, authServiceBaseUrl)
             }
 
-            post("/change-password") {
-                val userId = call.principalUserId()?: return@post call.respond(HttpStatusCode.Forbidden)
-                val body = call.receiveText()
-                val response = authClient.changePassword(userId, body)
-                call.respondText(
-                    text = response.bodyAsText(),
-                    contentType = ContentType.Application.Json,
-                    status = response.status
-                )
+            route("/change-password") {
+                proxyTo(client, authServiceBaseUrl)
             }
         }
     }

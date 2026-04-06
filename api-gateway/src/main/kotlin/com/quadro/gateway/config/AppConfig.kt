@@ -31,10 +31,10 @@ data class AppConfig(
                     activity = System.getenv("ACTIVITY_SERVICE_URL") ?: "http://activity-service:8087"
                 ),
                 jwt = JwtConfig(
-                    secret = System.getenv("JWT_SECRET") ?: "default-secret-key-change-in-production",
+                    secret = System.getenv("JWT_SECRET") ?: "default-secret",
                     issuer = System.getenv("JWT_ISSUER") ?: "quadro",
                     audience = System.getenv("JWT_AUDIENCE") ?: "quadro-api",
-                    realm = System.getenv("JWT_REALM") ?: "quadro"
+                    realm = System.getenv("JWT_REALM") ?: "quadro",
                 ),
                 rateLimiting = RateLimitingConfig(
                     enabled = config.getBoolean("rateLimiting.enabled"),

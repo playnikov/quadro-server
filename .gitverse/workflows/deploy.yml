@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on: img-ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         service: [api-gateway, auth-service, company-service]
@@ -67,7 +67,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ env.VERSION }}
 
   deploy:
-    runs-on: img-ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Checkout code

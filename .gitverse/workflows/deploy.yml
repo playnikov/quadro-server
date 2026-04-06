@@ -25,18 +25,14 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Install Gradle 9.3.0
+        if: steps.cache-gradle.outputs.cache-hit != 'true'
+        run: |
+          wget https://services.gradle.org/distributions/gradle-9.3.0-bin.zip
+          sudo unzip -d /opt gradle-9.3.0-bin.zip
+
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Cache Gradle
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       - name: Build JAR for ${{ matrix.service }}
         run: |

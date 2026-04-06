@@ -58,7 +58,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ env.VERSION }}
 
   deploy:
-    runs-on: self-hosted
+    runs-on: img-ubuntu-22.04
 #    needs: build
     steps:
       - name: Checkout code

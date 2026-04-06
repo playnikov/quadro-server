@@ -58,7 +58,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}.latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ env.VERSION | replace(':', '\\:' ) }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ env.VERSION }}
 
   deploy:
     runs-on: img-ubuntu-22.04

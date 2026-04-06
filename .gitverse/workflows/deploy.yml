@@ -28,34 +28,21 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Cache Gradle distribution
-        id: cache-gradle
+      - name: Cache Gradle Wrapper
         uses: actions/cache@v3
         with:
-          path: /opt/gradle-8.11
-          key: ${{ runner.os }}-gradle-8.11
-
-      - name: Install Gradle 8.11
-        if: steps.cache-gradle.outputs.cache-hit != 'true'
-        run: |
-          wget https://services.gradle.org/distributions/gradle-8.11-bin.zip
-          sudo unzip -d /opt gradle-8.11-bin.zip
-
-      - name: Setup Gradle symlink
-        run: sudo ln -sf /opt/gradle-8.11/bin/gradle /usr/local/bin/gradle
-
-      - name: Cache Gradle packages
-        id: cache-gradle-packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-caches-
+          path: |
+            **/.gradle
+            **/gradle-wrapper.properties
+            **/gradle-wrapper.jar
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Build JAR for ${{ matrix.service }}
         run: |
           chmod +x gradlew
-          ./gradlew :${{ matrix.service }}:build -x test
+          ./gradlew ${{ matrix.service }}:build -x test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

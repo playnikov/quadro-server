@@ -24,6 +24,12 @@ jobs:
           cat /etc/resolv.conf
           ping -c 2 8.8.8.8 || echo "No internet"
           nslookup services.gradle.org || echo "DNS failed"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
       - name: Checkout code
         uses: actions/checkout@v4
 

@@ -36,8 +36,8 @@ jobs:
 
       - name: Build JAR for ${{ matrix.service }}
         run: |
-          chmod +x gradlew
-          ./gradlew ${{ matrix.service }}:build -x test
+          export PATH=/opt/gradle-9.3.0/bin:$PATH
+          gradle ${{ matrix.service }}:build -x test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -1,6 +1,6 @@
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import org.junit.Test
+import kotlin.test.Test
 
 class AuthServiceTest {
 

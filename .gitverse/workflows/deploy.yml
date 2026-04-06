@@ -59,7 +59,7 @@ jobs:
 
   deploy:
     runs-on: img-ubuntu-22.04
-#    needs: build
+    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -101,6 +101,7 @@ services:
 #    build: ./auth-service
     image: ${DOCKERHUB_USERNAME}/quadro-platform:auth-service.${VERSION:-latest}
     container_name: auth-service
+    restart: unless-stopped
     environment:
       <<: *common-env
       DB_SCHEMA: ${DB_SCHEMA:-auth_schema}
@@ -116,6 +117,7 @@ services:
 #    build: ./company-service
     image: ${DOCKERHUB_USERNAME}/quadro-platform:company-service.${VERSION:-latest}
     container_name: company-service
+    restart: unless-stopped
     environment:
       <<: *common-env
       DB_SCHEMA: ${DB_SCHEMA:-company_schema}

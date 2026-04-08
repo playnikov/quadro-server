@@ -58,7 +58,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ env.VERSION }}
 
   deploy:
-    runs-on: dockerhome_runner_2
+    runs-on: [dockerhome_runner_2:img-ubuntu-22.04, dockerhome_runner:img-ubuntu-22.04]
     needs: build
     steps:
       - name: Checkout code

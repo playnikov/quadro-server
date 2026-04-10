@@ -107,7 +107,7 @@ data class CompanyResponse(
     val owner: UserResponse? = null
 ) {
     companion object {
-        fun fromCompany(company: Company, user: User? = null): CompanyResponse = CompanyResponse(
+        fun fromCompany(company: Company, owner: User? = null): CompanyResponse = CompanyResponse(
             id = company.id.toString(),
             name = company.name,
             description = company.description,
@@ -126,7 +126,7 @@ data class CompanyResponse(
             currentUsers = company.currentUsers,
             maxProjects = company.maxProjects,
             currentProjects = company.currentProjects,
-            owner = user?.let { UserResponse.fromUser(it) }
+            owner = owner?.let { UserResponse.fromUser(it) }
         )
     }
 }

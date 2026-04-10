@@ -2,13 +2,15 @@ package com.quadro.company.infrastructure.messaging
 
 import com.quadro.company.domain.models.User
 import com.quadro.company.domain.repositories.UserRepository
-import com.quadro.shared.events.UserEvent
+import com.quadro.shared.events.UserCreatedEvent
+import com.quadro.shared.events.UserDeactivatedEvent
+import com.quadro.shared.events.UserUpdatedEvent
 import java.util.UUID
 
 class UserEventProcessor(
     private val userRepository: UserRepository
 ) {
-    suspend fun processCreated(event: UserEvent.Created) {
+    suspend fun processCreated(event: UserCreatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
             email = event.email,
@@ -16,15 +18,12 @@ class UserEventProcessor(
             lastName = event.lastName,
             middleName = event.middleName,
             avatar = event.avatar,
-            role = event.role,
-            isActive = event.isActive,
-            updatedAt = event.updatedAt
+            isActive = event.isActive
         )
         userRepository.upsert(user)
     }
 
-    suspend fun processUpdated(event: UserEvent.Updated) {
-        val existing = userRepository.findById(UUID.fromString(event.userId))
+    suspend fun processUpdated(event: UserUpdatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
             email = event.email,
@@ -32,14 +31,8 @@ class UserEventProcessor(
             lastName = event.lastName,
             middleName = event.middleName,
             avatar = event.avatar,
-            role = event.role,
-            isActive = event.isActive,
-            updatedAt = event.updatedAt
+            isActive = event.isActive
         )
         userRepository.upsert(user)
-    }
-
-    suspend fun processDeleted(event: UserEvent.Deleted) {
-        userRepository.delete(UUID.fromString(event.userId))
     }
 }

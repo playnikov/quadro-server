@@ -11,9 +11,7 @@ data class User(
     val lastName: String,
     val middleName: String?,
     val avatar: String?,
-    val role: String,
     val isActive: Boolean,
-    val updatedAt: Instant
 )
 
 @Serializable
@@ -24,9 +22,7 @@ data class UserResponse(
     val lastName: String,
     val middleName: String?,
     val avatar: String?,
-    val role: String,
     val isActive: Boolean,
-    val updatedAt: Instant
 ) {
     companion object {
         fun fromUser(user: User): UserResponse = UserResponse(
@@ -36,9 +32,7 @@ data class UserResponse(
             lastName = user.lastName,
             middleName = user.middleName,
             avatar = user.avatar,
-            role = user.role,
             isActive = user.isActive,
-            updatedAt = user.updatedAt
         )
     }
 }

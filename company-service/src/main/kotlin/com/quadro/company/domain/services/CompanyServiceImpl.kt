@@ -12,7 +12,14 @@ import com.quadro.company.domain.models.CompanyUpdate
 import com.quadro.company.domain.repositories.CompanyMemberRepository
 import com.quadro.company.domain.repositories.CompanyRepository
 import com.quadro.company.domain.repositories.UserRepository
-import kotlinx.serialization.json.Json
+import com.quadro.shared.events.CompanyCreatedEvent
+import com.quadro.shared.events.CompanyDeletedEvent
+import com.quadro.shared.events.CompanyMemberAddedEvent
+import com.quadro.shared.events.CompanyMemberRemovedEvent
+import com.quadro.shared.events.CompanyMemberRoleUpdatedEvent
+import com.quadro.shared.events.CompanyUpdatedEvent
+import com.quadro.shared.kafka.EventProducer
+import com.quadro.shared.kafka.KafkaTopics
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.time.Clock
@@ -21,7 +28,7 @@ class CompanyServiceImpl(
     private val companyRepository: CompanyRepository,
     private val companyMemberRepository: CompanyMemberRepository,
     private val userRepository: UserRepository,
-    private val eventPublisher: EventPublisher
+    private val eventProducer: EventProducer
 ) : CompanyService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -56,7 +63,6 @@ class CompanyServiceImpl(
             )
 
             val createdCompany = companyRepository.create(company)
-            eventPublisher.publishCompanyCreated(createdCompany)
 
             val member = CompanyMember(
                 id = UUID.randomUUID(),
@@ -70,6 +76,18 @@ class CompanyServiceImpl(
                 lastActiveAt = now
             )
             companyMemberRepository.add(member)
+
+            eventProducer.publish(
+                topic = KafkaTopics.COMPANY_CREATED,
+                key = createdCompany.id.toString(),
+                event = CompanyCreatedEvent(
+                    companyId = createdCompany.id.toString(),
+                    name = createdCompany.name,
+                    ownerId = createdCompany.ownerId.toString(),
+                    maxProjects = createdCompany.maxProjects,
+                    maxMembers = createdCompany.maxUsers
+                )
+            )
 
             logger.info("Company created: ${createdCompany.name} by user: $userId")
             Result.success(CompanyResponse.fromCompany(createdCompany, user))
@@ -90,7 +108,8 @@ class CompanyServiceImpl(
                 return Result.failure(Exception("Access denied"))
             }
 
-            Result.success(CompanyResponse.fromCompany(company, user))
+            val owner = userRepository.findById(company.ownerId)
+            Result.success(CompanyResponse.fromCompany(company, owner))
         } catch (e: Exception) {
             logger.error("Failed to get company", e)
             Result.failure(e)
@@ -131,7 +150,18 @@ class CompanyServiceImpl(
                 updatedAt = now
             )
             val saved = companyRepository.update(updatedCompany)
-            eventPublisher.publishCompanyUpdated(updatedCompany)
+
+            eventProducer.publish(
+                topic = KafkaTopics.COMPANY_UPDATED,
+                key = updatedCompany.id.toString(),
+                event = CompanyUpdatedEvent(
+                    companyId = updatedCompany.id.toString(),
+                    name = updatedCompany.name,
+                    ownerId = updatedCompany.ownerId.toString(),
+                    maxProjects = updatedCompany.maxProjects,
+                    maxMembers = updatedCompany.maxUsers
+                )
+            )
 
             logger.info("Company updated: ${saved.name}")
             Result.success(CompanyResponse.fromCompany(saved, user))
@@ -148,9 +178,16 @@ class CompanyServiceImpl(
                 return Result.failure(Exception("Only owner can delete company"))
             }
             companyRepository.delete(companyId)
-            eventPublisher.publishCompanyDeleted(companyId.toString(), Clock.System.now())
 
-            logger.info("Company deleted: $companyId")
+            eventProducer.publish(
+                topic = KafkaTopics.COMPANY_DELETED,
+                key = company.id.toString(),
+                event = CompanyDeletedEvent(
+                    companyId = companyId.toString(),
+                )
+            )
+
+            logger.info("Company deleted: $companyId by owner: $userId")
             Result.success(Unit)
         } catch (e: Exception) {
             logger.error("Failed to delete company", e)
@@ -167,8 +204,9 @@ class CompanyServiceImpl(
             val user = userRepository.findById(userId) ?: return Result.failure(Exception("User not found"))
             val offset = (page - 1) * size
             val companies = companyRepository.findByUser(userId, size, offset)
-            val result = companies.map { companies ->
-                CompanyResponse.fromCompany(companies, user)
+            val result = companies.map { company ->
+                val owner = userRepository.findById(company.ownerId)
+                CompanyResponse.fromCompany(company, owner)
             }
             Result.success(result)
         } catch (e: Exception) {
@@ -184,14 +222,16 @@ class CompanyServiceImpl(
         size: Int
     ): Result<List<CompanyMemberResponse>> {
         return try {
+            require(page >= 1) { "Page must be >= 1" }
+            require(size in 1..100) { "Size must be between 1 and 100" }
+
             if (!companyMemberRepository.exists(companyId, userId)) {
                 return Result.failure(Exception("Access denied"))
             }
             val offset = (page - 1) * size
-            val members = companyMemberRepository.findByCompany(companyId, size, offset)
-            val result = members.map { member ->
-                CompanyMemberResponse.fromCompanyMember(member)
-            }
+            val result = companyMemberRepository
+                .findByCompany(companyId, size, offset)
+                .map { CompanyMemberResponse.fromCompanyMember(it) }
             Result.success(result)
         } catch (e: Exception) {
             logger.error("Failed to get company members", e)
@@ -206,6 +246,10 @@ class CompanyServiceImpl(
         role: CompanyRole
     ): Result<Unit> {
         return try {
+            if (userId == targetUserId) {
+                return Result.failure(Exception("Cannot change your own role"))
+            }
+
             val currentUser = companyMemberRepository.findByCompanyAndUser(companyId, userId)
                 ?: return Result.failure(Exception("Access denied"))
             if (currentUser.role != CompanyRole.OWNER && currentUser.role != CompanyRole.ADMIN) {
@@ -219,6 +263,17 @@ class CompanyServiceImpl(
             }
 
             companyMemberRepository.updateRole(targetMember.id, role)
+
+            eventProducer.publish(
+                topic = KafkaTopics.COMPANY_MEMBER_ROLE_UPDATED,
+                key = targetMember.id.toString(),
+                event = CompanyMemberRoleUpdatedEvent(
+                    companyId = companyId.toString(),
+                    userId = targetUserId.toString(),
+                    role = role.name
+                )
+            )
+
             logger.info("Member role updated: $targetUserId to $role")
             Result.success(Unit)
         } catch (e: Exception) {
@@ -250,6 +305,15 @@ class CompanyServiceImpl(
             companyMemberRepository.remove(targetMember.id)
             companyRepository.decrementUserCount(companyId)
 
+            eventProducer.publish(
+                topic = KafkaTopics.COMPANY_MEMBER_REMOVED,
+                key = targetMember.id.toString(),
+                event = CompanyMemberRemovedEvent(
+                    companyId = companyId.toString(),
+                    userId = userId.toString()
+                )
+            )
+
             logger.info("Member removed: $targetUserId")
             Result.success(Unit)
         } catch (e: Exception) {
@@ -267,6 +331,16 @@ class CompanyServiceImpl(
             }
             companyMemberRepository.remove(member.id)
             companyRepository.decrementUserCount(companyId)
+
+            eventProducer.publish(
+                topic = KafkaTopics.COMPANY_MEMBER_REMOVED,
+                key = member.id.toString(),
+                event = CompanyMemberRemovedEvent(
+                    companyId = companyId.toString(),
+                    userId = userId.toString()
+                )
+            )
+
             logger.info("User left company: $userId")
             Result.success(Unit)
         } catch (e: Exception) {

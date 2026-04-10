@@ -25,12 +25,13 @@ data class UserUpdatedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val userId: String,
-    val email: String?,
-    val firstName: String?,
-    val lastName: String?,
-    val middleName: String?,
-    val avatar: String?,
-    val isActive: Boolean?
+    val email: String,
+    val firstName: String,
+    val lastName: String,
+    val middleName: String,
+    val avatar: String,
+    val isActive: Boolean,
+    val updatedAt: Instant
 ) : DomainEvent
 
 @Serializable

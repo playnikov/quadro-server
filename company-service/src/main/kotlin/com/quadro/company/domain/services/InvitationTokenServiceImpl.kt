@@ -42,15 +42,9 @@ class InvitationTokenServiceImpl(
     override fun validateToken(token: String): InvitationValidationResult = try {
         val verifier = JWT.require(algorithm)
             .withIssuer(config.jwt.issuer)
+            .withClaim("type", "invitation")
             .build()
         val decodedJWT = verifier.verify(token)
-        val tokenType = decodedJWT.getClaim("type").asString()
-        if (tokenType != "invitation") {
-            return InvitationValidationResult(
-                isValid = false,
-                error = "Invalid token type"
-            )
-        }
 
         val invitationId = decodedJWT.getClaim("invitationId").asString()
         val companyId = decodedJWT.getClaim("companyId").asString()
@@ -60,7 +54,7 @@ class InvitationTokenServiceImpl(
             isValid = true,
             invitationId = UUID.fromString(invitationId),
             companyId = UUID.fromString(companyId),
-            teamId = if (teamId.isNullOrBlank()) null else UUID.fromString(teamId),
+            teamId = teamId?.takeIf { it.isNotBlank() }?.let { UUID.fromString(it) },
             expiresAt = decodedJWT.expiresAt?.time
         )
     } catch (e: TokenExpiredException) {
@@ -72,6 +66,11 @@ class InvitationTokenServiceImpl(
         InvitationValidationResult(
             isValid = false,
             error = "Invalid invitation token"
+        )
+    } catch (e: IllegalArgumentException) {
+        InvitationValidationResult(
+            isValid = false,
+            error = "Malformed token claims"
         )
     }
 }

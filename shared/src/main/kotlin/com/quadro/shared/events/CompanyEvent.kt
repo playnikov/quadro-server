@@ -18,6 +18,26 @@ data class CompanyCreatedEvent(
 ) : DomainEvent
 
 @Serializable
+data class CompanyUpdatedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val companyId: String,
+    val name: String?,
+    val ownerId: String?,
+    val maxProjects: Int?,
+    val maxMembers: Int?,
+) : DomainEvent
+
+@Serializable
+data class CompanyDeletedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val companyId: String
+) : DomainEvent
+
+@Serializable
 data class CompanyMemberAddedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredAt: Long = System.currentTimeMillis(),
@@ -44,6 +64,5 @@ data class CompanyMemberRoleUpdatedEvent(
     override val version: Int = 1,
     val companyId: String,
     val userId: String,
-    val oldRole: String,
-    val newRole: String,
+    val role: String,
 ) : DomainEvent

@@ -3,6 +3,7 @@ package com.quadro.company
 import com.quadro.company.config.AppConfig
 import com.quadro.company.di.companyModules
 import com.quadro.company.di.kafkaModule
+import com.quadro.company.infrastructure.messaging.UserEventListener
 import com.quadro.company.plugins.configureDatabase
 import com.quadro.company.plugins.configureKafka
 import com.quadro.company.plugins.configureRouting

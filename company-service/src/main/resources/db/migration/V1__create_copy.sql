@@ -5,9 +5,7 @@ CREATE TABLE users_copy (
     last_name VARCHAR(100) NOT NULL,
     middle_name VARCHAR(100),
     avatar VARCHAR(500),
-    role VARCHAR(50) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    updated_at TIMESTAMPTZ NOT NULL
+    is_active BOOLEAN NOT NULL DEFAULT true
 );
 
 CREATE INDEX idx_users_copy_email ON users_copy(email);

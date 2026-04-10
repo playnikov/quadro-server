@@ -29,7 +29,10 @@ data class CompanyInvitation(
     val acceptedAt: Instant?,
     val acceptedBy: UUID?,
     val message: String?
-)
+) {
+    fun isExpired(now: Instant) = expiresAt < now
+    fun isUsable() = status == InvitationStatus.PENDING
+}
 
 data class InvitationCreate(
     val teamId: UUID? = null,
@@ -38,12 +41,23 @@ data class InvitationCreate(
     val identifier: String? = null,
     val message: String? = null,
     val expiresInDays: Int? = null
-)
+) {
+    fun validate() {
+        if (inviteType == InvitationType.EMAIL) {
+            requireNotNull(identifier) { "Email is required for EMAIL invite type" }
+            require(identifier.contains("@")) { "Invalid email format" }
+        }
+        expiresInDays?.let {
+            require(it in 1..30) { "Expiry must be between 1 and 30 days" }
+        }
+    }
+}
 
 @Serializable
 data class InvitationResponse(
+    val id: String,
     val company: CompanyResponse,
-    val teamId: String,
+    val teamId: String?,
     val invitedBy: String,
     val inviteType: InvitationType,
     val identifier: String,
@@ -53,26 +67,32 @@ data class InvitationResponse(
     val expiresAt: Instant,
     val createdAt: Instant,
     val acceptedAt: Instant?,
-    val acceptedBy: String,
+    val acceptedBy: String?,
     val message: String?,
     val link: String?,
 ) {
     companion object {
-        fun fromCompanyInvitation(company: Company, companyInvitation: CompanyInvitation, link: String, user: User? = null): InvitationResponse  = InvitationResponse(
-            company = CompanyResponse.fromCompany(company, user),
-            teamId = companyInvitation.teamId.toString(),
-            invitedBy = companyInvitation.invitedBy.toString(),
-            inviteType = companyInvitation.inviteType,
-            identifier = companyInvitation.identifier,
-            role = companyInvitation.role,
-            status = companyInvitation.status,
-            token = companyInvitation.token,
-            expiresAt = companyInvitation.expiresAt,
-            createdAt = companyInvitation.createdAt,
-            acceptedAt = companyInvitation.acceptedAt,
-            acceptedBy = companyInvitation.acceptedBy.toString(),
-            message = companyInvitation.message,
-            link = link
+        fun fromCompanyInvitation(
+            company: Company,
+            invitation: CompanyInvitation,
+            link: String,
+            owner: User? = null,
+        ): InvitationResponse  = InvitationResponse(
+            id = invitation.id.toString(),
+            company = CompanyResponse.fromCompany(company, owner),
+            teamId = invitation.teamId?.toString(),
+            invitedBy = invitation.invitedBy.toString(),
+            inviteType = invitation.inviteType,
+            identifier = invitation.identifier,
+            role = invitation.role,
+            status = invitation.status,
+            token = invitation.token,
+            expiresAt = invitation.expiresAt,
+            createdAt = invitation.createdAt,
+            acceptedAt = invitation.acceptedAt,
+            acceptedBy = invitation.acceptedBy?.toString(),
+            message = invitation.message,
+            link = link,
         )
     }
 }

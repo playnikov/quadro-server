@@ -13,9 +13,7 @@ object UsersTable : UUIDTable("users_copy") {
     val lastName = varchar("last_name", 100)
     val middleName = varchar("middle_name", 100).nullable()
     val avatarUrl = varchar("avatar", 500).nullable()
-    val role = varchar("role", 50)
     val isActive = bool("is_active").default(true)
-    val updatedAt = timestampWithTimeZone("updated_at")
 }
 
 class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
@@ -26,7 +24,5 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var lastName by UsersTable.lastName
     var middleName by UsersTable.middleName
     var avatar by UsersTable.avatarUrl
-    var role by UsersTable.role
     var isActive by UsersTable.isActive
-    var updatedAt by UsersTable.updatedAt
 }

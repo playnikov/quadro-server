@@ -2,71 +2,80 @@ package com.quadro.shared.events
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.UUID
 import kotlin.time.Instant
 
 @Serializable
-sealed class TaskEvent {
-    abstract val taskId: String
-    abstract val projectId: String
-    abstract val companyId: String
+data class TaskCreatedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val taskId: String,
+    val projectId: String,
+    val companyId: String,
+    val title: String,
+    val type: String,
+    val priority: String,
+    val status: String,
+    val createdBy: String,
+    val assigneeId: String?,
+) : DomainEvent
 
-    @Serializable
-    @SerialName("created")
-    data class Created(
-        override val taskId: String,
-        override val projectId: String,
-        override val companyId: String,
-        val title: String,
-        val description: String?,
-        val assignedTo: String?,
-        val status: String,
-        val priority: String,
-        val dueDate: Instant?,
-        val createdAt: Instant
-    ) : TaskEvent()
+@Serializable
+data class TaskUpdatedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val taskId: String,
+    val projectId: String,
+    val companyId: String,
+    val updatedBy: String,
+    val changes: Map<String, String>,
+) : DomainEvent
 
-    @Serializable
-    @SerialName("updated")
-    data class Updated(
-        override val taskId: String,
-        override val projectId: String,
-        override val companyId: String,
-        val title: String?,
-        val description: String?,
-        val assignedTo: String?,
-        val status: String?,
-        val priority: String?,
-        val dueDate: Instant?,
-        val updatedAt: Instant
-    ) : TaskEvent()
+@Serializable
+data class TaskAssignedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val taskId: String,
+    val projectId: String,
+    val companyId: String,
+    val assigneeId: String,
+    val assignedBy: String,
+) : DomainEvent
 
-    @Serializable
-    @SerialName("deleted")
-    data class Deleted(
-        override val taskId: String,
-        override val projectId: String,
-        override val companyId: String,
-        val deletedAt: Instant
-    ) : TaskEvent()
+@Serializable
+data class TaskStatusChangedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val taskId: String,
+    val projectId: String,
+    val companyId: String,
+    val oldStatus: String,
+    val newStatus: String,
+    val changedBy: String,
+) : DomainEvent
 
-    @Serializable
-    @SerialName("assigned")
-    data class Assigned(
-        override val taskId: String,
-        override val projectId: String,
-        override val companyId: String,
-        val assignedTo: String,
-        val assignedAt: Instant
-    ) : TaskEvent()
+@Serializable
+data class TaskCompletedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val taskId: String,
+    val projectId: String,
+    val companyId: String,
+    val completedBy: String,
+    val completedAt: Long,
+) : DomainEvent
 
-    @Serializable
-    @SerialName("status_changed")
-    data class StatusChanged(
-        override val taskId: String,
-        override val projectId: String,
-        override val companyId: String,
-        val oldStatus: String,
-        val newStatus: String,
-        val changedAt: Instant
-    ) : TaskEvent()
-}
+@Serializable
+data class TaskDeletedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val taskId: String,
+    val projectId: String,
+    val companyId: String,
+) : DomainEvent

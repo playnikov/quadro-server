@@ -15,9 +15,7 @@ object UserMapper {
         lastName = entity.lastName,
         middleName = entity.middleName,
         avatar = entity.avatar,
-        role = entity.role,
         isActive = entity.isActive,
-        updatedAt = entity.updatedAt.toKotlinInstant(),
     )
 
     fun newEntity(domain: User): UserEntity = UserEntity.new(domain.id) {
@@ -34,8 +32,6 @@ object UserMapper {
         entity.lastName = domain.lastName
         entity.middleName = domain.middleName
         entity.avatar = domain.avatar
-        entity.role = domain.role
         entity.isActive = domain.isActive
-        entity.updatedAt = domain.updatedAt.toOffsetDateTime()
     }
 }

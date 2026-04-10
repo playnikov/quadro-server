@@ -8,6 +8,8 @@ object KafkaTopics {
 
     // Company events
     const val COMPANY_CREATED = "quadro.company.created"
+    const val COMPANY_UPDATED = "quadro.company.updated"
+    const val COMPANY_DELETED = "quadro.company.deleted"
     const val COMPANY_MEMBER_ADDED = "quadro.company.member.added"
     const val COMPANY_MEMBER_REMOVED = "quadro.company.member.removed"
     const val COMPANY_MEMBER_ROLE_UPDATED = "quadro.company.member.role.updated"

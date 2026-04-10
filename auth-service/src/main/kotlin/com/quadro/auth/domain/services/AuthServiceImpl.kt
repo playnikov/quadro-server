@@ -9,6 +9,9 @@ import com.quadro.auth.domain.models.UserRole
 import com.quadro.auth.domain.repositories.UserRepository
 import com.quadro.auth.infrastructure.security.JwtProvider
 import com.quadro.auth.infrastructure.security.PasswordEncoder
+import com.quadro.shared.events.UserCreatedEvent
+import com.quadro.shared.kafka.EventProducer
+import com.quadro.shared.kafka.KafkaTopics
 import com.quadro.shared.security.JwtValidator
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -20,7 +23,7 @@ class AuthServiceImpl(
     private val jwtProvider: JwtProvider,
     private val jwtValidator: JwtValidator,
 //    private val sessionCache: SessionCache,
-    private val eventProducer: EventPublisher,
+    private val eventProducer: EventProducer,
 ) : AuthService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -33,6 +36,7 @@ class AuthServiceImpl(
             if (userRepository.existsByEmail(request.email)) {
                 return Result.failure(Exception("Email already registered"))
             }
+
             if (userRepository.existsByUsername(request.username)) {
                 return Result.failure(Exception("Username already taken"))
             }
@@ -40,8 +44,8 @@ class AuthServiceImpl(
             val now = Clock.System.now()
             val user = User(
                 id = UUID.randomUUID(),
-                email = request.email.lowercase(),
-                username = request.username.lowercase(),
+                email = request.email,
+                username = request.username,
                 passwordHash = passwordEncoder.encode(request.password),
                 firstName = request.firstName,
                 lastName = request.lastName,
@@ -53,7 +57,20 @@ class AuthServiceImpl(
 
             val createdUser = userRepository.create(user)
             logger.info("User registered: ${createdUser.email}")
-            eventProducer.publishUserCreated(createdUser)
+
+            eventProducer.publish(
+                topic = KafkaTopics.USER_CREATED,
+                key = createdUser.id.toString(),
+                event = UserCreatedEvent(
+                    userId = createdUser.id.toString(),
+                    email = createdUser.email,
+                    firstName = createdUser.firstName,
+                    lastName = createdUser.lastName,
+                    middleName = createdUser.middleName,
+                    avatar = createdUser.avatarUrl,
+                    isActive = createdUser.isActive
+                )
+            )
             val accessToken = jwtProvider.generateAccessToken(createdUser)
             val refreshToken = jwtProvider.generateRefreshToken(createdUser)
 

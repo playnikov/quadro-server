@@ -2,55 +2,48 @@ package com.quadro.shared.events
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.UUID
 import kotlin.time.Instant
 
 @Serializable
-sealed class CompanyEvent {
-    abstract val companyId: String
+data class CompanyCreatedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val companyId: String,
+    val name: String,
+    val ownerId: String,
+    val maxProjects: Int,
+    val maxMembers: Int
+) : DomainEvent
 
-    @Serializable
-    @SerialName("created")
-    data class Created(
-        override val companyId: String,
-        val name: String,
-        val status: String,
-        val currentProjects: Int,
-        val maxProjects: Int,
-        val updatedAt: Instant
-    ) : CompanyEvent()
+@Serializable
+data class CompanyMemberAddedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val companyId: String,
+    val userId: String,
+    val role: String,
+    val invitedBy: String,
+) : DomainEvent
 
-    @Serializable
-    @SerialName("updated")
-    data class Updated(
-        override val companyId: String,
-        val name: String,
-        val status: String,
-        val currentProjects: Int,
-        val maxProjects: Int,
-        val updatedAt: Instant
-    ) : CompanyEvent()
+@Serializable
+data class CompanyMemberRemovedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val companyId: String,
+    val userId: String,
+) : DomainEvent
 
-    @Serializable
-    @SerialName("deleted")
-    data class Deleted(
-        override val companyId: String,
-        val deletedAt: Instant
-    ) : CompanyEvent()
-
-    @Serializable
-    @SerialName("user_added")
-    data class UserAdded(
-        override val companyId: String,
-        val userId: String,
-        val role: String,
-        val addedAt: Instant
-    ) : CompanyEvent()
-
-    @Serializable
-    @SerialName("user_removed")
-    data class UserRemoved(
-        override val companyId: String,
-        val userId: String,
-        val removedAt: Instant
-    ) : CompanyEvent()
-}
+@Serializable
+data class CompanyMemberRoleUpdatedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val companyId: String,
+    val userId: String,
+    val oldRole: String,
+    val newRole: String,
+) : DomainEvent

@@ -4,7 +4,7 @@ import com.quadro.company.config.KafkaConfig
 import com.quadro.company.domain.services.EventPublisher
 import com.quadro.company.domain.services.EventPublisherImpl
 import com.quadro.company.infrastructure.messaging.UserEventProcessor
-import com.quadro.shared.events.KafkaConsumerService
+import com.quadro.shared.kafka.KafkaConsumerService
 import com.quadro.shared.events.UserEvent
 import kotlinx.serialization.json.Json
 import org.apache.kafka.clients.producer.KafkaProducer

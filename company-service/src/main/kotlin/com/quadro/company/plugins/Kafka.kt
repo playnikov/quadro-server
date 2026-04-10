@@ -1,6 +1,6 @@
 package com.quadro.company.plugins
 
-import com.quadro.shared.events.KafkaConsumerService
+import com.quadro.shared.kafka.KafkaConsumerService
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.log

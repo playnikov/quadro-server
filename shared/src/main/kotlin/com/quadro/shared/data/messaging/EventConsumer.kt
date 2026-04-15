@@ -1,8 +1,13 @@
-package com.quadro.shared.kafka
+package com.quadro.shared.data.messaging
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
@@ -15,9 +20,12 @@ class EventConsumer(
     private val topics: List<String>,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val consumerMutex = Mutex()
+    private val supervisorJob = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.IO + supervisorJob)
     @Volatile
     private var running = false
+    private var pollingJob: Job? = null
 
     private val consumer = KafkaConsumer<String, String>(Properties().apply {
         put("bootstrap.servers", brokers)
@@ -29,13 +37,24 @@ class EventConsumer(
         put("max.poll.records", 100)
     })
 
+    @Synchronized
     fun start(handler: suspend (topic: String, key: String, value: String) -> Unit) {
+        if (pollingJob?.isActive == true) {
+            logger.warn("Consumer already started, ignoring duplicate start() call")
+            return
+        }
         running = true
-        consumer.subscribe(topics)
         scope.launch {
+            consumerMutex.withLock {
+                consumer.subscribe(topics)
+            }
+        }
+        pollingJob = scope.launch {
             while (running) {
                 try {
-                    val records = consumer.poll(Duration.ofMillis(500))
+                    val records = consumerMutex.withLock {
+                        consumer.poll(Duration.ofMillis(500))
+                    }
                     for (record in records) {
                         try {
                             handler(record.topic(), record.key() ?: "", record.value())
@@ -43,7 +62,9 @@ class EventConsumer(
                             logger.error("Error handling record from ${record.topic()}", e)
                         }
                     }
-                    consumer.commitSync()
+                    consumerMutex.withLock {
+                        consumer.commitSync()
+                    }
                 } catch (e: Exception) {
                     logger.error("Consumer poll error", e)
                 }
@@ -51,8 +72,18 @@ class EventConsumer(
         }
     }
 
-    fun stop() {
+
+    suspend fun stop() {
+        if (pollingJob?.isActive != true) return
         running = false
-        consumer.close()
+        pollingJob?.cancelAndJoin()
+        consumerMutex.withLock {
+            consumer.close()
+        }
+        pollingJob = null
+    }
+
+    fun close() {
+        supervisorJob.cancel()
     }
 }

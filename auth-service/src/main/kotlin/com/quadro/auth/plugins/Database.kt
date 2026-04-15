@@ -1,13 +1,11 @@
 package com.quadro.auth.plugins
 
-import com.quadro.auth.config.DatabaseConfig
-import com.quadro.auth.infrastructure.database.DatabaseFactory
+import com.quadro.shared.data.config.DatabaseConfig
+import com.quadro.shared.data.db.DatabaseFactory
 import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import org.apache.kafka.common.serialization.StringSerializer
-import org.koin.java.KoinJavaComponent.inject
+import org.koin.ktor.ext.inject
 
 fun Application.configureDatabase() {
-    val config: DatabaseConfig by inject(DatabaseConfig::class.java)
-    DatabaseFactory.init(config)
+    val db by inject<DatabaseConfig>()
+    DatabaseFactory.init(db)
 }

@@ -15,8 +15,7 @@ object CompanyMemberMapper {
         joinedAt = entity.joinedAt.toKotlinInstant(),
         invitedBy = entity.invitedBy,
         invitedAt = entity.invitedAt.toKotlinInstant(),
-        lastActiveAt = entity.lastActiveAt?.toKotlinInstant(),
-        isActive = entity.isActive
+        lastActiveAt = entity.lastActiveAt?.toKotlinInstant()
     )
 
     fun toEntity(domain: CompanyMember): CompanyMemberEntity =
@@ -36,6 +35,5 @@ object CompanyMemberMapper {
         entity.invitedBy = domain.invitedBy
         entity.invitedAt = domain.invitedAt.toOffsetDateTime()
         entity.lastActiveAt = domain.lastActiveAt?.toOffsetDateTime()
-        entity.isActive = domain.isActive
     }
 }

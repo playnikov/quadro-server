@@ -1,17 +1,18 @@
 package com.quadro.company.di
 
-import com.quadro.company.config.KafkaConfig
 import com.quadro.company.infrastructure.messaging.UserEventListener
-import com.quadro.shared.kafka.EventConsumer
-import com.quadro.shared.kafka.EventProducer
-import com.quadro.shared.kafka.KafkaTopics
+import com.quadro.company.infrastructure.messaging.UserEventProcessor
+import com.quadro.shared.data.config.KafkaConfig
+import com.quadro.shared.data.messaging.EventConsumer
+import com.quadro.shared.data.messaging.EventProducer
+import com.quadro.shared.data.messaging.KafkaTopics
 import org.koin.dsl.module
 
 val kafkaModule = module {
-    single { EventProducer(get<KafkaConfig>().brokers) }
+    single { EventProducer(get()) }
     single {
         EventConsumer(
-            get<KafkaConfig>().brokers,
+            get<KafkaConfig>().bootstrapServers,
             get<KafkaConfig>().groupId,
             listOf(
                 KafkaTopics.USER_CREATED,
@@ -21,4 +22,5 @@ val kafkaModule = module {
         )
     }
     single { UserEventListener() }
+    single { UserEventProcessor(get()) }
 }

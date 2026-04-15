@@ -10,14 +10,14 @@ import com.quadro.company.domain.models.CompanyUpdate
 import java.util.UUID
 
 interface CompanyService {
-    suspend fun createCompany(userId: UUID, request: CompanyCreate): Result<CompanyResponse>
-    suspend fun getCompany(companyId: UUID, userId: UUID): Result<CompanyResponse>
-    suspend fun updateCompany(companyId: UUID, userId: UUID, request: CompanyUpdate): Result<CompanyResponse>
-    suspend fun deleteCompany(companyId: UUID, userId: UUID): Result<Unit>
-    suspend fun getUserCompanies(userId: UUID, page: Int, size: Int): Result<List<CompanyResponse>>
+    suspend fun createCompany(userId: UUID, request: CompanyCreate): CompanyResponse
+    suspend fun getCompany(companyId: UUID, userId: UUID): CompanyResponse
+    suspend fun updateCompany(companyId: UUID, userId: UUID, request: CompanyUpdate): CompanyResponse
+    suspend fun deleteCompany(companyId: UUID, userId: UUID)
+    suspend fun getUserCompanies(userId: UUID, page: Int, size: Int): List<CompanyResponse>
 
-    suspend fun getCompanyMembers(companyId: UUID, userId: UUID, page: Int, size: Int): Result<List<CompanyMemberResponse>>
-    suspend fun updateMemberRole(companyId: UUID, userId: UUID, targetUserId: UUID, role: CompanyRole): Result<Unit>
-    suspend fun removeMember(companyId: UUID, userId: UUID, targetUserId: UUID): Result<Unit>
-    suspend fun leaveCompany(companyId: UUID, userId: UUID): Result<Unit>
+    suspend fun getCompanyMembers(companyId: UUID, userId: UUID, page: Int, size: Int): List<CompanyMemberResponse>
+    suspend fun updateMemberRole(companyId: UUID, userId: UUID, targetUserId: UUID, role: CompanyRole)
+    suspend fun removeMember(companyId: UUID, userId: UUID, targetUserId: UUID)
+    suspend fun leaveCompany(companyId: UUID, userId: UUID)
 }

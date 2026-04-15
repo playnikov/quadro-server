@@ -1,13 +1,12 @@
 package com.quadro.company
 
-import com.quadro.company.config.AppConfig
 import com.quadro.company.di.companyModules
 import com.quadro.company.di.kafkaModule
-import com.quadro.company.infrastructure.messaging.UserEventListener
 import com.quadro.company.plugins.configureDatabase
 import com.quadro.company.plugins.configureKafka
 import com.quadro.company.plugins.configureRouting
 import com.quadro.company.plugins.configureSerialization
+import com.quadro.shared.di.sharedModule
 import com.quadro.shared.plugins.configureMonitoring
 import com.quadro.shared.plugins.configureStatusPages
 import com.quadro.shared.security.JwtValidator
@@ -31,11 +30,11 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    val appConfig = AppConfig.fromEnvironment()
     install(Koin) {
         slf4jLogger()
         modules(
-            companyModules(appConfig),
+            sharedModule(this@module, "company-service"),
+            companyModules(),
             kafkaModule
         )
     }

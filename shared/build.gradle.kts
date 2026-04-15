@@ -4,19 +4,39 @@ plugins {
 }
 
 dependencies {
-    api(libs.kotlinx.serialization.json)
+    api(libs.ktor.server.core)
+    api(libs.ktor.server.auth)
     api(libs.ktor.server.auth.jwt)
-    api(libs.java.jwt)
-    api(libs.slf4j.api)
-    api(libs.ktor.server.call.logging)
     api(libs.ktor.server.status.pages)
+    api(libs.ktor.server.content.negotiation)
+    api(libs.ktor.serialization.kotlinx.json)
+    api(libs.ktor.client.core)
+    api(libs.ktor.client.cio)
+    api(libs.ktor.client.content.negotiation)
+
+    api(libs.postgresql)
+    api(libs.h2)
+    api(libs.exposed.core)
+    api(libs.exposed.dao)
+    api(libs.exposed.jdbc)
+    api(libs.exposed.java.time)
+    api(libs.hikari.cp)
+    api(libs.flyway.core)
+
+    api(libs.jbcrypt)
+    api(libs.java.jwt)
+
+    api(libs.kafka.clients)
+
+    api(libs.koin.ktor)
+
+    api(libs.koin.logger.slf4j)
+
     api(libs.ktor.server.metrics)
     api(libs.ktor.server.metrics.micrometer)
     api(libs.micrometer.registry.prometheus)
-    api(libs.kafka.clients)
 
-    testImplementation(libs.kotlin.test.junit)
-    testImplementation(libs.mockk)
+    api(libs.ktor.server.call.logging)
 }
 
 kotlin {

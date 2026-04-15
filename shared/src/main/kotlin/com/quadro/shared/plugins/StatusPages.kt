@@ -1,34 +1,46 @@
 package com.quadro.shared.plugins
 
-import com.quadro.shared.dto.ErrorResponse
+import com.quadro.shared.dto.DomainException
+import com.quadro.shared.dto.ApiResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.application.log
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
-import javax.security.sasl.AuthenticationException
-import kotlin.time.Clock
+import org.slf4j.LoggerFactory
+
+private val logger = LoggerFactory.getLogger("StatusPages")
 
 fun Application.configureStatusPages() {
     install(StatusPages) {
-        exception<Throwable> { call, cause ->
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                ErrorResponse(
-                    message = cause.message ?: "Internal server error",
-                    code = "INTERNAL_ERROR",
-                    timestamp = Clock.System.now()
-                )
-            )
+        exception<DomainException.NotFound> { call, ex ->
+            call.respond(HttpStatusCode.NotFound, ApiResponse.error("NOT_FOUND", ex.message ?: "Not found"))
         }
-        status(HttpStatusCode.Unauthorized) { call, _ ->
-            call.respond(
-                HttpStatusCode.Unauthorized,
-                ErrorResponse(
-                    message = "Invalid or missing authentication token",
-                    code = "UNAUTHORIZED",
-                )
-            )
+        exception<DomainException.AlreadyExists> { call, ex ->
+            call.respond(HttpStatusCode.Conflict, ApiResponse.error("ALREADY_EXISTS", ex.message ?: "Already exists"))
+        }
+        exception<DomainException.AccessDenied> { call, ex ->
+            call.respond(HttpStatusCode.Unauthorized, ApiResponse.error("ACCESS_DENIED", ex.message ?: "Unauthorized"))
+        }
+        exception<DomainException.Forbidden> { call, ex ->
+            call.respond(HttpStatusCode.Forbidden, ApiResponse.error("FORBIDDEN", ex.message ?: "Forbidden"))
+        }
+        exception<DomainException.BusinessRule> { call, ex ->
+            call.respond(HttpStatusCode.UnprocessableEntity, ApiResponse.error("BUSINESS_RULE", ex.message ?: "Business rule violation"))
+        }
+        exception<DomainException.InvalidTransition> { call, ex ->
+            call.respond(HttpStatusCode.UnprocessableEntity, ApiResponse.error("INVALID_TRANSITION", ex.message ?: "Invalid transition"))
+        }
+        exception<DomainException.ValidationError> { call, ex ->
+            call.respond(HttpStatusCode.BadRequest, ApiResponse.error("VALIDATION_ERROR", ex.message ?: "Validation error"))
+        }
+        exception<IllegalArgumentException> { call, ex ->
+            call.respond(HttpStatusCode.BadRequest, ApiResponse.error("BAD_REQUEST", ex.message ?: "Bad request"))
+        }
+        exception<Throwable> { call, ex ->
+            logger.error("Unhandled error in ${call.request.local.uri}", ex)
+            call.respond(HttpStatusCode.InternalServerError, ApiResponse.error("INTERNAL_ERROR", "Internal server error"))
         }
     }
 }

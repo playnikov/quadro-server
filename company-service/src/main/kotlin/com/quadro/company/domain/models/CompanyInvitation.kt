@@ -79,7 +79,7 @@ data class InvitationResponse(
             owner: User? = null,
         ): InvitationResponse  = InvitationResponse(
             id = invitation.id.toString(),
-            company = CompanyResponse.fromCompany(company, owner),
+            company = CompanyResponse.from(company, owner),
             teamId = invitation.teamId?.toString(),
             invitedBy = invitation.invitedBy.toString(),
             inviteType = invitation.inviteType,

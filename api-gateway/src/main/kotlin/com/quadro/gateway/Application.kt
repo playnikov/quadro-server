@@ -1,9 +1,9 @@
 package com.quadro.gateway
 
-import com.quadro.gateway.config.AppConfig
 import com.quadro.gateway.di.gatewayModule
 import com.quadro.gateway.plugins.configureRouting
 import com.quadro.gateway.plugins.configureSerialization
+import com.quadro.shared.di.sharedModule
 import com.quadro.shared.plugins.configureMonitoring
 import com.quadro.shared.plugins.configureStatusPages
 import com.quadro.shared.security.JwtValidator
@@ -22,9 +22,7 @@ fun main(args: Array<String>)  {
     val logger = LoggerFactory.getLogger("Application")
     try {
         logger.info("Starting API Gateway...")
-        embeddedServer(Netty, port = 8080) {
-            module()
-        }.start(wait = true)
+        io.ktor.server.netty.EngineMain.main(args)
 
     } catch (e: Exception) {
         logger.error("Failed to start API Gateway", e)
@@ -33,10 +31,12 @@ fun main(args: Array<String>)  {
 }
 
 fun Application.module() {
-    val appConfig = AppConfig.fromEnvironment()
     install(Koin) {
         slf4jLogger()
-        modules(gatewayModule(appConfig))
+        modules(
+            sharedModule(this@module, "api-gateway"),
+            gatewayModule(this@module)
+        )
     }
     configureSecurity(getKoin().get<JwtValidator>())
     configureSerialization()

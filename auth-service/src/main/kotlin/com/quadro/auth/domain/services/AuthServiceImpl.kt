@@ -9,9 +9,10 @@ import com.quadro.auth.domain.models.UserRole
 import com.quadro.auth.domain.repositories.UserRepository
 import com.quadro.auth.infrastructure.security.JwtProvider
 import com.quadro.auth.infrastructure.security.PasswordEncoder
-import com.quadro.shared.events.UserCreatedEvent
-import com.quadro.shared.kafka.EventProducer
-import com.quadro.shared.kafka.KafkaTopics
+import com.quadro.shared.dto.DomainException
+import com.quadro.shared.data.messaging.events.UserCreatedEvent
+import com.quadro.shared.data.messaging.EventProducer
+import com.quadro.shared.data.messaging.KafkaTopics
 import com.quadro.shared.security.JwtValidator
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -30,251 +31,197 @@ class AuthServiceImpl(
     override suspend fun register(
         request: UserCreate,
         ipAddress: String?
-    ): Result<AuthResult> {
-        return try {
-            validateRegistration(request)
-            if (userRepository.existsByEmail(request.email)) {
-                return Result.failure(Exception("Email already registered"))
-            }
+    ): AuthResult {
+        validateRegistration(request)
 
-            if (userRepository.existsByUsername(request.username)) {
-                return Result.failure(Exception("Username already taken"))
-            }
-
-            val now = Clock.System.now()
-            val user = User(
-                id = UUID.randomUUID(),
-                email = request.email,
-                username = request.username,
-                passwordHash = passwordEncoder.encode(request.password),
-                firstName = request.firstName,
-                lastName = request.lastName,
-                middleName = request.middleName,
-                role = UserRole.USER,
-                createdAt = now,
-                updatedAt = now
-            )
-
-            val createdUser = userRepository.create(user)
-            logger.info("User registered: ${createdUser.email}")
-
-            eventProducer.publish(
-                topic = KafkaTopics.USER_CREATED,
-                key = createdUser.id.toString(),
-                event = UserCreatedEvent(
-                    userId = createdUser.id.toString(),
-                    email = createdUser.email,
-                    firstName = createdUser.firstName,
-                    lastName = createdUser.lastName,
-                    middleName = createdUser.middleName,
-                    avatar = createdUser.avatarUrl,
-                    isActive = createdUser.isActive
-                )
-            )
-            val accessToken = jwtProvider.generateAccessToken(createdUser)
-            val refreshToken = jwtProvider.generateRefreshToken(createdUser)
-
-            Result.success(
-                AuthResult(
-                    token = accessToken,
-                    refreshToken = refreshToken,
-                    userInfo = UserResult.fromUser(createdUser)
-                )
-            )
-        } catch (e: Exception) {
-            logger.error("Registration failed", e)
-            Result.failure(e)
+        if (userRepository.existsByEmail(request.email)) {
+            throw DomainException.AlreadyExists("Email '${request.email}'")
         }
+        if (userRepository.existsByUsername(request.username)) {
+            throw DomainException.AlreadyExists("Username '${request.username}'")
+        }
+
+        val now = Clock.System.now()
+        val user = User(
+            id = UUID.randomUUID(),
+            email = request.email,
+            username = request.username,
+            passwordHash = passwordEncoder.encode(request.password),
+            firstName = request.firstName,
+            lastName = request.lastName,
+            middleName = request.middleName,
+            role = UserRole.USER,
+            createdAt = now,
+            updatedAt = now
+        )
+
+        val createdUser = userRepository.create(user)
+        logger.info("User registered: ${createdUser.email}")
+
+        eventProducer.publish(
+            topic = KafkaTopics.USER_CREATED,
+            key = createdUser.id.toString(),
+            event = UserCreatedEvent(
+                userId = createdUser.id.toString(),
+                email = createdUser.email,
+                firstName = createdUser.firstName,
+                lastName = createdUser.lastName,
+                middleName = createdUser.middleName,
+                avatar = createdUser.avatarUrl,
+                isActive = createdUser.isActive
+            )
+        )
+
+        val accessToken = jwtProvider.generateAccessToken(createdUser)
+        val refreshToken = jwtProvider.generateRefreshToken(createdUser)
+
+        return AuthResult(
+            token = accessToken,
+            refreshToken = refreshToken,
+            userInfo = UserResult.fromUser(createdUser)
+        )
     }
 
     override suspend fun login(
         request: UserLogin,
         ipAddress: String?,
         userAgent: String?
-    ): Result<AuthResult> {
-        return try {
-            val user = if (request.name.contains('@') && request.name.contains(".")) {
-                userRepository.findByEmail(request.name)
-            } else {
-                userRepository.findByUsername(request.name)
-            }
-
-            if (user == null || !passwordEncoder.verify(request.password, user.passwordHash)) {
-                return Result.failure(Exception("Invalid login or password"))
-            }
-
-            if (!user.isActive) {
-                return Result.failure(Exception("User is deactivated"))
-            }
-
-            val accessToken = jwtProvider.generateAccessToken(user)
-            val refreshToken = jwtProvider.generateRefreshToken(user)
-
-            Result.success(
-                AuthResult(
-                    token = accessToken,
-                    refreshToken = refreshToken,
-                    userInfo = UserResult.fromUser(user)
-                )
-            )
-        } catch (e: Exception) {
-            logger.error("Login failed", e)
-            Result.failure(e)
+    ): AuthResult {
+        val user = if (request.name.contains('@') && request.name.contains(".")) {
+            userRepository.findByEmail(request.name)
+        } else {
+            userRepository.findByUsername(request.name)
         }
+
+        if (user == null || !passwordEncoder.verify(request.password, user.passwordHash)) {
+            throw DomainException.ValidationError("Invalid login or password")
+        }
+        if (!user.isActive) {
+            throw DomainException.BusinessRule("User is deactivated")
+        }
+
+        val accessToken = jwtProvider.generateAccessToken(user)
+        val refreshToken = jwtProvider.generateRefreshToken(user)
+
+        return AuthResult(
+            token = accessToken,
+            refreshToken = refreshToken,
+            userInfo = UserResult.fromUser(user)
+        )
     }
 
-    override suspend fun refreshToken(refreshToken: String): Result<AuthResult> {
-        return try {
-            val validation = jwtValidator.validateToken(refreshToken)
-            if (!validation.isValid || validation.userId == null) {
-                return Result.failure(Exception("Invalid refresh token"))
-            }
-
-            val user = userRepository.findById(validation.userId!!)
-                ?: return Result.failure(Exception("User not found"))
-
-            if (!user.isActive) {
-                return Result.failure(Exception("User is deactivated"))
-            }
-
-            val newAccessToken = jwtProvider.generateAccessToken(user)
-            val newRefreshToken = jwtProvider.generateRefreshToken(user)
-
-            Result.success(
-                AuthResult(
-                    token = newAccessToken,
-                    refreshToken = newRefreshToken,
-                    userInfo = UserResult.fromUser(user)
-                )
-            )
-        } catch (e: Exception) {
-            logger.error("Token refresh failed", e)
-            Result.failure(e)
+    override suspend fun refreshToken(refreshToken: String): AuthResult {
+        val validation = jwtValidator.validateToken(refreshToken)
+        if (!validation.isValid || validation.userId == null) {
+            throw DomainException.ValidationError("Invalid refresh token")
         }
+
+        val user = userRepository.findById(validation.userId!!)
+            ?: throw DomainException.NotFound("User", validation.userId.toString())
+        if (!user.isActive) {
+            throw DomainException.BusinessRule("User is deactivated")
+        }
+
+        val newAccessToken = jwtProvider.generateAccessToken(user)
+        val newRefreshToken = jwtProvider.generateRefreshToken(user)
+
+        return AuthResult(
+            token = newAccessToken,
+            refreshToken = newRefreshToken,
+            userInfo = UserResult.fromUser(user)
+        )
     }
 
-    override suspend fun validateToken(token: String): Result<UserResult> {
-        return try {
-            val validation  = jwtValidator.validateToken(token)
-            if (!validation.isValid || validation.userId == null) {
-                return Result.failure(Exception(validation.error ?: "Invalid token"))
-            }
 
-            val user = userRepository.findById(validation.userId!!)
-                ?: return Result.failure(Exception("User not found"))
-
-            if (!user.isActive) {
-                return Result.failure(Exception("User is deactivated"))
-            }
-
-            Result.success(UserResult.fromUser(user))
-        } catch (e: Exception) {
-            Result.failure(e)
+    override suspend fun validateToken(token: String): UserResult {
+        val validation = jwtValidator.validateToken(token)
+        if (!validation.isValid || validation.userId == null) {
+            throw DomainException.ValidationError(validation.error ?: "Invalid token")
         }
+
+        val user = userRepository.findById(validation.userId!!)
+            ?: throw DomainException.NotFound("User", validation.userId.toString())
+        if (!user.isActive) {
+            throw DomainException.BusinessRule("User is deactivated")
+        }
+
+        return UserResult.fromUser(user)
     }
 
     override suspend fun changePassword(
         userId: UUID,
         currentPassword: String,
         newPassword: String
-    ): Result<Unit> {
-        return try {
-            val user = userRepository.findById(userId)
-                ?: return Result.failure(Exception("User not found"))
-
-            if (!user.isActive) {
-                return Result.failure(Exception("User is deactivated"))
-            }
-
-            if (!passwordEncoder.verify(currentPassword, user.passwordHash)) {
-                return Result.failure(Exception("Current password is incorrect"))
-            }
-
-            validatePassword(newPassword)
-
-            val updatedUser = user.copy(
-                passwordHash = passwordEncoder.encode(newPassword),
-                updatedAt = Clock.System.now()
-            )
-            userRepository.update(updatedUser)
-
-            logger.info("Password changed for user: ${user.email}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            logger.error("Password change failed", e)
-            Result.failure(e)
+    ) {
+        val user = userRepository.findById(userId)
+            ?: throw DomainException.NotFound("User", userId.toString())
+        if (!user.isActive) {
+            throw DomainException.BusinessRule("User is deactivated")
         }
+        if (!passwordEncoder.verify(currentPassword, user.passwordHash)) {
+            throw DomainException.ValidationError("Current password is incorrect")
+        }
+        validatePassword(newPassword)
+
+        val updatedUser = user.copy(
+            passwordHash = passwordEncoder.encode(newPassword),
+            updatedAt = Clock.System.now()
+        )
+        userRepository.update(updatedUser)
+
+        logger.info("Password changed for user: ${user.email}")
     }
 
-    override suspend fun forgotPassword(email: String): Result<Unit> {
+    override suspend fun forgotPassword(email: String) {
         TODO("Not yet implemented")
     }
 
-    override suspend fun resetPassword(token: String, newPassword: String): Result<Unit> {
-        return try {
-            val validation = jwtValidator.validateToken(token)
-
-            if (!validation.isValid || validation.userId == null) {
-                return Result.failure(Exception("Invalid or expired token"))
-            }
-
-            val user = userRepository.findById(validation.userId!!)
-                ?: return Result.failure(Exception("User not found"))
-
-            validatePassword(newPassword)
-
-            val updatedUser = user.copy(
-                passwordHash = passwordEncoder.encode(newPassword),
-                updatedAt = Clock.System.now()
-            )
-            userRepository.update(updatedUser)
-
-            logger.info("Password reset for user: ${user.email}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            logger.error("Password reset failed", e)
-            Result.failure(e)
+    override suspend fun resetPassword(token: String, newPassword: String) {
+        val validation = jwtValidator.validateToken(token)
+        if (!validation.isValid || validation.userId == null) {
+            throw DomainException.ValidationError("Invalid or expired token")
         }
+
+        val user = userRepository.findById(validation.userId!!)
+            ?: throw DomainException.NotFound("User", validation.userId.toString())
+
+        validatePassword(newPassword)
+
+        val updatedUser = user.copy(
+            passwordHash = passwordEncoder.encode(newPassword),
+            updatedAt = Clock.System.now()
+        )
+        userRepository.update(updatedUser)
+
+        logger.info("Password reset for user: ${user.email}")
     }
 
-    override suspend fun verifyEmail(token: String): Result<Unit> {
-        return try {
-            val validation = jwtValidator.validateToken(token)
-            if (!validation.isValid || validation.userId == null) {
-                return Result.failure(Exception("Invalid or expired token"))
-            }
-
-            val user = userRepository.findById(validation.userId!!)
-                ?: return Result.failure(Exception("User not found"))
-
-            val updatedUser = user.copy(
-                isEmailVerified = true,
-                updatedAt = Clock.System.now()
-            )
-            userRepository.update(updatedUser)
-
-            logger.info("Email verified for user: ${user.email}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            logger.error("Email verification failed", e)
-            Result.failure(e)
+    override suspend fun verifyEmail(token: String) {
+        val validation = jwtValidator.validateToken(token)
+        if (!validation.isValid || validation.userId == null) {
+            throw DomainException.ValidationError("Invalid or expired token")
         }
+
+        val user = userRepository.findById(validation.userId!!)
+            ?: throw DomainException.NotFound("User", validation.userId.toString())
+
+        val updatedUser = user.copy(
+            isEmailVerified = true,
+            updatedAt = Clock.System.now()
+        )
+        userRepository.update(updatedUser)
+
+        logger.info("Email verified for user: ${user.email}")
     }
 
-    override suspend fun logout(userId: UUID): Result<Unit> {
+    override suspend fun logout(userId: UUID) {
         TODO("Not yet implemented")
     }
 
-    override suspend fun getUser(userId: UUID): Result<UserResult> {
-        return try {
-            val user = userRepository.findById(userId)
-                ?: return Result.failure(Exception("User not found"))
-
-            Result.success(UserResult.fromUser(user))
-        } catch (e: Exception) {
-            logger.error("Failed get user info", e)
-            Result.failure(e)
-        }
+    override suspend fun getUser(userId: UUID): UserResult {
+        val user = userRepository.findById(userId)
+            ?: throw DomainException.NotFound("User", userId.toString())
+        return UserResult.fromUser(user)
     }
 
     private fun validateRegistration(request: UserCreate) {

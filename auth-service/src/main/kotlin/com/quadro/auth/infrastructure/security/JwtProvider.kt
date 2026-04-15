@@ -2,12 +2,9 @@ package com.quadro.auth.infrastructure.security
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.quadro.auth.config.JwtConfig
 import com.quadro.auth.domain.models.User
-import com.quadro.shared.security.TokenValidationResult
+import com.quadro.shared.data.config.JwtConfig
 import java.util.Date
-import java.util.UUID
-import kotlin.toString
 
 class JwtProvider(private val config: JwtConfig) {
     private val algorithm = Algorithm.HMAC256(config.secret)

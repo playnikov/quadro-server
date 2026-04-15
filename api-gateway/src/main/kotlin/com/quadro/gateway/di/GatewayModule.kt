@@ -1,7 +1,8 @@
 package com.quadro.gateway.di
 
-import com.quadro.gateway.config.AppConfig
+import com.quadro.gateway.config.loadServiceUrls
 import com.quadro.gateway.routes.*
+import com.quadro.shared.data.config.JwtConfig
 import com.quadro.shared.security.JwtValidator
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -9,19 +10,14 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.Application
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 
-fun gatewayModule(appConfig: AppConfig) = module {
-    single { appConfig }
-    single { appConfig.serviceUrls }
-    single { appConfig.jwt }
-    single { appConfig.rateLimiting }
-    single { JwtValidator(
-        secretKey = get<AppConfig>().jwt.secret,
-        issuer = get<AppConfig>().jwt.issuer,
-        audience = get<AppConfig>().jwt.audience)
-    }
+fun gatewayModule(application: Application) = module {
+    single { application.loadServiceUrls() }
+    single { JwtValidator(get()) }
+
 
     single<HttpClient> {
         HttpClient(CIO) {
@@ -39,6 +35,14 @@ fun gatewayModule(appConfig: AppConfig) = module {
             install(DefaultRequest) {
                 header("User-Agent", "Quadro-API-Gateway/1.0")
             }
+            engine {
+                maxConnectionsCount = 1000
+                endpoint {
+                    maxConnectionsPerRoute = 100
+                    keepAliveTime          = 5000
+                    connectTimeout         = 5000
+                }
+            }
         }
     }
 
@@ -47,4 +51,6 @@ fun gatewayModule(appConfig: AppConfig) = module {
     factory { CompanyRoutes(get(), get()) }
 
     factory { InvitationRoutes(get(), get()) }
+
+    factory { TeamRoutes(get(), get()) }
 }

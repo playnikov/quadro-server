@@ -1,9 +1,9 @@
 package com.quadro.company.infrastructure.messaging
 
-import com.quadro.shared.events.UserCreatedEvent
-import com.quadro.shared.events.UserUpdatedEvent
-import com.quadro.shared.kafka.EventConsumer
-import com.quadro.shared.kafka.KafkaTopics
+import com.quadro.shared.data.messaging.events.UserCreatedEvent
+import com.quadro.shared.data.messaging.events.UserUpdatedEvent
+import com.quadro.shared.data.messaging.EventConsumer
+import com.quadro.shared.data.messaging.KafkaTopics
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -31,7 +31,7 @@ class UserEventListener : KoinComponent {
         }
     }
 
-    fun stop() {
+    suspend fun stop() {
         eventConsumer.stop()
     }
 }

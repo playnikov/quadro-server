@@ -1,6 +1,6 @@
 package com.quadro.auth.infrastructure.redis
 
-import com.quadro.auth.config.RedisConfig
+import com.quadro.shared.data.config.RedisConfig
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI

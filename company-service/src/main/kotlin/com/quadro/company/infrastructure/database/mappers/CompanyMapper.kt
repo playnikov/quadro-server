@@ -2,8 +2,8 @@ package com.quadro.company.infrastructure.database.mappers
 
 import com.quadro.company.domain.models.Company
 import com.quadro.company.domain.models.CompanyStatus
-import com.quadro.company.infrastructure.database.DatabaseFactory
 import com.quadro.company.infrastructure.database.entities.CompanyEntity
+import com.quadro.shared.data.db.DatabaseFactory
 import com.quadro.shared.utils.toKotlinInstant
 import com.quadro.shared.utils.toOffsetDateTime
 import kotlinx.serialization.json.Json

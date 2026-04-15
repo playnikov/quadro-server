@@ -25,7 +25,7 @@ data class UserResponse(
     val isActive: Boolean,
 ) {
     companion object {
-        fun fromUser(user: User): UserResponse = UserResponse(
+        fun from(user: User): UserResponse = UserResponse(
             id = user.id.toString(),
             email = user.email,
             firstName = user.firstName,

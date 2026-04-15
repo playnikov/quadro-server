@@ -6,7 +6,7 @@ import com.quadro.auth.domain.services.AuthService
 import com.quadro.auth.presentation.models.LoginRequest
 import com.quadro.auth.presentation.models.RefreshTokenRequest
 import com.quadro.auth.presentation.models.RegisterRequest
-import com.quadro.shared.dto.ErrorResponse
+import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
@@ -24,27 +24,19 @@ class AuthController(private val authService: AuthService) {
         val clientIp = call.request.origin.remoteHost
         logger.info("[$requestId] Registration attempt from: $clientIp")
 
-        try {
-            val request = call.receive<RegisterRequest>()
-            val result = authService.register(
-                UserCreate(
-                    username = request.username,
-                    email = request.email,
-                    password = request.password,
-                    lastName = request.lastName,
-                    firstName = request.firstName,
-                    middleName = request.middleName
-                ),
-                clientIp
-            )
-            result.fold(
-                onSuccess = { call.respond(HttpStatusCode.Created, it) },
-                onFailure = { call.respond(HttpStatusCode.BadRequest, ErrorResponse(it.message ?: "Registration failed")) }
-            )
-        } catch (e: Exception) {
-            logger.error("[$requestId] Registration error", e)
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid request format"))
-        }
+        val request = call.receive<RegisterRequest>()
+        val result = authService.register(
+            UserCreate(
+                username = request.username,
+                email = request.email,
+                password = request.password,
+                lastName = request.lastName,
+                firstName = request.firstName,
+                middleName = request.middleName
+            ),
+            clientIp
+        )
+        call.respond(HttpStatusCode.Created, result)
     }
 
     suspend fun login(call: ApplicationCall) {
@@ -53,62 +45,32 @@ class AuthController(private val authService: AuthService) {
         val clientIp = call.request.origin.remoteHost
         logger.info("[$requestId] Login attempt from: $clientIp")
 
-        try {
-            val request = call.receive<LoginRequest>()
+        val request = call.receive<LoginRequest>()
 
-            val userLogin = UserLogin(
-                name = request.name,
-                password = request.password
-            )
+        val userLogin = UserLogin(
+            name = request.name,
+            password = request.password
+        )
 
-            val result = authService.login(userLogin, clientIp, userAgent)
-            result.fold(
-                onSuccess = { call.respond(HttpStatusCode.OK, it) },
-                onFailure = { call.respond(HttpStatusCode.Unauthorized, ErrorResponse(it.message ?: "Login failed")) }
-            )
-        } catch (e: Exception) {
-            logger.error("[$requestId] Login error", e)
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Invalid request format"))
-        }
+        val result = authService.login(userLogin, clientIp, userAgent)
+        call.respond(HttpStatusCode.OK, result)
     }
 
     suspend fun refreshToken(call: ApplicationCall) {
-        return try {
-            val request = call.receive<RefreshTokenRequest>()
-            val result = authService.refreshToken(request.refreshToken)
-
-            result.fold(
-                onSuccess = { call.respond(HttpStatusCode.OK, it) },
-                onFailure = { call.respond(HttpStatusCode.Unauthorized, ErrorResponse(it.message ?: "Token refresh failed")) }
-            )
-        } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Invalid request"))
-        }
+        val request = call.receive<RefreshTokenRequest>()
+        val result = authService.refreshToken(request.refreshToken)
+        call.respond(HttpStatusCode.OK, result)
     }
 
     suspend fun getMyProfile(call: ApplicationCall) {
-        return try {
-            val userId = call.getUserId() ?: throw IllegalStateException("No user logged in")
-            val result = authService.getUser(userId)
-            result.fold(
-                onSuccess = { call.respond(HttpStatusCode.OK, it) },
-                onFailure = { call.respond(HttpStatusCode.Unauthorized, ErrorResponse(it.message ?: "Token failed")) }
-            )
-        } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Invalid request"))
-        }
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
+        val result = authService.getUser(userId)
+        call.respond(HttpStatusCode.OK, result)
     }
 
     suspend fun getUser(call: ApplicationCall) {
-        return try {
-            val userId = call.request.queryParameters["userId"]
-            val result = authService.getUser(UUID.fromString(userId))
-            result.fold(
-                onSuccess = { call.respond(HttpStatusCode.OK, it) },
-                onFailure = { call.respond(HttpStatusCode.Unauthorized, ErrorResponse(it.message ?: "Token failed")) }
-            )
-        } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(e.message ?: "Invalid request"))
-        }
+        val userId = call.request.queryParameters["userId"]
+        val result = authService.getUser(UUID.fromString(userId))
+        call.respond(HttpStatusCode.OK, result)
     }
 }

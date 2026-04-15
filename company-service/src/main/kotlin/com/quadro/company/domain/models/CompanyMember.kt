@@ -12,8 +12,7 @@ data class CompanyMember(
     val joinedAt: Instant,
     val invitedBy: UUID,
     val invitedAt: Instant,
-    val lastActiveAt: Instant?,
-    val isActive: Boolean
+    val lastActiveAt: Instant?
 )
 
 @Serializable
@@ -25,8 +24,7 @@ data class CompanyMemberResponse(
     val joinedAt: Instant,
     val invitedBy: String,
     val invitedAt: Instant,
-    val lastActiveAt: Instant?,
-    val isActive: Boolean
+    val lastActiveAt: Instant?
 ) {
     companion object {
         fun fromCompanyMember(companyMember: CompanyMember): CompanyMemberResponse = CompanyMemberResponse(
@@ -37,8 +35,7 @@ data class CompanyMemberResponse(
             joinedAt = companyMember.joinedAt,
             invitedBy = companyMember.invitedBy.toString(),
             invitedAt = companyMember.invitedAt,
-            lastActiveAt = companyMember.lastActiveAt,
-            isActive = companyMember.isActive
+            lastActiveAt = companyMember.lastActiveAt
         )
     }
 }

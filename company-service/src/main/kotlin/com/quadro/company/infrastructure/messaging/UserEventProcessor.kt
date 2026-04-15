@@ -2,9 +2,8 @@ package com.quadro.company.infrastructure.messaging
 
 import com.quadro.company.domain.models.User
 import com.quadro.company.domain.repositories.UserRepository
-import com.quadro.shared.events.UserCreatedEvent
-import com.quadro.shared.events.UserDeactivatedEvent
-import com.quadro.shared.events.UserUpdatedEvent
+import com.quadro.shared.data.messaging.events.UserCreatedEvent
+import com.quadro.shared.data.messaging.events.UserUpdatedEvent
 import java.util.UUID
 
 class UserEventProcessor(

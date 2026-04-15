@@ -4,16 +4,16 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.exceptions.TokenExpiredException
-import com.quadro.company.config.AppConfig
 import com.quadro.company.domain.models.InvitationValidationResult
+import com.quadro.shared.data.config.JwtConfig
 import java.util.Date
 import java.util.UUID
 import kotlin.time.Clock
 
 class InvitationTokenServiceImpl(
-    private val config: AppConfig
+    private val config: JwtConfig
 ) : InvitationTokenService {
-    private val algorithm = Algorithm.HMAC256(config.jwt.secret)
+    private val algorithm = Algorithm.HMAC256(config.secret)
 
     override fun generateToken(
         invitationId: UUID,
@@ -21,7 +21,7 @@ class InvitationTokenServiceImpl(
         teamId: UUID?,
         expiresInDays: Int?
     ): String = JWT.create()
-        .withIssuer(config.jwt.issuer)
+        .withIssuer(config.issuer)
         .withSubject(invitationId.toString())
         .withClaim("invitationId", invitationId.toString())
         .withClaim("companyId", companyId.toString())
@@ -34,14 +34,14 @@ class InvitationTokenServiceImpl(
             Date(
                 Clock.System.now().toEpochMilliseconds() +
                         (expiresInDays?.times(24L * 60 * 60 * 1000)
-                            ?: config.jwt.invitationExpiration)
+                            ?: config.invitationExpiration)
             )
         )
         .sign(algorithm)
 
     override fun validateToken(token: String): InvitationValidationResult = try {
         val verifier = JWT.require(algorithm)
-            .withIssuer(config.jwt.issuer)
+            .withIssuer(config.issuer)
             .withClaim("type", "invitation")
             .build()
         val decodedJWT = verifier.verify(token)

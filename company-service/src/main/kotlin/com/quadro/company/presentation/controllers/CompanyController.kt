@@ -7,176 +7,116 @@ import com.quadro.company.domain.services.CompanyService
 import com.quadro.company.presentation.models.CreateCompanyRequest
 import com.quadro.company.presentation.models.UpdateCompanyRequest
 import com.quadro.company.presentation.models.UpdateMemberRoleRequest
-import com.quadro.shared.dto.ErrorResponse
+import com.quadro.shared.dto.DomainException
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.security.getUserId
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
-import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class CompanyController(
     private val companyService: CompanyService
 ) {
     suspend fun createCompany(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized,
-            ErrorResponse("Not authenticated")
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
+        val request = call.receive<CreateCompanyRequest>()
+        val companyCreate = CompanyCreate(
+            name = request.name,
+            description = request.description,
+            logo = request.logo,
+            website = request.website,
+            email = request.email,
+            phone = request.phone,
+            address = request.address,
+            taxId = request.taxId
         )
-        try {
-            val request = call.receive<CreateCompanyRequest>()
-            val companyCreate = CompanyCreate(
-                name = request.name,
-                description = request.description,
-                logo = request.logo,
-                website = request.website,
-                email = request.email,
-                phone = request.phone,
-                address = request.address,
-                taxId = request.taxId
-            )
-            val result = companyService.createCompany(userId, companyCreate)
-            result.fold(
-                onSuccess = { call.respond(HttpStatusCode.Created, it) },
-                onFailure = { error -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Creation failed")) }
-            )
-        } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid request format"))
-        }
+        val result = companyService.createCompany(userId, companyCreate)
+        call.respond(HttpStatusCode.Created, result)
     }
 
     suspend fun getCompany(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Not authenticated"))
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid company ID"))
+            ?: throw DomainException.ValidationError("Company ID is invalid")
         val result = companyService.getCompany(companyId, userId)
-        result.fold(
-            onSuccess = { call.respond(HttpStatusCode.OK, it) },
-            onFailure = { error ->
-                when (error.message) {
-                    "Company not found" -> call.respond(HttpStatusCode.NotFound, ErrorResponse(error.message!!))
-                    "Access denied" -> call.respond(HttpStatusCode.Forbidden, ErrorResponse(error.message!!))
-                    else -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Failed to get company"))
-                }
-            }
-        )
+        call.respond(HttpStatusCode.Created, result)
     }
 
     suspend fun updateCompany(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Not authenticated"))
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid company ID"))
-        try {
-            val request = call.receive<UpdateCompanyRequest>()
-            val companyUpdate = CompanyUpdate(
-                name = request.name,
-                description = request.description,
-                logo = request.logo,
-                website = request.website,
-                email = request.email,
-                phone = request.phone,
-                address = request.address,
-                taxId = request.taxId
-            )
-            val result = companyService.updateCompany(companyId, userId, companyUpdate)
-            result.fold(
-                onSuccess = { call.respond(HttpStatusCode.OK, it) },
-                onFailure = { error ->
-                    when (error.message) {
-                        "Company not found" -> call.respond(HttpStatusCode.NotFound, ErrorResponse(error.message!!))
-                        "Insufficient permissions" -> call.respond(HttpStatusCode.Forbidden, ErrorResponse(error.message!!))
-                        else -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Update failed"))
-                    }
-                }
-            )
-        } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid request format"))
-        }
+            ?: throw DomainException.ValidationError("Company ID is invalid")
+
+        val request = call.receive<UpdateCompanyRequest>()
+        val companyUpdate = CompanyUpdate(
+            name = request.name,
+            description = request.description,
+            logo = request.logo,
+            website = request.website,
+            email = request.email,
+            phone = request.phone,
+            address = request.address,
+            taxId = request.taxId
+        )
+        val result = companyService.updateCompany(companyId, userId, companyUpdate)
+        call.respond(HttpStatusCode.OK, result)
     }
 
     suspend fun deleteCompany(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Not authenticated"))
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid company ID"))
-        val result = companyService.deleteCompany(companyId, userId)
-        result.fold(
-            onSuccess = { call.respond(HttpStatusCode.OK, mapOf("message" to "Company deleted")) },
-            onFailure = { error ->
-                when (error.message) {
-                    "Company not found" -> call.respond(HttpStatusCode.NotFound, ErrorResponse(error.message!!))
-                    "Only owner can delete company" -> call.respond(HttpStatusCode.Forbidden, ErrorResponse(error.message!!))
-                    else -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Delete failed"))
-                }
-            }
-        )
+            ?: throw DomainException.ValidationError("Company ID is invalid")
+        companyService.deleteCompany(companyId, userId)
+        call.respond(HttpStatusCode.OK, mapOf("message" to "Company deleted"))
     }
 
     suspend fun getUserCompanies(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Not authenticated"))
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
         val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 20
         val result = companyService.getUserCompanies(userId, page, size)
-        result.fold(
-            onSuccess = { call.respond(HttpStatusCode.OK, it) },
-            onFailure = { error -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Failed to get user companies")) }
-        )
+        call.respond(HttpStatusCode.OK, result)
     }
 
     suspend fun getCompanyMembers(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Not authenticated"))
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid company ID"))
+            ?: throw DomainException.ValidationError("Company ID is invalid")
         val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
         val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 20
         val result = companyService.getCompanyMembers(companyId, userId, page, size)
-        result.fold(
-            onSuccess = { call.respond(HttpStatusCode.OK, it) },
-            onFailure = { error -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Failed to get members")) }
-        )
+        call.respond(HttpStatusCode.OK, result)
     }
 
     suspend fun updateMemberRole(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Not authenticated"))
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid company ID"))
+            ?: throw DomainException.ValidationError("Company ID is invalid")
         val targetUserId = call.parameters["userId"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid user ID"))
-        try {
-            val request = call.receive<UpdateMemberRoleRequest>()
-            val role = try { CompanyRole.valueOf(request.role.uppercase()) } catch (e: Exception) {
-                return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid role"))
-            }
-            val result = companyService.updateMemberRole(companyId, userId, targetUserId, role)
-            result.fold(
-                onSuccess = { call.respond(HttpStatusCode.OK, mapOf("message" to "Role updated")) },
-                onFailure = { error -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Update failed")) }
-            )
-        } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid request format"))
-        }
+            ?: throw DomainException.ValidationError("Target user ID is invalid")
+        val request = call.receive<UpdateMemberRoleRequest>()
+        val role = CompanyRole.valueOf(request.role.uppercase())
+        companyService.updateMemberRole(companyId, userId, targetUserId, role)
+        call.respond(HttpStatusCode.OK, mapOf("message" to "Role updated"))
     }
 
     suspend fun removeMember(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Not authenticated"))
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid company ID"))
+            ?: throw DomainException.ValidationError("Company ID is invalid")
         val targetUserId = call.parameters["userId"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid user ID"))
-        val result = companyService.removeMember(companyId, userId, targetUserId)
-        result.fold(
-            onSuccess = { call.respond(HttpStatusCode.OK, mapOf("message" to "Member removed")) },
-            onFailure = { error -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Remove failed")) }
-        )
+            ?: throw DomainException.ValidationError("Target user ID is invalid")
+        companyService.removeMember(companyId, userId, targetUserId)
+        call.respond(HttpStatusCode.OK, mapOf("message" to "Member removed"))
     }
 
     suspend fun leaveCompany(call: ApplicationCall) {
-        val userId = call.getUserId() ?: return call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Not authenticated"))
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: return call.respond(HttpStatusCode.BadRequest, ErrorResponse("Invalid company ID"))
-        val result = companyService.leaveCompany(companyId, userId)
-        result.fold(
-            onSuccess = { call.respond(HttpStatusCode.OK, mapOf("message" to "Left company")) },
-            onFailure = { error -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(error.message ?: "Leave failed")) }
-        )
+            ?: throw DomainException.ValidationError("Company ID is invalid")
+        companyService.leaveCompany(companyId, userId)
+        call.respond(HttpStatusCode.OK, mapOf("message" to "Company leaved successfully"))
     }
 }

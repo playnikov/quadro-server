@@ -9,16 +9,4 @@ CREATE TABLE users_copy (
 );
 
 CREATE INDEX idx_users_copy_email ON users_copy(email);
-CREATE INDEX idx_users_copy_role ON users_copy(role);
 CREATE INDEX idx_users_copy_active ON users_copy(is_active);
-
-CREATE TABLE projects_copy (
-    id UUID PRIMARY KEY,
-    company_id UUID NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    archived_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ NOT NULL
-);
-
-CREATE INDEX idx_projects_copy_company ON projects_copy(company_id);

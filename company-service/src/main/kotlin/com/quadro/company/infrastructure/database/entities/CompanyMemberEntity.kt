@@ -17,7 +17,6 @@ object CompanyMembersTable : UUIDTable("company_members") {
     val invitedBy = uuid("invited_by")
     val invitedAt = timestampWithTimeZone("invited_at")
     val lastActiveAt = timestampWithTimeZone("last_active_at").nullable()
-    val isActive = bool("is_active").default(true)
 
     init {
         uniqueIndex(companyId, userId)
@@ -34,5 +33,4 @@ class CompanyMemberEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var invitedBy by CompanyMembersTable.invitedBy
     var invitedAt by CompanyMembersTable.invitedAt
     var lastActiveAt by CompanyMembersTable.lastActiveAt
-    var isActive by CompanyMembersTable.isActive
 }

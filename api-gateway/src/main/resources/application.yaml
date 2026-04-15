@@ -1,0 +1,21 @@
+ktor:
+    deployment:
+      port: 8080
+    application:
+        modules:
+        - com.quadro.gateway.ApplicationKt.module
+
+app:
+    jwt:
+        secret: "test"
+        issuer: "gateway"
+        audience: "client"
+        access_ms: 3600000
+        refresh_ms: 604800000
+    services:
+        auth: "http://localhost:8081"
+        company: "http://localhost:8082"
+        team: "http://localhost:8083"
+        project: "http://localhost:8084"
+        task: "http://localhost:8085"
+        notification: "http://localhost:8086"

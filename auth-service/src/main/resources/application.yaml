@@ -1,0 +1,24 @@
+ktor:
+    deployment:
+      port: 8081
+    application:
+        modules:
+        - com.quadro.auth.ApplicationKt.module
+
+app:
+    jwt:
+        secret: "test"
+        issuer: "gateway"
+        audience: "client"
+        access_ms: 3600000
+        refresh_ms: 604800000
+    kafka:
+        bootstrap_servers: "localhost:9092"
+    database:
+        url: "jdbc:postgresql://localhost:5432/quadro_db"
+        user: "postgres"
+        password: "postgres"
+        schema: "auth_schema"
+    redis:
+        host: "localhost"
+        port: 6379

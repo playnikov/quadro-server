@@ -7,7 +7,6 @@ CREATE TABLE company_members (
      invited_by UUID NOT NULL,
      invited_at TIMESTAMPTZ NOT NULL,
      last_active_at TIMESTAMPTZ,
-     is_active BOOLEAN NOT NULL DEFAULT true,
      UNIQUE(company_id, user_id)
 );
 

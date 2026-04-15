@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.exceptions.TokenExpiredException
+import com.quadro.shared.data.config.JwtConfig
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
@@ -27,16 +28,14 @@ data class TokenValidationResult(
 )
 
 class JwtValidator(
-    private val secretKey: String,
-    private val issuer: String,
-    private val audience: String
+    private val config: JwtConfig
 ) {
-    private val algorithm = Algorithm.HMAC256(secretKey)
+    private val algorithm = Algorithm.HMAC256(config.secret)
 
     fun validateToken(token: String): TokenValidationResult = try {
         val decoded = JWT.require(algorithm)
-            .withIssuer(issuer)
-            .withAudience(audience)
+            .withIssuer(config.issuer)
+            .withAudience(config.audience)
             .build()
             .verify(token)
         val userId = runCatching { UUID.fromString(decoded.subject) }.getOrNull()
@@ -55,7 +54,7 @@ class JwtValidator(
             isValid = false,
             userId = null,
             role = null,
-            error = "Token expired",
+            error = e.message ?: "Token expired",
             isExpired = true
         )
     } catch (e: JWTVerificationException) {
@@ -63,7 +62,7 @@ class JwtValidator(
             isValid = false,
             userId = null,
             role = null,
-            error = "Invalid token",
+            error = e.message ?: "Invalid token",
             isExpired = false
         )
     }

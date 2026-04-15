@@ -53,6 +53,9 @@ dependencies {
     // Logging
     implementation(libs.logback.classic)
 
+    // Config
+    implementation(libs.ktor.server.config.yaml)
+
     // Testing
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.mockk)

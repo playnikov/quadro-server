@@ -3,6 +3,7 @@ package com.quadro.gateway.plugins
 import com.quadro.gateway.routes.AuthRoutes
 import com.quadro.gateway.routes.CompanyRoutes
 import com.quadro.gateway.routes.InvitationRoutes
+import com.quadro.gateway.routes.TeamRoutes
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.request
@@ -32,6 +33,7 @@ fun Application.configureRouting() {
     val authRoutes by inject<AuthRoutes>()
     val companyRoutes by inject<CompanyRoutes>()
     val invitationRoutes by inject<InvitationRoutes>()
+    val teamRoutes by inject<TeamRoutes>()
 
     routing {
         get("/") {
@@ -56,6 +58,7 @@ fun Application.configureRouting() {
             authRoutes.protectedRoutes(this)
             companyRoutes.protectedRoutes(this)
             invitationRoutes.protectedRoutes(this)
+            teamRoutes.protectedRoutes(this)
         }
     }
 }

@@ -1,9 +1,7 @@
-package com.quadro.shared.events
+package com.quadro.shared.data.messaging.events
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.UUID
-import kotlin.time.Instant
 
 @Serializable
 data class TaskCreatedEvent(

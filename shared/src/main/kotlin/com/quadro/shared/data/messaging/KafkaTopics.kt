@@ -1,4 +1,4 @@
-package com.quadro.shared.kafka
+package com.quadro.shared.data.messaging
 
 object KafkaTopics {
     // User events

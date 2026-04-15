@@ -1,4 +1,4 @@
-package com.quadro.shared.events
+package com.quadro.shared.data.messaging.events
 
 sealed interface DomainEvent {
     val eventId: String

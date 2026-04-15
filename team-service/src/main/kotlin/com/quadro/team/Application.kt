@@ -1,10 +1,12 @@
 package com.quadro.team
 
+import com.quadro.shared.di.sharedModule
 import com.quadro.shared.plugins.configureMonitoring
 import com.quadro.shared.plugins.configureStatusPages
-import com.quadro.team.config.AppConfig
-import com.quadro.team.di.companyModules
+import com.quadro.team.di.kafkaModule
+import com.quadro.team.di.teamModules
 import com.quadro.team.plugins.configureDatabase
+import com.quadro.team.plugins.configureKafka
 import com.quadro.team.plugins.configureRouting
 import com.quadro.team.plugins.configureSecurity
 import com.quadro.team.plugins.configureSerialization
@@ -17,24 +19,28 @@ import kotlin.system.exitProcess
 fun main(args: Array<String>) {
     val logger = LoggerFactory.getLogger("Application")
     try {
-        logger.info("Starting Auth Service...")
+        logger.info("Starting Team Service...")
         io.ktor.server.netty.EngineMain.main(args)
     } catch (e: Exception) {
-        logger.error("Failed to start Auth Service", e)
+        logger.error("Failed to start Team Service", e)
         exitProcess(1)
     }
 }
 
 fun Application.module() {
-    val appConfig = AppConfig.fromEnvironment()
     install(Koin) {
         slf4jLogger()
-        modules(companyModules(appConfig))
+        modules(
+            sharedModule(this@module, "team-service"),
+            teamModules(),
+            kafkaModule
+        )
     }
     configureSerialization()
     configureMonitoring()
     configureStatusPages()
     configureDatabase()
+    configureKafka()
     configureSecurity()
     configureRouting()
 }

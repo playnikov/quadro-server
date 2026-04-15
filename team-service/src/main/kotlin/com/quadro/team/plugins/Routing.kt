@@ -1,7 +1,7 @@
 package com.quadro.team.plugins
 
-import com.quadro.company.presentation.routes.CompanyRoutes
-import com.quadro.company.presentation.routes.InvitationRoutes
+import com.quadro.team.presentation.routes.BindingRoutes
+import com.quadro.team.presentation.routes.TeamRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -10,8 +10,8 @@ import org.koin.ktor.ext.inject
 import kotlin.time.Clock
 
 fun Application.configureRouting() {
-    val companyRoutes by inject<CompanyRoutes>()
-    val invitationRoutes by inject<InvitationRoutes>()
+    val teamRoutes by inject<TeamRoutes>()
+    val bindingRoutes by inject<BindingRoutes>()
 
     routing {
         get("/") {
@@ -30,7 +30,7 @@ fun Application.configureRouting() {
             ))
         }
 
-        companyRoutes.init(this)
-        invitationRoutes.init(this)
+        teamRoutes.init(this)
+        bindingRoutes.init(this)
     }
 }

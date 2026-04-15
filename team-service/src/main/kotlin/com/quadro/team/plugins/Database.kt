@@ -1,7 +1,7 @@
 package com.quadro.team.plugins
 
-import com.quadro.company.config.DatabaseConfig
-import com.quadro.company.infrastructure.database.DatabaseFactory
+import com.quadro.shared.data.config.DatabaseConfig
+import com.quadro.shared.data.db.DatabaseFactory
 import io.ktor.server.application.Application
 import org.koin.java.KoinJavaComponent.inject
 

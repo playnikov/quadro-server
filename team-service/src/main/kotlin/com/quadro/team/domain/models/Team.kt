@@ -5,9 +5,7 @@ import java.util.UUID
 import kotlin.time.Instant
 
 @Serializable
-enum class TeamRole {
-    MEMBER, LEAD
-}
+enum class TeamRole { MEMBER, LEAD, MANAGER }
 
 @Serializable
 enum class TeamStatus {
@@ -19,6 +17,14 @@ enum class TeamVisibility {
     PUBLIC, PRIVATE, HIDDEN
 }
 
+@Serializable
+enum class TeamProjectRole {
+    VIEWER,       // только просмотр задач
+    CONTRIBUTOR,  // может брать задачи
+    ASSIGNEE,     // задачи назначаются команде
+    MANAGER       // управляет задачами в проекте
+}
+
 data class Team(
     val id: UUID,
     val companyId: UUID,
@@ -27,44 +33,38 @@ data class Team(
     val avatar: String?,
     val status: TeamStatus,
     val visibility: TeamVisibility,
-    val leadId: UUID,
-    val settings: TeamSettings,
+    val leadId: UUID?,
+    val createdBy: UUID,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val archivedAt: Instant?,
-    val maxMembers: Int,
-    val currentMembers: Int
-)
-
-@Serializable
-data class TeamSettings(
-    val allowGuests: Boolean = false,
-    val memberCanInvite: Boolean = false,
-    val memberCanCreateProjects: Boolean = false,
-    val requireLeadApproval: Boolean = true,
-    val defaultMemberRole: TeamRole = TeamRole.MEMBER,
-    val maxProjects: Int = 10,
-    val autoArchiveDays: Int? = null
 )
 
 data class TeamCreate(
     val name: String,
     val description: String? = null,
     val avatar: String? = null,
-    val leadId: String,
+    val leadId: String? = null,
     val visibility: TeamVisibility = TeamVisibility.PUBLIC,
-    val settings: TeamSettings = TeamSettings(),
     val initialMembers: List<UUID>? = null
-)
+) {
+    fun validate() {
+        require(name.isNotBlank()) { "Team name cannot be blank" }
+        require(name.length in 2..50) { "Name: 2–50 chars" }
+    }
+}
 
 data class TeamUpdate(
     val name: String? = null,
     val description: String? = null,
     val avatar: String? = null,
+    val leadId: String? = null,
     val visibility: TeamVisibility? = null,
-    val settings: TeamSettings? = null,
     val status: TeamStatus? = null
-)
+) {
+    fun validate() {
+        require(name?.length in 2..50) { "Name: 2–50 chars" }
+    }
+}
 
 @Serializable
 data class TeamResponse(
@@ -75,16 +75,15 @@ data class TeamResponse(
     val avatar: String?,
     val status: TeamStatus,
     val visibility: TeamVisibility,
-    val leadId: String,
-    val settings: TeamSettings,
+    val leadId: String?,
+    val createdBy: String,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val archivedAt: Instant?,
-    val maxMembers: Int,
-    val currentMembers: Int
+    val members: List<TeamMemberResponse> = emptyList(),
+    val projects: List<TeamProjectBindingResponse> = emptyList()
 ) {
     companion object {
-        fun fromTeam(team: Team): TeamResponse = TeamResponse(
+        fun from(team: Team): TeamResponse = TeamResponse(
             id = team.id.toString(),
             companyId = team.companyId.toString(),
             name = team.name,
@@ -93,12 +92,39 @@ data class TeamResponse(
             status = team.status,
             visibility = team.visibility,
             leadId = team.leadId.toString(),
-            settings = team.settings,
             createdAt = team.createdAt,
             updatedAt = team.updatedAt,
-            archivedAt = team.archivedAt,
-            maxMembers = team.maxMembers,
-            currentMembers = team.currentMembers
+            createdBy = team.createdBy.toString()
+        )
+    }
+}
+
+data class TeamProjectBinding(
+    val id: UUID,
+    val teamId: UUID,
+    val projectId: UUID,
+    val role: TeamProjectRole,
+    val boundAt: Instant,
+    val boundBy: UUID,
+)
+
+@Serializable
+data class TeamProjectBindingResponse(
+    val id: String,
+    val teamId: String,
+    val projectId: String,
+    val role: TeamProjectRole,
+    val boundAt: Instant,
+    val boundBy: String
+) {
+    companion object {
+        fun from(bind: TeamProjectBinding): TeamProjectBindingResponse = TeamProjectBindingResponse(
+            id = bind.id.toString(),
+            teamId = bind.teamId.toString(),
+            projectId = bind.projectId.toString(),
+            role = bind.role,
+            boundAt = bind.boundAt,
+            boundBy = bind.boundBy.toString()
         )
     }
 }

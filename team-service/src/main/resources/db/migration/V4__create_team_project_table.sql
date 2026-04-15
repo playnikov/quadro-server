@@ -1,6 +1,6 @@
 CREATE TABLE team_projects (
     id UUID PRIMARY KEY,
-    team_id UUID NOT NULL REFERENCES team.teams(id) ON DELETE CASCADE,
+    team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
     project_id UUID NOT NULL,
     assigned_at TIMESTAMPTZ NOT NULL,
     assigned_by UUID NOT NULL,

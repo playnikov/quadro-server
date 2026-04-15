@@ -18,8 +18,8 @@ fun Application.loadJwtConfig() = JwtConfig(
     secret      = environment.config.property("app.jwt.secret").getString(),
     issuer      = environment.config.property("app.jwt.issuer").getString(),
     audience    = environment.config.property("app.jwt.audience").getString(),
-    accessExpiration = environment.config.property("app.jwt.access_ms").getString().toLong(),
-    refreshExpiration = environment.config.property("app.jwt.refresh_ms").getString().toLong(),
+    accessExpiration = environment.config.propertyOrNull("app.jwt.access_ms")?.getString()?.toLong() ?: 3600000,
+    refreshExpiration = environment.config.propertyOrNull("app.jwt.refresh_ms")?.getString()?.toLong() ?: 604800000,
     invitationExpiration = environment.config.propertyOrNull("app.jwt.invitation_ms")?.getString()?.toLong() ?: 604800000,
 )
 

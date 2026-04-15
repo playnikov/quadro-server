@@ -27,11 +27,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          cache-read-only: false
-
       - name: Build JAR for ${{ matrix.service }}
         run: |
           chmod +x gradlew

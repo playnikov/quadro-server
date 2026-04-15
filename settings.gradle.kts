@@ -1,4 +1,4 @@
-rootProject.name = "ktor"
+rootProject.name = "quadro-server"
 
 dependencyResolutionManagement {
     repositories {
@@ -6,7 +6,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "quadro-server"
 
 include(
     ":shared",

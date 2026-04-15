@@ -1,11 +1,6 @@
-FROM gradle:8.11-jdk21 AS builder
-WORKDIR /workspace
-COPY . .
-RUN gradle :api-gateway:shadowJar --no-daemon -x test
-
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
-COPY --from=builder /workspace/api-gatewat/build/libs/*-all.jar app.jar
+COPY build/libs/api-gateway-*.jar app.jar
 RUN addgroup -S quadro && adduser -S quadro -G quadro
 RUN mkdir -p /app/logs && chown -R quadro:quadro /app
 USER quadro

@@ -34,6 +34,12 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
 
+      - name: Install Gradle 9.3.0
+        if: steps.cache-gradle.outputs.cache-hit != 'true'
+        run: |
+          wget https://services.gradle.org/distributions/gradle-9.3.0-bin.zip
+          sudo unzip -d /opt gradle-9.3.0-bin.zip
+
       - name: Build JAR for ${{ matrix.service }}
         run: |
           export PATH=/opt/gradle-9.3.0/bin:$PATH

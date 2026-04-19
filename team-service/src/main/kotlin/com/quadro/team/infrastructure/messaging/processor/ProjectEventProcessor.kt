@@ -24,7 +24,6 @@ class ProjectEventProcessor(
         val project = Project(
             id = UUID.fromString(event.projectId),
             companyId = UUID.fromString(event.companyId),
-            name = event.name,
             status = ProjectStatus.valueOf(event.status),
             updatedAt = Instant.ofEpochMilli(event.updatedAt).toKotlinInstant()
         )
@@ -36,7 +35,6 @@ class ProjectEventProcessor(
         val project = Project(
             id = UUID.fromString(event.projectId),
             companyId = UUID.fromString(event.companyId),
-            name = event.name,
             status = ProjectStatus.valueOf(event.status),
             updatedAt = Instant.ofEpochMilli(event.updatedAt).toKotlinInstant()
         )

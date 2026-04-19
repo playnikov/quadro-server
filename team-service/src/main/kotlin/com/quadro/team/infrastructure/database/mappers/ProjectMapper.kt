@@ -14,7 +14,6 @@ object ProjectMapper {
     fun toDomain(entity: ProjectEntity): Project = Project(
         id = entity.id.value,
         companyId = entity.companyId,
-        name = entity.name,
         status = ProjectStatus.valueOf(entity.status),
         updatedAt = entity.updatedAt.toKotlinInstant(),
     )
@@ -29,7 +28,6 @@ object ProjectMapper {
 
     private fun applyDomainToEntity(entity: ProjectEntity, domain: Project) {
         entity.companyId = domain.companyId
-        entity.name = domain.name
         entity.status = domain.status.name
         entity.updatedAt = domain.updatedAt.toOffsetDateTime()
     }

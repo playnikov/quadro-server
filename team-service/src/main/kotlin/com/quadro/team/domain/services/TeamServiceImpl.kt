@@ -1,6 +1,7 @@
 package com.quadro.team.domain.services
 
 import com.quadro.shared.dto.DomainException
+import com.quadro.team.domain.models.Company
 import com.quadro.team.domain.models.Team
 import com.quadro.team.domain.models.TeamCreate
 import com.quadro.team.domain.models.TeamMember
@@ -8,10 +9,12 @@ import com.quadro.team.domain.models.TeamResponse
 import com.quadro.team.domain.models.TeamRole
 import com.quadro.team.domain.models.TeamStatus
 import com.quadro.team.domain.models.TeamUpdate
+import com.quadro.team.domain.models.User
 import com.quadro.team.domain.repositories.CompanyMemberRepository
 import com.quadro.team.domain.repositories.CompanyRepository
 import com.quadro.team.domain.repositories.TeamMemberRepository
 import com.quadro.team.domain.repositories.TeamRepository
+import com.quadro.team.domain.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.time.Clock
@@ -20,24 +23,41 @@ class TeamServiceImpl(
     private val teamRepository: TeamRepository,
     private val teamMemberRepository: TeamMemberRepository,
     private val companyRepository: CompanyRepository,
-    private val memberRepository: CompanyMemberRepository
+    private val userRepository: UserRepository,
+    private val companyMemberRepository: CompanyMemberRepository
 ) : TeamService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override suspend fun create(companyId: UUID, createdBy: UUID, request: TeamCreate): TeamResponse {
+    private suspend fun ensureUserCanManageProjects(
+        userId: UUID,
+        companyId: UUID,
+        action: String
+    ): Pair<User, Company> {
+        val user = userRepository.findById(userId)
+            ?: throw DomainException.NotFound("User", "ID: $userId")
+
         val company = companyRepository.findById(companyId)
-            ?: throw DomainException.NotFound("Company", "Company with id $companyId not found")
+            ?: throw DomainException.NotFound("Company", "ID: $companyId")
 
-        val member = memberRepository.findByCompanyAndUser(companyId, createdBy)
-            ?: throw DomainException.NotFound("Member", "Member with id $companyId not found")
-        request.validate()
+        if (!company.isActive())
+            throw DomainException.AccessDenied("Company is not active")
 
-        if (!company.createRole.isAtLeast(member.role)) {
-            throw DomainException.AccessDenied("Create role ${member.role} is not allowed")
+        val member = companyMemberRepository.findByCompanyAndUser(companyId, userId)
+            ?: throw DomainException.AccessDenied("User is not a member of the company")
+
+        if (!member.role.isAtLeast(company.teamManagementRole)) {
+            logger.warn("User $userId (role: ${member.role}) denied team management access for $action")
+            throw DomainException.AccessDenied("Insufficient permissions to $action teams")
         }
 
+        return user to company
+    }
+
+    override suspend fun create(companyId: UUID, createdBy: UUID, request: TeamCreate): TeamResponse {
+        ensureUserCanManageProjects(createdBy, companyId, "create")
+
         request.leadId?.let {
-            memberRepository.findByCompanyAndUser(companyId, UUID.fromString(request.leadId))
+            companyMemberRepository.findByCompanyAndUser(companyId, UUID.fromString(request.leadId))
                 ?: throw DomainException.NotFound("Member", "Member ${request.leadId} with id $companyId not found")
         }
 
@@ -94,8 +114,9 @@ class TeamServiceImpl(
         teamRepository.findByCompany(companyId, page, size)
             .map { TeamResponse.from(it) }
 
-    override suspend fun update(id: UUID, request: TeamUpdate): TeamResponse {
+    override suspend fun update(id: UUID, request: TeamUpdate, requesterId: UUID): TeamResponse {
         val team = teamRepository.findById(id) ?: throw DomainException.NotFound("Team", id.toString())
+        ensureUserCanManageProjects(requesterId, team.companyId, "update")
         val teamUpdate = teamRepository.update(
             team.copy(
                 name = request.name?.trim() ?: team.name,
@@ -112,6 +133,7 @@ class TeamServiceImpl(
 
     override suspend fun delete(id: UUID, requesterId: UUID) {
         val team = teamRepository.findById(id) ?: throw DomainException.NotFound("Team", id.toString())
+        ensureUserCanManageProjects(requesterId, team.companyId, "delete")
         if (team.createdBy != requesterId) throw DomainException.Forbidden("Only creator can delete team")
         teamRepository.delete(id)
         logger.info("Deleted team id=$id by user $requesterId")

@@ -17,9 +17,8 @@ class CompanyEventProcessor(
     suspend fun processCreated(event: CompanyCreatedEvent) {
         val company= Company(
             id = UUID.fromString(event.companyId),
-            name = event.name,
             companyStatus = CompanyStatus.valueOf(event.companyStatus),
-            createRole = CompanyRole.valueOf(event.createTeamRole),
+            teamManagementRole = CompanyRole.valueOf(event.teamManagementRole),
             updatedAt = Instant.ofEpochMilli(event.updatedAt).toKotlinInstant()
         )
 
@@ -29,9 +28,8 @@ class CompanyEventProcessor(
     suspend fun processUpdated(event: CompanyUpdatedEvent) {
         val company= Company(
             id = UUID.fromString(event.companyId),
-            name = event.name,
             companyStatus = CompanyStatus.valueOf(event.companyStatus),
-            createRole = CompanyRole.valueOf(event.createTeamRole),
+            teamManagementRole = CompanyRole.valueOf(event.teamManagementRole),
             updatedAt = Instant.ofEpochMilli(event.updatedAt).toKotlinInstant()
         )
 

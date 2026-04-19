@@ -6,17 +6,12 @@ import com.quadro.team.domain.models.Company
 import com.quadro.team.domain.models.CompanyRole
 import com.quadro.team.domain.models.CompanyStatus
 import com.quadro.team.infrastructure.database.entities.CompanyEntity
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
-import java.time.Instant
 
 object CompanyMapper {
     fun toDomain(entity: CompanyEntity): Company = Company(
         id = entity.id.value,
-        name = entity.name,
         companyStatus = CompanyStatus.valueOf(entity.status),
-        createRole = CompanyRole.valueOf(entity.createRole),
+        teamManagementRole = CompanyRole.valueOf(entity.teamManagementRole),
         updatedAt = entity.updatedAt.toKotlinInstant(),
     )
 
@@ -29,9 +24,8 @@ object CompanyMapper {
     }
 
     private fun applyDomainToEntity(entity: CompanyEntity, domain: Company) {
-        entity.name = domain.name
         entity.status = domain.companyStatus.name
-        entity.createRole = domain.createRole.name
+        entity.teamManagementRole = domain.teamManagementRole.name
         entity.updatedAt = domain.updatedAt.toOffsetDateTime()
     }
 }

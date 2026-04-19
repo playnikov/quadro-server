@@ -57,6 +57,8 @@ class TeamController(
     }
 
     suspend fun update(call: ApplicationCall) {
+        val userId = call.getUserId()
+            ?: throw DomainException.Forbidden("Not authorized")
         val teamId = call.parameters["teamId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Team ID is invalid")
         val request = call.receive<TeamUpdateRequest>()
@@ -68,7 +70,7 @@ class TeamController(
             visibility = request.visibility?.let { TeamVisibility.valueOf(it) },
             status = request.status?.let { TeamStatus.valueOf(it) }
         )
-        val result = teamService.update(teamId, teamUpdate)
+        val result = teamService.update(teamId, teamUpdate, userId)
         call.respond(HttpStatusCode.OK, result)
     }
 

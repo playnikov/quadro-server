@@ -11,6 +11,6 @@ interface TeamService {
     suspend fun create(companyId: UUID, createdBy: UUID, request: TeamCreate): TeamResponse
     suspend fun getById(id: UUID): TeamResponse
     suspend fun getByCompany(companyId: UUID, page: Int, size: Int): List<TeamResponse>
-    suspend fun update(id: UUID, request: TeamUpdate): TeamResponse
+    suspend fun update(id: UUID, request: TeamUpdate, requesterId: UUID): TeamResponse
     suspend fun delete(id: UUID, requesterId: UUID)
 }

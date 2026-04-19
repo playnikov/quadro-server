@@ -10,14 +10,11 @@ CREATE TABLE projects (
     visibility VARCHAR(50) NOT NULL,
     lead_id UUID NOT NULL,
     owner_id UUID NOT NULL,
-    settings TEXT NOT NULL,
     start_date TIMESTAMPTZ,
     end_date TIMESTAMPTZ,
     completed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
-    archived_at TIMESTAMPTZ,
-    stats TEXT NOT NULL,
     UNIQUE(company_id, key),
     UNIQUE(company_id, name)
 );

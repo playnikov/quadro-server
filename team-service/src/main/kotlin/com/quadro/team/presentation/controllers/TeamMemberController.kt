@@ -17,7 +17,7 @@ class TeamMemberController(
     private val teamMemberService: TeamMemberService
 ) {
     suspend fun getMembers(call: ApplicationCall) {
-        val teamId = call.parameters["id"]?.let { UUID.fromString(it) }
+        val teamId = call.parameters["teamId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Team ID is invalid")
         val result = teamMemberService.getMembers(teamId)
         call.respond(HttpStatusCode.Created, result)
@@ -26,14 +26,14 @@ class TeamMemberController(
     suspend fun addMember(call: ApplicationCall) {
         val userId = call.getUserId()
             ?: throw DomainException.Forbidden("Not authorized")
-        val teamId = call.parameters["id"]?.let { UUID.fromString(it) }
+        val teamId = call.parameters["teamId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Team ID is invalid")
         val request = call.receive<AddMemberRequest>()
         val result = teamMemberService.addMember(
             teamId = teamId,
             userId = UUID.fromString(request.userId),
             role = TeamRole.valueOf(request.role),
-            addedBy = userId
+            requesterId = userId
         )
         call.respond(HttpStatusCode.Created, result)
     }
@@ -41,7 +41,7 @@ class TeamMemberController(
     suspend fun removeMember(call: ApplicationCall) {
         val userId = call.getUserId()
             ?: throw DomainException.Forbidden("Not authorized")
-        val teamId = call.parameters["id"]?.let { UUID.fromString(it) }
+        val teamId = call.parameters["teamId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Team ID is invalid")
         val request = call.receive<RemoveMember>()
         val result = teamMemberService.removeMember(
@@ -55,7 +55,7 @@ class TeamMemberController(
     suspend fun changeRole(call: ApplicationCall) {
         val userId = call.getUserId()
             ?: throw DomainException.Forbidden("Not authorized")
-        val teamId = call.parameters["id"]?.let { UUID.fromString(it) }
+        val teamId = call.parameters["teamId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Team ID is invalid")
         val request = call.receive<UpdateMemberRole>()
         val result = teamMemberService.changeRole(

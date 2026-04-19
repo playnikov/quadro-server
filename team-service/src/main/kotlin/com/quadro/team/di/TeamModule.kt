@@ -25,10 +25,11 @@ import com.quadro.team.presentation.controllers.ProjectBindingController
 import com.quadro.team.presentation.controllers.TeamController
 import com.quadro.team.presentation.controllers.TeamMemberController
 import com.quadro.team.presentation.routes.BindingRoutes
+import com.quadro.team.presentation.routes.TeamMemberRoutes
 import com.quadro.team.presentation.routes.TeamRoutes
 import org.koin.dsl.module
 
-fun teamModules() = module {
+val teamModules = module {
     single { JwtValidator(get()) }
 
     single<TeamRepository> { TeamRepositoryImpl() }
@@ -42,14 +43,15 @@ fun teamModules() = module {
 
     single<UserRepository> { UserRepositoryImpl() }
 
-    single<TeamService> { TeamServiceImpl(get(), get(), get(), get()) }
-    single<TeamMemberService> { TeamMemberServiceImpl(get(), get(), get()) }
-    single<ProjectBindingService> { ProjectBindingServiceImpl(get(), get(), get()) }
+    single<TeamService> { TeamServiceImpl(get(), get(), get(), get(), get()) }
+    single<TeamMemberService> { TeamMemberServiceImpl(get(), get(), get(), get()) }
+    single<ProjectBindingService> { ProjectBindingServiceImpl(get(), get(), get(), get(), get()) }
 
     factory { TeamController(get()) }
     factory { TeamMemberController(get()) }
     factory { ProjectBindingController(get()) }
 
     factory { TeamRoutes(get()) }
+    factory { TeamMemberRoutes(get()) }
     factory { BindingRoutes(get()) }
 }

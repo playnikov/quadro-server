@@ -9,7 +9,6 @@ import java.util.UUID
 
 object ProjectsTable : UUIDTable("projects_copy") {
     val companyId = uuid("company_id")
-    val name = varchar("name", 50)
     val status = varchar("status", 50)
     val updatedAt = timestampWithTimeZone("updated_at")
 }
@@ -18,7 +17,6 @@ class ProjectEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<ProjectEntity>(ProjectsTable)
 
     var companyId by ProjectsTable.companyId
-    var name by ProjectsTable.name
     var status by ProjectsTable.status
     var updatedAt by ProjectsTable.updatedAt
 }

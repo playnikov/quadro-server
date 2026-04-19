@@ -25,7 +25,7 @@ class ProjectBindingController(
             teamId = teamId,
             projectId = UUID.fromString(request.projectId),
             role = TeamProjectRole.valueOf(request.role),
-            boundBy = userId
+            requesterId = userId
         )
         call.respond(HttpStatusCode.Created, result)
     }

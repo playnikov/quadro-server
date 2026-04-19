@@ -3,6 +3,7 @@ package com.quadro.team.plugins
 import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.team.infrastructure.messaging.listener.CompanyEventListener
 import com.quadro.team.infrastructure.messaging.listener.CompanyMemberEventListener
+import com.quadro.team.infrastructure.messaging.listener.ProjectEventListener
 import com.quadro.team.infrastructure.messaging.listener.UserEventListener
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopping
@@ -14,6 +15,7 @@ import org.koin.ktor.ext.getKoin
 fun Application.configureKafka() {
     val userListener: UserEventListener = getKoin().get()
     val companyListener: CompanyEventListener = getKoin().get()
+    val projectListener: ProjectEventListener = getKoin().get()
     val companyMemberListener: CompanyMemberEventListener = getKoin().get()
     val producer: EventProducer = getKoin().get()
 
@@ -26,11 +28,15 @@ fun Application.configureKafka() {
     companyMemberListener.start()
     log.info("Member event listener started")
 
+    projectListener.start()
+    log.info("Project event listener started")
+
     Runtime.getRuntime().addShutdownHook(Thread {
         runBlocking {
             userListener.stop()
             companyListener.stop()
             companyMemberListener.stop()
+            projectListener.stop()
             producer.close()
         }
         log.info("Kafka producer and listener closed")
@@ -41,6 +47,7 @@ fun Application.configureKafka() {
             producer.close()
             userListener.stop()
             companyListener.stop()
+            projectListener.stop()
             companyMemberListener.stop()
             log.info("Kafka producer and listener stopped gracefully")
         }

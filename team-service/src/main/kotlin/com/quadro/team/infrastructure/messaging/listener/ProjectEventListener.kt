@@ -20,7 +20,7 @@ class ProjectEventListener : KoinComponent {
     private val json = Json { ignoreUnknownKeys = true }
 
     private val projectEventProcessor: ProjectEventProcessor by inject()
-    private val eventConsumer: EventConsumer by inject(named("companyConsumer"))
+    private val eventConsumer: EventConsumer by inject(named("projectConsumer"))
 
     fun start() {
         eventConsumer.start { topic, _, value ->

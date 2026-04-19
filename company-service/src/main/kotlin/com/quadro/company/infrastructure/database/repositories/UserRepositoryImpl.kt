@@ -6,6 +6,7 @@ import com.quadro.company.infrastructure.database.entities.UserEntity
 import com.quadro.company.infrastructure.database.entities.UsersTable
 import com.quadro.company.infrastructure.database.mappers.UserMapper
 import com.quadro.shared.utils.toOffsetDateTime
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.Instant
 import java.util.UUID
@@ -23,8 +24,10 @@ class UserRepositoryImpl : UserRepository {
         UserMapper.toDomain(entity)
     }
 
-    override suspend fun findByEmail(email: String): User? = newSuspendedTransaction {
-        UserEntity.find { UsersTable.email eq email }.firstOrNull()?.let(UserMapper::toDomain)
+    override suspend fun findByIds(ids: Set<UUID>): List<User> = newSuspendedTransaction {
+        UserEntity.find {
+            UsersTable.id inList ids
+        }.map { UserMapper.toDomain(it) }
     }
 
     override suspend fun findById(id: UUID): User? = newSuspendedTransaction {

@@ -9,7 +9,6 @@ import java.util.UUID
 
 object CompanyInvitationsTable : UUIDTable("company_invitations") {
     val companyId = uuid("company_id").references(CompaniesTable.id)
-    val teamId = uuid("team_id").nullable()
     val invitedBy = uuid("invited_by")
     val inviteType = varchar("invite_type", 50)
     val identifier = varchar("identifier", 255)
@@ -27,7 +26,6 @@ class CompanyInvitationEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<CompanyInvitationEntity>(CompanyInvitationsTable)
 
     var companyId by CompanyInvitationsTable.companyId
-    var teamId by CompanyInvitationsTable.teamId
     var invitedBy by CompanyInvitationsTable.invitedBy
     var inviteType by CompanyInvitationsTable.inviteType
     var identifier by CompanyInvitationsTable.identifier

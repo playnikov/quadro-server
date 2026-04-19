@@ -3,6 +3,7 @@ package com.quadro.company.plugins
 import com.quadro.company.presentation.routes.CompanyRoutes
 import com.quadro.company.presentation.routes.InvitationRoutes
 import io.ktor.server.application.Application
+import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
@@ -30,7 +31,9 @@ fun Application.configureRouting() {
             ))
         }
 
-        companyRoutes.init(this)
-        invitationRoutes.init(this)
+        authenticate("auth-jwt") {
+            companyRoutes.init(this)
+            invitationRoutes.init(this)
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.quadro.company.plugins
 
+import com.quadro.company.infrastructure.messaging.ProjectEventListener
 import com.quadro.company.infrastructure.messaging.UserEventListener
 import com.quadro.shared.data.messaging.EventProducer
 import io.ktor.server.application.Application
@@ -10,15 +11,18 @@ import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.getKoin
 
 fun Application.configureKafka() {
-    val listener: UserEventListener = getKoin().get()
+    val userListener: UserEventListener = getKoin().get()
+    val projectListener: ProjectEventListener = getKoin().get()
     val producer: EventProducer = getKoin().get()
 
-    listener.start()
-    log.info("User event listener started")
+    userListener.start()
+    projectListener.start()
+    log.info("Event listener started")
 
     Runtime.getRuntime().addShutdownHook(Thread {
         runBlocking {
-            listener.stop()
+            userListener.stop()
+            projectListener.stop()
             producer.close()
         }
         log.info("Kafka producer and listener closed")
@@ -27,7 +31,8 @@ fun Application.configureKafka() {
     monitor.subscribe(ApplicationStopping) {
         launch {
             producer.close()
-            listener.stop()
+            userListener.stop()
+            projectListener.stop()
             log.info("Kafka producer and listener stopped gracefully")
         }
     }

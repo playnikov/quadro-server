@@ -33,16 +33,22 @@ class CompanyServiceImpl(
 ) : CompanyService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
+    private suspend fun userActive(userId: UUID) {
+        val user = userRepository.findById(userId)
+            ?: throw DomainException.NotFound("User", userId.toString())
+        if (!user.isActive)
+            throw DomainException.AccessDenied()
+    }
+
     override suspend fun createCompany(
         userId: UUID,
         request: CompanyCreate
     ): CompanyResponse {
+        userActive(userId)
         request.validate()
 
-        val user = userRepository.findById(userId)
-            ?: throw DomainException.NotFound("User", "User Not Found")
-
         if (companyRepository.existsByName(request.name)) {
+            logger.warn("User $userId attempted to create company with existing name: ${request.name}")
             throw DomainException.AlreadyExists("Company '${request.name}'")
         }
 
@@ -75,9 +81,9 @@ class CompanyServiceImpl(
                 name = createdCompany.name,
                 ownerId = createdCompany.ownerId.toString(),
                 maxProjects = createdCompany.maxProjects,
-                maxMembers = createdCompany.maxUsers,
                 companyStatus = createdCompany.companyStatus.name,
-                createTeamRole = createdCompany.companySettings.teamCreationRole.name
+                teamManagementRole = createdCompany.companySettings.teamManagementRole.name,
+                manageProjectRole = createdCompany.companySettings.projectManagementRole.name,
             )
         )
 
@@ -106,7 +112,7 @@ class CompanyServiceImpl(
         )
 
         logger.info("Company created: ${createdCompany.name} by user: $userId")
-        return CompanyResponse.from(createdCompany, user)
+        return CompanyResponse.from(createdCompany)
     }
 
     override suspend fun getCompany(
@@ -118,8 +124,8 @@ class CompanyServiceImpl(
         companyMemberRepository.findByCompanyAndUser(companyId, userId)
             ?: throw DomainException.AccessDenied("Not a member of this company")
 
-        val owner = userRepository.findById(company.ownerId)
-        return CompanyResponse.from(company, owner)
+        logger.info("User $userId accessed company ${company.name} (ID: ${company.id})")
+        return CompanyResponse.from(company)
     }
 
     override suspend fun updateCompany(
@@ -127,18 +133,19 @@ class CompanyServiceImpl(
         userId: UUID,
         request: CompanyUpdate
     ): CompanyResponse {
-        val user = userRepository.findById(userId)
-            ?: throw DomainException.NotFound("User", "User Not Found")
+        userActive(userId)
         val company = companyRepository.findById(companyId)
             ?: throw DomainException.NotFound("Company", companyId.toString())
         val member = companyMemberRepository.findByCompanyAndUser(companyId, userId)
             ?: throw DomainException.AccessDenied("Not a member")
 
         if (member.role != CompanyRole.OWNER && member.role != CompanyRole.ADMIN) {
+            logger.warn("User ${userId} with role ${member.role} attempted to update company ${companyId} without sufficient permissions")
             throw DomainException.AccessDenied("Insufficient permissions")
         }
 
         if (request.name != null && request.name != company.name && companyRepository.existsByName(request.name)) {
+            logger.warn("User ${userId} attempted to rename company ${companyId} to existing name: ${request.name}")
             throw DomainException.AlreadyExists("Company '${request.name}'")
         }
 
@@ -168,18 +175,22 @@ class CompanyServiceImpl(
                 maxProjects = updatedCompany.maxProjects,
                 maxMembers = updatedCompany.maxUsers,
                 companyStatus = updatedCompany.companyStatus.name,
-                createTeamRole = updatedCompany.companySettings.teamCreationRole.name
+                teamManagementRole = updatedCompany.companySettings.teamManagementRole.name,
+                manageProjectRole = updatedCompany.companySettings.projectManagementRole.name,
+                currentProjects = updatedCompany.currentProjects
             )
         )
 
-        logger.info("Company updated: ${saved.name}")
-        return CompanyResponse.from(saved, user)
+        logger.info("Company updated: ${saved.name} by user: $userId")
+        return CompanyResponse.from(saved)
     }
 
     override suspend fun deleteCompany(companyId: UUID, userId: UUID) {
+        userActive(userId)
         val company = companyRepository.findById(companyId)
             ?: throw DomainException.NotFound("Company", companyId.toString())
         if (company.ownerId != userId) {
+            logger.warn("User ${userId} attempted to delete company ${companyId} without ownership")
             throw DomainException.AccessDenied("Only owner can delete company")
         }
         companyRepository.delete(companyId)
@@ -192,7 +203,7 @@ class CompanyServiceImpl(
             )
         )
 
-        logger.info("Company deleted: $companyId by owner: $userId")
+        logger.info("Company deleted: ${company.name} (ID: ${company.id}) by owner: ${userId}")
     }
 
     override suspend fun getUserCompanies(
@@ -200,11 +211,13 @@ class CompanyServiceImpl(
         page: Int,
         size: Int
     ): List<CompanyResponse> {
+        userActive(userId)
         val offset = (page - 1) * size
         val companies = companyRepository.findByUser(userId, size, offset)
+
+        logger.info("User ${userId} requested list of companies, page: ${page}, size: ${size}, count: ${companies.size}")
         return companies.map { company ->
-            val owner = userRepository.findById(company.ownerId)
-            CompanyResponse.from(company, owner)
+            CompanyResponse.from(company)
         }
     }
 
@@ -214,6 +227,7 @@ class CompanyServiceImpl(
         page: Int,
         size: Int
     ): List<CompanyMemberResponse> {
+        userActive(userId)
         require(page >= 1) { "Page must be >= 1" }
         require(size in 1..100) { "Size must be between 1 and 100" }
 
@@ -221,9 +235,11 @@ class CompanyServiceImpl(
             ?: throw DomainException.AccessDenied("Not a member of this company")
 
         val offset = (page - 1) * size
-        return companyMemberRepository
-            .findByCompany(companyId, size, offset)
-            .map { CompanyMemberResponse.fromCompanyMember(it) }
+        val members = companyMemberRepository.findByCompany(companyId, size, offset)
+        logger.info("User ${userId} requested members of company ${companyId}, page: ${page}, size: ${size}, count: ${members.size}")
+        return members.map { member ->
+            CompanyMemberResponse.fromCompanyMember(member)
+        }
     }
 
     override suspend fun updateMemberRole(
@@ -232,19 +248,23 @@ class CompanyServiceImpl(
         targetUserId: UUID,
         role: CompanyRole
     ) {
+        userActive(userId)
         if (userId == targetUserId) {
+            logger.warn("User ${userId} attempted to change their own role in company ${companyId}")
             throw DomainException.Forbidden("Not allowed")
         }
 
         val currentUser = companyMemberRepository.findByCompanyAndUser(companyId, userId)
             ?: throw DomainException.AccessDenied("Not a member of this company")
         if (currentUser.role.canManageMembers()) {
+            logger.warn("User ${userId} with role ${currentUser.role} attempted to change member role in company ${companyId}")
             throw DomainException.AccessDenied("Insufficient permissions")
         }
 
         val targetMember = companyMemberRepository.findByCompanyAndUser(companyId, targetUserId)
             ?: throw DomainException.NotFound("Member", targetUserId.toString())
         if (targetMember.role.isHigherThan(currentUser.role) || currentUser.role == targetMember.role) {
+            logger.warn("User ${userId} attempted to change role of higher-level user ${targetUserId} in company ${companyId}")
             throw DomainException.BusinessRule("Admin cannot change another admin's role")
         }
 
@@ -261,7 +281,7 @@ class CompanyServiceImpl(
             )
         )
 
-        logger.info("Member role updated: $targetUserId to $role")
+        logger.info("Member role updated: user ${userId} changed role of user ${targetUserId} to ${role} in company ${companyId}")
     }
 
     override suspend fun removeMember(
@@ -269,15 +289,18 @@ class CompanyServiceImpl(
         userId: UUID,
         targetUserId: UUID
     ) {
+        userActive(userId)
         val currentUser = companyMemberRepository.findByCompanyAndUser(companyId, userId)
             ?: throw DomainException.AccessDenied("Not a member of this company")
         val targetMember = companyMemberRepository.findByCompanyAndUser(companyId, targetUserId)
             ?: throw DomainException.NotFound("Member", targetUserId.toString())
 
         if (targetMember.role == CompanyRole.OWNER) {
+            logger.warn("User ${userId} attempted to remove owner ${targetUserId} from company ${companyId}")
             throw DomainException.BusinessRule("Cannot remove owner")
         }
         if (targetMember.role.isAtLeast(currentUser.role) && currentUser.role.canManageMembers()) {
+            logger.warn("User ${userId} with role ${currentUser.role} attempted to remove higher-level user ${targetUserId} from company ${companyId}")
             throw DomainException.AccessDenied("Admin can only remove members and guests")
         }
 
@@ -292,13 +315,14 @@ class CompanyServiceImpl(
             )
         )
 
-        logger.info("Member removed: $targetUserId")
+        logger.info("Member removed: user ${userId} removed user ${targetUserId} from company ${companyId}")
     }
 
     override suspend fun leaveCompany(companyId: UUID, userId: UUID) {
         val member = companyMemberRepository.findByCompanyAndUser(companyId, userId)
             ?: throw DomainException.NotFound("Member", userId.toString())
         if (member.role == CompanyRole.OWNER) {
+            logger.warn("Owner ${userId} attempted to leave company ${companyId}")
             throw DomainException.BusinessRule("Owner cannot leave the company")
         }
 
@@ -313,6 +337,6 @@ class CompanyServiceImpl(
             )
         )
 
-        logger.info("User left company: $userId")
+        logger.info("User left company: $userId left company $companyId")
     }
 }

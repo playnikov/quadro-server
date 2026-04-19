@@ -11,7 +11,6 @@ sealed class DomainException(message: String) : Exception(message) {
 
     class AccessDenied(reason: String = "Access denied") :
         DomainException(reason)
-
     class Forbidden(reason: String = "Forbidden") :
         DomainException(reason)
 

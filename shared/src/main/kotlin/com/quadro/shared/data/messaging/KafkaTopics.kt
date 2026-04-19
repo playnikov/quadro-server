@@ -25,7 +25,6 @@ object KafkaTopics {
     const val PROJECT_UPDATED = "quadro.project.updated"
     const val PROJECT_ARCHIVED = "quadro.project.archived"
     const val PROJECT_DELETED = "quadro.project.deleted"
-    const val PROJECT_MEMBER_ADDED = "quadro.project.member.added"
     const val PROJECT_TEAM_ASSIGNED = "quadro.project.team.assigned"
 
     // Task events

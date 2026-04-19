@@ -1,6 +1,7 @@
 package com.quadro.auth.plugins
 
 import com.quadro.auth.presentation.routes.AuthRoutes
+import com.quadro.auth.presentation.routes.UserRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond
@@ -10,6 +11,7 @@ import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
     val authRoutes by inject<AuthRoutes>()
+    val userRoutes by inject<UserRoutes>()
 
     routing {
         get("/") {
@@ -31,7 +33,7 @@ fun Application.configureRouting() {
         authRoutes.publicRoute(this)
 
         authenticate("auth-jwt") {
-            authRoutes.protectedRoute(this)
+            userRoutes.protectedRoute(this)
         }
     }
 }

@@ -17,10 +17,10 @@ class InvitationRoutes(
                 route("/{id}/invitations/") {
                     post { invitationController.createInvitation(call) }
                     get { invitationController.getInvitations(call) }
-                    delete("/{invitationId}") { invitationController.cancelInvitation(call) }
+                    delete { invitationController.cancelInvitation(call) }
                 }
 
-                route("/invite/{token}") {
+                route("/invite") {
                     post { invitationController.acceptInvitation(call) }
                 }
             }

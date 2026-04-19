@@ -12,9 +12,10 @@ data class CompanyCreatedEvent(
     val name: String,
     val ownerId: String,
     val companyStatus: String,
-    val createTeamRole: String,
+    val teamManagementRole: String,
+    val manageProjectRole: String,
+    val currentProjects: Int = 0,
     val maxProjects: Int,
-    val maxMembers: Int,
     val updatedAt: Long = System.currentTimeMillis()
 ) : DomainEvent
 
@@ -27,7 +28,9 @@ data class CompanyUpdatedEvent(
     val name: String,
     val ownerId: String,
     val companyStatus: String,
-    val createTeamRole: String,
+    val teamManagementRole: String,
+    val manageProjectRole: String,
+    val currentProjects: Int,
     val maxProjects: Int,
     val maxMembers: Int,
     val updatedAt: Long = System.currentTimeMillis()

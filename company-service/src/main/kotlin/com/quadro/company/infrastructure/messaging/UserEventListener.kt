@@ -7,6 +7,7 @@ import com.quadro.shared.data.messaging.KafkaTopics
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.core.qualifier.named
 import org.slf4j.LoggerFactory
 
 class UserEventListener : KoinComponent {
@@ -14,7 +15,7 @@ class UserEventListener : KoinComponent {
     private val json = Json { ignoreUnknownKeys = true }
 
     private val userEventProcessor: UserEventProcessor by inject()
-    private val eventConsumer: EventConsumer by inject()
+    private val eventConsumer: EventConsumer by inject(named("userConsumer"))
 
     fun start() {
         eventConsumer.start { topic, key, value ->

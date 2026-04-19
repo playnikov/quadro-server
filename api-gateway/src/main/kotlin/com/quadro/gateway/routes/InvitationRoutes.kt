@@ -20,12 +20,14 @@ class InvitationRoutes(
 ) {
     private val companyServiceBaseUrl = serviceBaseUrl.company
     fun protectedRoutes(routing: Route) {
-        routing.route("/api/companies/{companyId}/invitations/") {
-            proxyTo(client, companyServiceBaseUrl)
-        }
+        routing.route("/api/companies") {
+            route("/{companyId}/invitations/") {
+                proxyTo(client, companyServiceBaseUrl)
+            }
 
-        routing.route("/invite/{token}") {
-            proxyTo(client, companyServiceBaseUrl)
+            route("/invite") {
+                proxyTo(client, companyServiceBaseUrl)
+            }
         }
     }
 }

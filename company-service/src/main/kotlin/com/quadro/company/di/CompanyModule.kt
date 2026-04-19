@@ -22,7 +22,7 @@ import com.quadro.company.presentation.routes.InvitationRoutes
 import com.quadro.shared.security.JwtValidator
 import org.koin.dsl.module
 
-fun companyModules() = module {
+val companyModules = module {
     single { JwtValidator(get())}
 
     single<CompanyRepository> { CompanyRepositoryImpl() }

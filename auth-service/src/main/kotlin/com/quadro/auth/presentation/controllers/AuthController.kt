@@ -61,16 +61,4 @@ class AuthController(private val authService: AuthService) {
         val result = authService.refreshToken(request.refreshToken)
         call.respond(HttpStatusCode.OK, result)
     }
-
-    suspend fun getMyProfile(call: ApplicationCall) {
-        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
-        val result = authService.getUser(userId)
-        call.respond(HttpStatusCode.OK, result)
-    }
-
-    suspend fun getUser(call: ApplicationCall) {
-        val userId = call.request.queryParameters["userId"]
-        val result = authService.getUser(UUID.fromString(userId))
-        call.respond(HttpStatusCode.OK, result)
-    }
 }

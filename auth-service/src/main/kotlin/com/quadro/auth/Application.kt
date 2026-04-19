@@ -2,6 +2,7 @@ package com.quadro.auth
 
 import com.quadro.auth.di.authModule
 import com.quadro.auth.di.kafkaModule
+import com.quadro.auth.di.userModule
 import com.quadro.auth.plugins.configureDatabase
 import com.quadro.auth.plugins.configureKafka
 import com.quadro.shared.plugins.configureMonitoring
@@ -34,7 +35,8 @@ fun Application.module() {
         slf4jLogger()
         modules(
             sharedModule(this@module, "auth-service"),
-            authModule(),
+            authModule,
+            userModule,
             kafkaModule
         )
     }

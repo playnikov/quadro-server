@@ -14,12 +14,10 @@ import com.quadro.shared.security.JwtValidator
 import io.ktor.server.application.Application
 import org.koin.dsl.module
 
-fun authModule() = module {
+val authModule = module {
     single { JwtValidator(get()) }
     single<PasswordEncoder> { BCryptPasswordEncoder() }
     single { JwtProvider(get()) }
-
-    single<UserRepository> { UserRepositoryImpl() }
 
     single<AuthService> { AuthServiceImpl(get(), get(), get(), get(), get()) }
 

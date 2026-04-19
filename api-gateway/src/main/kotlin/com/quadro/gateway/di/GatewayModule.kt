@@ -52,5 +52,7 @@ fun gatewayModule(application: Application) = module {
 
     factory { InvitationRoutes(get(), get()) }
 
+    factory { ProjectRoutes(get(), get()) }
+
     factory { TeamRoutes(get(), get()) }
 }

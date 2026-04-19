@@ -17,7 +17,6 @@ enum class InvitationType {
 data class CompanyInvitation(
     val id: UUID,
     val companyId: UUID,
-    val teamId: UUID?,
     val invitedBy: UUID,
     val inviteType: InvitationType,
     val identifier: String,
@@ -35,7 +34,6 @@ data class CompanyInvitation(
 }
 
 data class InvitationCreate(
-    val teamId: UUID? = null,
     val role: CompanyRole = CompanyRole.MEMBER,
     val inviteType: InvitationType = InvitationType.LINK,
     val identifier: String? = null,
@@ -57,7 +55,6 @@ data class InvitationCreate(
 data class InvitationResponse(
     val id: String,
     val company: CompanyResponse,
-    val teamId: String?,
     val invitedBy: String,
     val inviteType: InvitationType,
     val identifier: String,
@@ -75,12 +72,10 @@ data class InvitationResponse(
         fun fromCompanyInvitation(
             company: Company,
             invitation: CompanyInvitation,
-            link: String,
-            owner: User? = null,
+            link: String
         ): InvitationResponse  = InvitationResponse(
             id = invitation.id.toString(),
-            company = CompanyResponse.from(company, owner),
-            teamId = invitation.teamId?.toString(),
+            company = CompanyResponse.from(company),
             invitedBy = invitation.invitedBy.toString(),
             inviteType = invitation.inviteType,
             identifier = invitation.identifier,

@@ -18,7 +18,6 @@ class InvitationTokenServiceImpl(
     override fun generateToken(
         invitationId: UUID,
         companyId: UUID,
-        teamId: UUID?,
         expiresInDays: Int?
     ): String = JWT.create()
         .withIssuer(config.issuer)
@@ -26,9 +25,6 @@ class InvitationTokenServiceImpl(
         .withClaim("invitationId", invitationId.toString())
         .withClaim("companyId", companyId.toString())
         .withClaim("type", "invitation")
-        .apply {
-            teamId?.let { withClaim("teamId", it.toString()) }
-        }
         .withIssuedAt(Date())
         .withExpiresAt(
             Date(

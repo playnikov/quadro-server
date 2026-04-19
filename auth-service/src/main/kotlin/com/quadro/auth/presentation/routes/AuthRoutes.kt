@@ -24,16 +24,4 @@ class AuthRoutes(
             }
         }
     }
-
-    fun protectedRoute(routing: Route) {
-        routing.route("/api/users") {
-            get("/{id}") {
-                authController.getUser(call)
-            }
-
-            get("/profile") {
-                authController.getMyProfile(call)
-            }
-        }
-    }
 }

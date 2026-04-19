@@ -59,7 +59,6 @@ class CompanyInvitationServiceImpl(
         val invitation = CompanyInvitation(
             id = UUID.randomUUID(),
             companyId = companyId,
-            teamId = request.teamId,
             invitedBy = userId,
             inviteType = request.inviteType,
             identifier = request.identifier ?: "link:${UUID.randomUUID()}",
@@ -76,7 +75,6 @@ class CompanyInvitationServiceImpl(
         val token = invitationTokenService.generateToken(
             invitationId = invitation.id,
             companyId = invitation.companyId,
-            teamId = invitation.teamId,
             expiresInDays = request.expiresInDays ?: company.companySettings.inviteExpiryDays
         )
 
@@ -84,8 +82,7 @@ class CompanyInvitationServiceImpl(
         companyInvitationRepository.create(finalInvitation)
 
         val inviteLink = "${config.domain}/invite?token=$token"
-        val ownerUser = userRepository.findById(company.ownerId)
-        val result = InvitationResponse.fromCompanyInvitation(company, finalInvitation, inviteLink, ownerUser)
+        val result = InvitationResponse.fromCompanyInvitation(company, finalInvitation, inviteLink)
 
         logger.info("Invitation created: ${invitation.id} for company: $companyId by user: $userId")
         return result
@@ -114,11 +111,10 @@ class CompanyInvitationServiceImpl(
 
         val company = companyRepository.findById(invitation.companyId)
             ?: throw DomainException.NotFound("Company", invitation.companyId.toString())
-        val ownerUser = userRepository.findById(company.ownerId)
 
         if (companyMemberRepository.exists(invitation.companyId, userId)) {
             logger.info("User $userId is already a member of company ${company.id}, invitation remains PENDING")
-            return CompanyResponse.from(company, ownerUser)
+            return CompanyResponse.from(company)
         }
 
         val member = CompanyMember(
@@ -149,7 +145,7 @@ class CompanyInvitationServiceImpl(
         companyInvitationRepository.acceptInvitation(invitation.id, userId)
 
         logger.info("Invitation accepted: ${invitation.id} by user: $userId")
-        return CompanyResponse.from(company, ownerUser)
+        return CompanyResponse.from(company)
     }
 
     override suspend fun getInvitations(
@@ -165,10 +161,9 @@ class CompanyInvitationServiceImpl(
             ?: throw DomainException.NotFound("Company", companyId.toString())
 
         val invitations = companyInvitationRepository.findByCompany(companyId, null)
-        val ownerUser = userRepository.findById(company.ownerId)
         return invitations.map { invitation ->
             val inviteLink = "${config.domain}/invite?token=${invitation.token}"
-            InvitationResponse.fromCompanyInvitation(company, invitation, inviteLink, ownerUser)
+            InvitationResponse.fromCompanyInvitation(company, invitation, inviteLink)
         }
     }
 

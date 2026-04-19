@@ -6,6 +6,7 @@ import com.quadro.auth.infrastructure.database.entities.UserEntity
 import com.quadro.auth.infrastructure.database.entities.UsersTable
 import com.quadro.auth.infrastructure.database.mappers.UserMapper
 import com.quadro.shared.utils.toOffsetDateTime
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.Instant
 import java.util.UUID
@@ -15,6 +16,16 @@ class UserRepositoryImpl : UserRepository {
     override suspend fun create(user: User): User  = newSuspendedTransaction {
         val entity = UserMapper.toEntity(user)
         UserMapper.toDomain(entity)
+    }
+
+    override suspend fun getAll(): List<User> = newSuspendedTransaction {
+        UserEntity.all()
+            .map { UserMapper.toDomain(it) }
+    }
+
+    override suspend fun getByIds(ids: List<UUID>): List<User> = newSuspendedTransaction {
+        UserEntity.find { UsersTable.id inList ids }
+            .map { UserMapper.toDomain(it) }
     }
 
     override suspend fun findByEmail(email: String): User? = newSuspendedTransaction {

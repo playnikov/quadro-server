@@ -30,7 +30,7 @@ data class UserUpdatedEvent(
     val middleName: String,
     val avatar: String,
     val isActive: Boolean,
-    val updatedAt: Instant
+    val updatedAt: Long
 ) : DomainEvent
 
 @Serializable

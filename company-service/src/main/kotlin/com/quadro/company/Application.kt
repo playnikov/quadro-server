@@ -34,7 +34,7 @@ fun Application.module() {
         slf4jLogger()
         modules(
             sharedModule(this@module, "company-service"),
-            companyModules(),
+            companyModules,
             kafkaModule
         )
     }

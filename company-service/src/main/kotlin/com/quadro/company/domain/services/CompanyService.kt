@@ -7,6 +7,7 @@ import com.quadro.company.domain.models.CompanyMemberResponse
 import com.quadro.company.domain.models.CompanyResponse
 import com.quadro.company.domain.models.CompanyRole
 import com.quadro.company.domain.models.CompanyUpdate
+import com.quadro.company.domain.models.User
 import java.util.UUID
 
 interface CompanyService {

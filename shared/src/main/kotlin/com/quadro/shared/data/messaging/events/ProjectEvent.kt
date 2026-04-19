@@ -46,25 +46,3 @@ data class ProjectDeletedEvent(
     val companyId: String,
     val deletedBy: String,
 ) : DomainEvent
-
-@Serializable
-data class ProjectMemberAddedEvent(
-    override val eventId: String = UUID.randomUUID().toString(),
-    override val occurredAt: Long = System.currentTimeMillis(),
-    override val version: Int = 1,
-    val projectId: String,
-    val companyId: String,
-    val userId: String,
-    val role: String,
-) : DomainEvent
-
-@Serializable
-data class ProjectTeamAssignedEvent(
-    override val eventId: String = UUID.randomUUID().toString(),
-    override val occurredAt: Long = System.currentTimeMillis(),
-    override val version: Int = 1,
-    val projectId: String,
-    val companyId: String,
-    val teamId: String,
-    val role: String,
-) : DomainEvent

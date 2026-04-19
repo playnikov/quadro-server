@@ -20,11 +20,6 @@ class InvitationController(
             ?: throw DomainException.ValidationError("Company ID is invalid")
         val request = call.receive<CreateInvitationRequest>()
         val invitationCreate = InvitationCreate(
-            teamId = if (!request.teamId.isNullOrBlank()) {
-                UUID.fromString(request.teamId)
-            } else {
-                null
-            },
             role = request.role,
             identifier = request.identifier,
             message = request.message,

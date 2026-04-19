@@ -21,7 +21,7 @@ fun Application.configureStatusPages() {
             call.respond(HttpStatusCode.Conflict, ApiResponse.error("ALREADY_EXISTS", ex.message ?: "Already exists"))
         }
         exception<DomainException.AccessDenied> { call, ex ->
-            call.respond(HttpStatusCode.Unauthorized, ApiResponse.error("ACCESS_DENIED", ex.message ?: "Unauthorized"))
+            call.respond(HttpStatusCode.Forbidden, ApiResponse.error("ACCESS_DENIED", ex.message ?: "Forbidden"))
         }
         exception<DomainException.Forbidden> { call, ex ->
             call.respond(HttpStatusCode.Forbidden, ApiResponse.error("FORBIDDEN", ex.message ?: "Forbidden"))

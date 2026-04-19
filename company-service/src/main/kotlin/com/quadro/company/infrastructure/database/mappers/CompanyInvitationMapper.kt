@@ -12,7 +12,6 @@ object CompanyInvitationMapper {
     fun toDomain(entity: CompanyInvitationEntity): CompanyInvitation = CompanyInvitation(
         id = entity.id.value,
         companyId = entity.companyId,
-        teamId = entity.teamId,
         invitedBy = entity.invitedBy,
         inviteType = InvitationType.valueOf(entity.inviteType),
         identifier = entity.identifier,
@@ -31,13 +30,8 @@ object CompanyInvitationMapper {
             applyDomainToEntity(this, domain)
         }
 
-    fun updateEntity(entity: CompanyInvitationEntity, domain: CompanyInvitation) {
-        applyDomainToEntity(entity, domain)
-    }
-
     private fun applyDomainToEntity(entity: CompanyInvitationEntity, domain: CompanyInvitation) {
         entity.companyId = domain.companyId
-        entity.teamId = domain.teamId
         entity.invitedBy = domain.invitedBy
         entity.inviteType = domain.inviteType.name
         entity.identifier = domain.identifier

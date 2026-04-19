@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateInvitationRequest(
-    val teamId: String? = null,
     val role: CompanyRole = CompanyRole.MEMBER,
     val type: InvitationType = InvitationType.LINK,
     val identifier: String? = null,

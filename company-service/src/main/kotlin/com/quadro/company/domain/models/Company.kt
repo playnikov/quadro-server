@@ -10,10 +10,6 @@ enum class CompanyRole {
 
     fun canManageInvitations() = this in setOf(OWNER, ADMIN, MANAGER)
     fun canManageMembers() = this in setOf(OWNER, ADMIN)
-    fun canUpdateCompany() = this in setOf(OWNER, ADMIN)
-    fun canCreateProjects() = this in setOf(OWNER, ADMIN, MANAGER)
-    fun canCreateTeams() = this in setOf(OWNER, ADMIN, MANAGER)
-    fun canViewReports() = this in setOf(OWNER, ADMIN)
     fun isAtLeast(other: CompanyRole) = ordinal >= other.ordinal
     fun isHigherThan(other: CompanyRole) = ordinal > other.ordinal
 }
@@ -54,9 +50,9 @@ data class CompanySettings(
     val requireInviteApproval: Boolean = false,
     val allowExternalInvites: Boolean = true,
     val inviteExpiryDays: Int = 7,
-    val projectCreationRole: CompanyRole = CompanyRole.MANAGER,
-    val teamCreationRole: CompanyRole = CompanyRole.MANAGER,
-    val taskCreationRole: CompanyRole = CompanyRole.MEMBER,
+    val projectManagementRole: CompanyRole = CompanyRole.MANAGER,
+    val teamManagementRole: CompanyRole = CompanyRole.MANAGER,
+    val taskManagementRole: CompanyRole = CompanyRole.MEMBER,
     val sprintManagementRole: CompanyRole = CompanyRole.MANAGER,
     val reportViewRole: CompanyRole = CompanyRole.ADMIN,
     val enableFileAttachments: Boolean = true,
@@ -108,6 +104,7 @@ data class CompanyUpdate(
 @Serializable
 data class CompanyResponse(
     val id: String,
+    val ownerId: String,
     val name: String,
     val description: String?,
     val logo: String?,
@@ -125,11 +122,11 @@ data class CompanyResponse(
     val currentUsers: Int,
     val maxProjects: Int,
     val currentProjects: Int,
-    val owner: UserResponse? = null,
 ) {
     companion object {
-        fun from(company: Company, owner: User? = null) = CompanyResponse(
+        fun from(company: Company) = CompanyResponse(
             id = company.id.toString(),
+            ownerId = company.ownerId.toString(),
             name = company.name,
             description = company.description,
             logo = company.logo,
@@ -146,8 +143,7 @@ data class CompanyResponse(
             maxUsers = company.maxUsers,
             currentUsers = company.currentUsers,
             maxProjects = company.maxProjects,
-            currentProjects = company.currentProjects,
-            owner = owner?.let { UserResponse.from(it) },
+            currentProjects = company.currentProjects
         )
     }
 }

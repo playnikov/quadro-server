@@ -41,7 +41,7 @@ data class UserLogin(
 )
 
 @Serializable
-data class UserResult(
+data class UserResponse(
     val id: String,
     val username: String,
     val email: String,
@@ -56,7 +56,7 @@ data class UserResult(
     val lastLoginAt: Instant?
 ) {
     companion object {
-        fun fromUser(user: User): UserResult = UserResult(
+        fun from(user: User): UserResponse = UserResponse(
             id = user.id.toString(),
             username = user.username,
             email = user.email,
@@ -78,5 +78,5 @@ data class AuthResult(
     val token: String,
     val refreshToken: String,
     val tokenType: String = "Bearer",
-    val userInfo: UserResult
+    val userInfo: UserResponse
 )

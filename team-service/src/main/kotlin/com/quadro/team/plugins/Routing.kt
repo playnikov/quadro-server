@@ -19,17 +19,17 @@ fun Application.configureRouting() {
     routing {
         get("/") {
             call.respond(mapOf(
-                "service" to "Auth Service",
+                "service" to "Team Service",
                 "version" to "1.0.0",
-                "timestamp" to Clock.System.now()
+                "timestamp" to System.currentTimeMillis().toString()
             ))
         }
 
         get("/health") {
             call.respond(mapOf(
                 "status" to "UP",
-                "service" to "auth-service",
-                "timestamp" to Clock.System.now()
+                "service" to "team-service",
+                "timestamp" to System.currentTimeMillis().toString()
             ))
         }
 

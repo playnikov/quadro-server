@@ -59,8 +59,6 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_LISTEN_PORT: 80
-    volumes:
-      - ./pgadmin-servers.json:/pgadmin4/servers.json
     depends_on:
       - postgres
     networks:
@@ -71,6 +69,9 @@ services:
     image: confluentinc/cp-kafka:latest
     container_name: kafka
     restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT_INTERNAL:-29092}:29092"
+      - "${KAFKA_PORT_EXTERNAL:-9092}:9092"
     volumes:
       - kafka_data:/var/lib/kafka/data
     environment:

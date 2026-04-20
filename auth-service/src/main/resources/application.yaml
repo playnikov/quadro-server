@@ -16,9 +16,9 @@ app:
     kafka:
         bootstrap_servers: "$?APP_KAFKA_BROKERS:localhost:9092"
     database:
-        url: "$?DATABASE_URL:jdbc:postgresql://localhost:5432/quadro_db"
-        user: "$?DB_USER:postgres"
-        password: "$?DB_PASSWORD:postgres"
+        url: "$?APP_DATABASE_URL:jdbc:postgresql://localhost:5432/quadro_db"
+        user: "$?APP_DB_USER:postgres"
+        password: "$?APP_DB_PASSWORD:postgres"
         schema: "$?APP_DATABASE:auth_schema"
     redis:
         host: "localhost"

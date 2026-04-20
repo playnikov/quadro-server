@@ -10,6 +10,7 @@ data class TeamMember(
     val userId: UUID,
     val role: TeamRole,
     val joinedAt: Instant?,
+    val invitedAt: Instant?,
     val invitedBy: UUID,
     val lastActiveAt: Instant?,
     val isActive: Boolean
@@ -22,6 +23,7 @@ data class TeamMemberResponse(
     val userId: String,
     val role: TeamRole,
     val joinedAt: Instant?,
+    val invitedAt: Instant?,
     val invitedBy: String,
     val lastActiveAt: Instant?,
     val isActive: Boolean
@@ -34,6 +36,7 @@ data class TeamMemberResponse(
             role = teamMember.role,
             joinedAt = teamMember.joinedAt,
             invitedBy = teamMember.invitedBy.toString(),
+            invitedAt = teamMember.invitedAt,
             lastActiveAt = teamMember.lastActiveAt,
             isActive = teamMember.isActive
         )

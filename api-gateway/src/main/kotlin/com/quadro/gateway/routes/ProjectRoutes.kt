@@ -19,7 +19,7 @@ class ProjectRoutes(
             route("/{projectId}/{status}") { proxyTo(client,projectServiceBaseUrl ) }
 
             route("/my") { proxyTo(client,projectServiceBaseUrl ) }
-            route("/{name}") { proxyTo(client,projectServiceBaseUrl ) }
+            route("/search") { proxyTo(client,projectServiceBaseUrl ) }
         }
     }
 }

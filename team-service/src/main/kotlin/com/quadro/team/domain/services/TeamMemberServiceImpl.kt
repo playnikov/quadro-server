@@ -56,6 +56,7 @@ class TeamMemberServiceImpl(
                 joinedAt = Clock.System.now(),
                 invitedBy = requesterId,
                 isActive = true,
+                invitedAt = Clock.System.now(),
                 lastActiveAt = null
             )
         )

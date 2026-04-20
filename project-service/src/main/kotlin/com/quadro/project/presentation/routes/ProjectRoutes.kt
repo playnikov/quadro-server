@@ -22,7 +22,7 @@ class ProjectRoutes(
 
                 get { controller.findByCompany(call) }
                 get("/{projectId}") { controller.findById(call) }
-                get("/{name}") { controller.findByName(call) }
+                get("/search") { controller.findByName(call) }
 
                 get("/my") { controller.findByUser(call) }
 

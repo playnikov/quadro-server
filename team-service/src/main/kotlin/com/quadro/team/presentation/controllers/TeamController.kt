@@ -28,7 +28,7 @@ class TeamController(
             name = request.name,
             description = request.description,
             avatar = request.avatar,
-            leadId = request.leadId,
+            leadId = UUID.fromString(request.leadId),
             visibility = TeamVisibility.valueOf(request.visibility),
             initialMembers = request.initialMembers?.map {
                 UUID.fromString(it)

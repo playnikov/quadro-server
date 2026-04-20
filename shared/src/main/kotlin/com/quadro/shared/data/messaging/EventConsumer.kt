@@ -44,12 +44,10 @@ class EventConsumer(
             return
         }
         running = true
-        scope.launch {
+        pollingJob = scope.launch {
             consumerMutex.withLock {
                 consumer.subscribe(topics)
             }
-        }
-        pollingJob = scope.launch {
             while (running) {
                 try {
                     val records = consumerMutex.withLock {

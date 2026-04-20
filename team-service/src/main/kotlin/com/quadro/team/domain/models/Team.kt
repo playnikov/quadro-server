@@ -3,6 +3,7 @@ package com.quadro.team.domain.models
 import kotlinx.serialization.Serializable
 import java.util.UUID
 import kotlin.time.Instant
+import kotlin.toString
 
 @Serializable
 enum class TeamRole { MEMBER, LEAD, MANAGER }
@@ -33,7 +34,7 @@ data class Team(
     val avatar: String?,
     val status: TeamStatus,
     val visibility: TeamVisibility,
-    val leadId: UUID?,
+    val leadId: UUID,
     val createdBy: UUID,
     val createdAt: Instant,
     val updatedAt: Instant,
@@ -43,13 +44,14 @@ data class TeamCreate(
     val name: String,
     val description: String? = null,
     val avatar: String? = null,
-    val leadId: String? = null,
+    val leadId: UUID,
     val visibility: TeamVisibility = TeamVisibility.PUBLIC,
     val initialMembers: List<UUID>? = null
 ) {
     fun validate() {
         require(name.isNotBlank()) { "Team name cannot be blank" }
-        require(name.length in 2..50) { "Name: 2–50 chars" }
+        require(name.length in 2..50) { "Name must be 2–50 characters" }
+        require((initialMembers?.distinct()?.size ?: 0) == (initialMembers?.size ?: 0)) { "Duplicate members in initialMembers" }
     }
 }
 

@@ -5,6 +5,7 @@ import com.quadro.team.domain.models.Company
 import com.quadro.team.domain.models.Team
 import com.quadro.team.domain.models.TeamCreate
 import com.quadro.team.domain.models.TeamMember
+import com.quadro.team.domain.models.TeamMemberResponse
 import com.quadro.team.domain.models.TeamResponse
 import com.quadro.team.domain.models.TeamRole
 import com.quadro.team.domain.models.TeamStatus
@@ -55,11 +56,10 @@ class TeamServiceImpl(
 
     override suspend fun create(companyId: UUID, createdBy: UUID, request: TeamCreate): TeamResponse {
         ensureUserCanManageProjects(createdBy, companyId, "create")
+        request.validate()
 
-        request.leadId?.let {
-            companyMemberRepository.findByCompanyAndUser(companyId, UUID.fromString(request.leadId))
-                ?: throw DomainException.NotFound("Member", "Member ${request.leadId} with id $companyId not found")
-        }
+        companyMemberRepository.findByCompanyAndUser(companyId, request.leadId)
+            ?: throw DomainException.NotFound("Member", "${request.leadId} with id $companyId not found")
 
         if (teamRepository.existsByNameInCompany(companyId, request.name)) {
             logger.warn("Attempt to create duplicate team '${request.name}' in company $companyId by user $createdBy")
@@ -76,7 +76,7 @@ class TeamServiceImpl(
                 avatar = request.avatar,
                 status = TeamStatus.ACTIVE,
                 visibility = request.visibility,
-                leadId = UUID.fromString(request.leadId),
+                leadId = request.leadId,
                 createdBy = createdBy,
                 createdAt = now,
                 updatedAt = now
@@ -87,23 +87,68 @@ class TeamServiceImpl(
             TeamMember(
                 id = UUID.randomUUID(),
                 teamId = team.id,
-                userId = UUID.fromString(request.leadId),
+                userId = request.leadId,
                 role = TeamRole.LEAD,
                 joinedAt = now,
                 invitedBy = createdBy,
+                invitedAt = now,
                 isActive = true,
                 lastActiveAt = null
             )
         )
 
+        request.initialMembers?.let { members ->
+            val validMembers = members.filter { memberId ->
+                companyMemberRepository.findByCompanyAndUser(companyId, memberId) != null
+            }
+
+            val invalidCount = members.size - validMembers.size
+            if (invalidCount > 0) {
+                logger.warn("Some initial members not found in company $companyId: ${members.filter { !validMembers.contains(it) }}")
+            }
+
+            validMembers.forEach { memberId ->
+                if (memberId == request.leadId) return@forEach
+
+                companyMemberRepository.findByCompanyAndUser(companyId, memberId)
+                    ?: throw DomainException.NotFound("Member", "$memberId with id $companyId not found")
+                teamMemberRepository.add(
+                    TeamMember(
+                        id = UUID.randomUUID(),
+                        teamId = team.id,
+                        userId = memberId,
+                        role = TeamRole.LEAD,
+                        joinedAt = now,
+                        invitedBy = createdBy,
+                        invitedAt = now,
+                        isActive = true,
+                        lastActiveAt = null
+                    )
+                )
+            }
+        }
+
         logger.info("Created Team id=${team.id}, name='${request.name}', company=$companyId, createdBy=$createdBy")
-        return TeamResponse.from(team)
+
+        val response = TeamResponse.from(team)
+        val members = teamMemberRepository.findByTeam(team.id).map { teamMember ->
+            TeamMemberResponse.from(teamMember)
+        }
+        return response.copy(
+            members = members
+        )
     }
 
     override suspend fun getById(id: UUID): TeamResponse {
         val team = teamRepository.findById(id) ?: throw DomainException.NotFound("Team", id.toString())
         logger.info("Retrieved team: id=$id, name=${team.name}")
-        return TeamResponse.from(team)
+        val response = TeamResponse.from(team)
+        val members = teamMemberRepository.findByTeam(id).map { teamMember ->
+            TeamMemberResponse.from(teamMember)
+        }
+        return response.copy(
+            members = members
+        )
     }
 
     override suspend fun getByCompany(
@@ -112,7 +157,15 @@ class TeamServiceImpl(
         size: Int
     ): List<TeamResponse> =
         teamRepository.findByCompany(companyId, page, size)
-            .map { TeamResponse.from(it) }
+            .map {
+                val members = teamMemberRepository.findByTeam(it.id).map { teamMember ->
+                    TeamMemberResponse.from(teamMember)
+                }
+                val response = TeamResponse.from(it)
+                response.copy(
+                    members = members
+                )
+            }
 
     override suspend fun update(id: UUID, request: TeamUpdate, requesterId: UUID): TeamResponse {
         val team = teamRepository.findById(id) ?: throw DomainException.NotFound("Team", id.toString())
@@ -128,7 +181,13 @@ class TeamServiceImpl(
             )
         )
         logger.info("Updated team id=$id, changes: name=${request.name ?: "unchanged"}, leadId=${request.leadId ?: "unchanged"}")
-        return TeamResponse.from(teamUpdate)
+        val response = TeamResponse.from(teamUpdate)
+        val members = teamMemberRepository.findByTeam(teamUpdate.id).map { teamMember ->
+            TeamMemberResponse.from(teamMember)
+        }
+        return response.copy(
+            members = members
+        )
     }
 
     override suspend fun delete(id: UUID, requesterId: UUID) {

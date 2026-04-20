@@ -129,6 +129,7 @@ class CompanyInvitationServiceImpl(
         )
 
         companyMemberRepository.add(member)
+        companyRepository.incrementUserCount(company.id)
 
         eventProducer.publish(
             topic = KafkaTopics.COMPANY_MEMBER_ADDED,

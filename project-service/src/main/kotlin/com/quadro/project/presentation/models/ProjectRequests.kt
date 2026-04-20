@@ -18,12 +18,12 @@ data class ProjectCreateRequest(
 
 @Serializable
 data class ProjectUpdateRequest(
-    val name: String?,
-    val description: String?,
-    val status: String?,
-    val priority: String?,
-    val visibility: String?,
-    val startDate: Instant?,
-    val endDate: Instant?,
-    val leadId: String?
+    val name: String? = null,
+    val description: String? = null,
+    val status: String? = null,
+    val priority: String? = null,
+    val visibility: String? = null,
+    val startDate: Instant? = null,
+    val endDate: Instant? = null,
+    val leadId: String? = null
 )

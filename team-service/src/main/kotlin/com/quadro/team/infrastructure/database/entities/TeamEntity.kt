@@ -14,7 +14,7 @@ object TeamsTable : UUIDTable("teams") {
     val avatar = varchar("avatar", 500).nullable()
     val status = varchar("status", 50)
     val visibility = varchar("visibility", 50)
-    val leadId = uuid("lead_id").nullable()
+    val leadId = uuid("lead_id")
     val createdBy = uuid("created_by")
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")

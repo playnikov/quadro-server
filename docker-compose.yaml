@@ -53,7 +53,7 @@ services:
 
   pgAdmin:
     image: dpage/pgadmin4
-    container_name: postgres
+    container_name: pgadmin
     restart: unless-stopped
     ports:
       - "5050:80"

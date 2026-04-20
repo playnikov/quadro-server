@@ -8,10 +8,10 @@ volumes:
     name: ${POSTGRES_VOLUME:-postgres_data}
   kafka_data:
     name: ${KAFKA_VOLUME:-kafka_data}
-#  redis_data:
-#    name: ${REDIS_VOLUME:-redis_data}
-#  minio_data:
-#    name: ${MINIO_VOLUME:-minio_data}
+  redis_data:
+    name: ${REDIS_VOLUME:-redis_data}
+  minio_data:
+    name: ${MINIO_VOLUME:-minio_data}
 
 x-common-env: &common-env
   APP_DATABASE_URL: ${DATABASE_URL}
@@ -28,8 +28,8 @@ x-common-env: &common-env
   APP_JWT_ISSUER: ${JWT_ISSUER:-quadro}
   APP_JWT_AUDIENCE: ${JWT_AUDIENCE:-quadro-api}
   APP_JWT_REALM: ${JWT_REALM:-quadro}
-  APP_JWT_EXPIRATION_MS: ${JWT_ACCESS_EXPIRATION}
-  APP_JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION}
+  APP_JWT_EXPIRATION_MS: ${JWT_ACCESS_EXPIRATION:-3600000}
+  APP_JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION:-604800000}
 
 services:
   # ========== PostgreSQL ==========
@@ -174,6 +174,40 @@ services:
     networks:
       - quadro-net
 
+  project-service:
+    image: ${DOCKERHUB_USERNAME}/${REPOSITORY}:project-service.${VERSION:-latest}
+    container_name: project-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      APP_DATABASE: project_schema
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - quadro-net
+
+#  task-service:
+#    image: ${DOCKERHUB_USERNAME}/${REPOSITORY}:task-service.${VERSION:-latest}
+#    container_name: task-service
+#    restart: unless-stopped
+#    environment:
+#      <<: *common-env
+#      APP_DATABASE: task_schema
+#    ports:
+#      - "8085:8085"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#    networks:
+#      - quadro-net
+
   api-gateway:
     image: ${DOCKERHUB_USERNAME}/${REPOSITORY}:api-gateway.${VERSION:-latest}
     container_name: api-gateway
@@ -192,7 +226,7 @@ services:
       - auth-service
       - company-service
       - team-service
-#      - project-service
+      - project-service
 #      - task-service
 #      - notification-service
 #      - redis

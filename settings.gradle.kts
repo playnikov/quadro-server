@@ -14,7 +14,5 @@ include(
     ":company-service",
     ":team-service",
     ":project-service",
-    ":task-service",
-    ":notification-service",
-    ":activity-service",
+    ":task-service"
 )

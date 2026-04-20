@@ -31,8 +31,6 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    println("APP_DATABASE_URL env = ${System.getenv("APP_DATABASE_URL")}")
-    println("APP_DATABASE_URL env = ${System.getenv("DATABASE_URL")}")
     install(Koin) {
         slf4jLogger()
         modules(

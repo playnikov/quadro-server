@@ -16,7 +16,6 @@ object TeamMembersMapper {
         joinedAt = entity.joinedAt?.toKotlinInstant(),
         invitedAt = entity.invitedAt?.toKotlinInstant(),
         invitedBy = entity.invitedBy,
-        lastActiveAt = entity.lastActiveAt?.toKotlinInstant(),
         isActive = entity.isActive
     )
 
@@ -35,7 +34,6 @@ object TeamMembersMapper {
         entity.joinedAt = domain.joinedAt?.toOffsetDateTime()
         entity.invitedBy = domain.invitedBy
         entity.invitedAt = domain.invitedAt?.toOffsetDateTime()
-        entity.lastActiveAt = domain.lastActiveAt?.toOffsetDateTime()
         entity.isActive = domain.isActive
     }
 }

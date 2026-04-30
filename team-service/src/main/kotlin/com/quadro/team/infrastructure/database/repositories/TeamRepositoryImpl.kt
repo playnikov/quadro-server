@@ -4,7 +4,6 @@ import com.quadro.team.domain.models.Team
 import com.quadro.team.domain.repositories.TeamRepository
 import com.quadro.team.infrastructure.database.entities.TeamEntity
 import com.quadro.team.infrastructure.database.entities.TeamsTable
-import com.quadro.team.infrastructure.database.mappers.CompanyMapper
 import com.quadro.team.infrastructure.database.mappers.TeamMapper
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
@@ -16,21 +15,16 @@ class TeamRepositoryImpl : TeamRepository {
         TeamEntity.findById(id)?.let { TeamMapper.toDomain(it) }
     }
 
-    override suspend fun findByCompany(
-        companyId: UUID,
-        page: Int,
-        size: Int
-    ): List<Team> = newSuspendedTransaction {
-        TeamEntity.find { TeamsTable.companyId eq companyId}
+    override suspend fun findAll(page: Int, size: Int): List<Team> = newSuspendedTransaction {
+        TeamEntity.all()
             .limit(page).offset(size.toLong())
             .orderBy(TeamsTable.updatedAt to SortOrder.ASC)
             .map { TeamMapper.toDomain(it) }
     }
 
-    override suspend fun existsByNameInCompany(companyId: UUID, name: String): Boolean = newSuspendedTransaction {
+    override suspend fun existsByName(name: String): Boolean = newSuspendedTransaction {
         !TeamEntity.find {
-            (TeamsTable.companyId eq companyId) and
-                    (TeamsTable.name eq name)
+            (TeamsTable.name eq name)
         }.empty()
     }
 

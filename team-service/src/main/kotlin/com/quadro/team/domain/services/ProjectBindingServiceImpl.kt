@@ -1,11 +1,14 @@
 package com.quadro.team.domain.services
 
+import com.quadro.shared.data.messaging.EventProducer
+import com.quadro.shared.data.messaging.KafkaTopics
+import com.quadro.shared.data.messaging.events.TeamProjectAssignedEvent
+import com.quadro.shared.data.messaging.events.TeamProjectUnassignedEvent
 import com.quadro.shared.dto.DomainException
+import com.quadro.team.domain.models.Team
 import com.quadro.team.domain.models.TeamProjectBinding
 import com.quadro.team.domain.models.TeamProjectBindingResponse
 import com.quadro.team.domain.models.TeamProjectRole
-import com.quadro.team.domain.repositories.CompanyMemberRepository
-import com.quadro.team.domain.repositories.CompanyRepository
 import com.quadro.team.domain.repositories.ProjectRepository
 import com.quadro.team.domain.repositories.TeamProjectBindingRepository
 import com.quadro.team.domain.repositories.TeamRepository
@@ -14,26 +17,16 @@ import java.util.UUID
 import kotlin.time.Clock
 
 class ProjectBindingServiceImpl(
-    private val companyRepository: CompanyRepository,
-    private val companyMemberRepository: CompanyMemberRepository,
     private val teamRepository: TeamRepository,
     private val projectRepository: ProjectRepository,
-    private val bindingRepository: TeamProjectBindingRepository
+    private val bindingRepository: TeamProjectBindingRepository,
+    private val eventProducer: EventProducer
 ) : ProjectBindingService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private suspend fun canManageTeam(teamId: UUID, requesterId: UUID) {
-        val team = teamRepository.findById(teamId) ?: throw DomainException.NotFound("Team", teamId.toString())
-        val company = companyRepository.findById(team.companyId)
-            ?: throw DomainException.NotFound("Company", "ID: ${team.companyId}")
-        val member = companyMemberRepository.findByCompanyAndUser(team.companyId, requesterId)
-            ?: throw DomainException.NotFound("Member", "Member with id ${team.companyId} not found")
-
-        if (!member.role.isAtLeast(company.teamManagementRole)) {
-            logger.warn("User $requesterId (role: ${member.role}) denied team management access")
-            throw DomainException.AccessDenied("Insufficient permissions")
-        }
-    }
+    private suspend fun checkTeamExists(teamId: UUID): Team =
+        teamRepository.findById(teamId)
+            ?: throw DomainException.NotFound("Team", teamId.toString())
 
     override suspend fun bind(
         teamId: UUID,
@@ -41,8 +34,7 @@ class ProjectBindingServiceImpl(
         role: TeamProjectRole,
         requesterId: UUID
     ): TeamProjectBindingResponse {
-        canManageTeam(teamId, requesterId)
-
+        checkTeamExists(teamId)
         projectRepository.findById(projectId) ?: throw DomainException.NotFound("Project", projectId.toString())
         if (bindingRepository.exists(teamId, projectId)) throw DomainException.AlreadyExists("Binding already exists")
         val bind = bindingRepository.bind(
@@ -55,17 +47,37 @@ class ProjectBindingServiceImpl(
                 boundBy = requesterId
             )
         )
+
+        eventProducer.publish(
+            topic = KafkaTopics.TEAM_PROJECT_ASSIGNED,
+            key = bind.id.toString(),
+            event = TeamProjectAssignedEvent(
+                teamId = bind.teamId.toString(),
+                projectId = bind.projectId.toString(),
+                role = bind.role.name
+            )
+        )
+
         return TeamProjectBindingResponse.from(bind)
     }
 
     override suspend fun unbind(teamId: UUID, projectId: UUID, requesterId: UUID) {
-        canManageTeam(teamId, requesterId)
+        checkTeamExists(teamId)
         projectRepository.findById(projectId) ?: throw DomainException.NotFound("Project", projectId.toString())
         bindingRepository.unbind(teamId, projectId)
+
+        eventProducer.publish(
+            topic = KafkaTopics.TEAM_PROJECT_UNASSIGNED,
+            key = projectId.toString(),
+            event = TeamProjectUnassignedEvent(
+                teamId = teamId.toString(),
+                projectId = projectId.toString()
+            )
+        )
     }
 
     override suspend fun getBindingsByTeam(teamId: UUID): List<TeamProjectBindingResponse> {
-        teamRepository.findById(teamId) ?: throw DomainException.NotFound("Team", teamId.toString())
+        checkTeamExists(teamId)
         return bindingRepository.findByTeam(teamId).map { TeamProjectBindingResponse.from(it) }
     }
 }

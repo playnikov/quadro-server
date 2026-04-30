@@ -12,7 +12,6 @@ data class TeamMember(
     val joinedAt: Instant?,
     val invitedAt: Instant?,
     val invitedBy: UUID,
-    val lastActiveAt: Instant?,
     val isActive: Boolean
 )
 
@@ -25,7 +24,6 @@ data class TeamMemberResponse(
     val joinedAt: Instant?,
     val invitedAt: Instant?,
     val invitedBy: String,
-    val lastActiveAt: Instant?,
     val isActive: Boolean
 ) {
     companion object {
@@ -37,7 +35,6 @@ data class TeamMemberResponse(
             joinedAt = teamMember.joinedAt,
             invitedBy = teamMember.invitedBy.toString(),
             invitedAt = teamMember.invitedAt,
-            lastActiveAt = teamMember.lastActiveAt,
             isActive = teamMember.isActive
         )
     }

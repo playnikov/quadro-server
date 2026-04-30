@@ -6,7 +6,11 @@ import kotlin.time.Instant
 import kotlin.toString
 
 @Serializable
-enum class TeamRole { MEMBER, LEAD, MANAGER }
+enum class TeamRole {
+    MEMBER,     // Может просматривать задачи и комментировать
+    LEAD,       // Может назначать задачи и управлять спринтами
+    MANAGER     // Полный контроль над командой и проектами
+}
 
 @Serializable
 enum class TeamStatus {
@@ -28,13 +32,11 @@ enum class TeamProjectRole {
 
 data class Team(
     val id: UUID,
-    val companyId: UUID,
     val name: String,
     val description: String?,
     val avatar: String?,
     val status: TeamStatus,
     val visibility: TeamVisibility,
-    val leadId: UUID,
     val createdBy: UUID,
     val createdAt: Instant,
     val updatedAt: Instant,
@@ -71,13 +73,11 @@ data class TeamUpdate(
 @Serializable
 data class TeamResponse(
     val id: String,
-    val companyId: String,
     val name: String,
     val description: String?,
     val avatar: String?,
     val status: TeamStatus,
     val visibility: TeamVisibility,
-    val leadId: String?,
     val createdBy: String,
     val createdAt: Instant,
     val updatedAt: Instant,
@@ -87,13 +87,11 @@ data class TeamResponse(
     companion object {
         fun from(team: Team): TeamResponse = TeamResponse(
             id = team.id.toString(),
-            companyId = team.companyId.toString(),
             name = team.name,
             description = team.description,
             avatar = team.avatar,
             status = team.status,
             visibility = team.visibility,
-            leadId = team.leadId.toString(),
             createdAt = team.createdAt,
             updatedAt = team.updatedAt,
             createdBy = team.createdBy.toString()

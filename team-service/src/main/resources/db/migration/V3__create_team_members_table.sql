@@ -6,7 +6,6 @@ CREATE TABLE team_members (
     joined_at TIMESTAMPTZ,
     invited_by UUID NOT NULL,
     invited_at TIMESTAMPTZ NOT NULL,
-    last_active_at TIMESTAMPTZ,
     is_active BOOLEAN NOT NULL DEFAULT false,
     UNIQUE(team_id, user_id)
 );

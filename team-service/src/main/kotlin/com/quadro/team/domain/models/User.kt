@@ -1,10 +1,13 @@
 package com.quadro.team.domain.models
 
-import kotlinx.serialization.Serializable
 import java.util.UUID
-import kotlin.time.Instant
+
+enum class UserRole {
+    SUPER_ADMIN, ADMIN, PROJECT_MANAGER, USER
+}
 
 data class User(
     val id: UUID,
+    val role: UserRole,
     val isActive: Boolean,
 )

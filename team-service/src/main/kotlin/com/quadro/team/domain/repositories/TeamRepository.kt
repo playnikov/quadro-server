@@ -5,8 +5,8 @@ import java.util.UUID
 
 interface TeamRepository {
     suspend fun findById(id: UUID): Team?
-    suspend fun findByCompany(companyId: UUID, page: Int, size: Int): List<Team>
-    suspend fun existsByNameInCompany(companyId: UUID, name: String): Boolean
+    suspend fun findAll(page: Int, size: Int): List<Team>
+    suspend fun existsByName(name: String): Boolean
     suspend fun create(team: Team): Team
     suspend fun update(team: Team): Team
     suspend fun delete(id: UUID): Boolean

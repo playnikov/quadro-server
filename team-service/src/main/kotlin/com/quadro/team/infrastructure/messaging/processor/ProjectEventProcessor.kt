@@ -1,17 +1,10 @@
 package com.quadro.team.infrastructure.messaging.processor
 
-import com.quadro.shared.data.messaging.events.CompanyCreatedEvent
-import com.quadro.shared.data.messaging.events.CompanyDeletedEvent
-import com.quadro.shared.data.messaging.events.CompanyUpdatedEvent
 import com.quadro.shared.data.messaging.events.ProjectCreatedEvent
 import com.quadro.shared.data.messaging.events.ProjectDeletedEvent
 import com.quadro.shared.data.messaging.events.ProjectUpdatedEvent
-import com.quadro.team.domain.models.Company
-import com.quadro.team.domain.models.CompanyRole
-import com.quadro.team.domain.models.CompanyStatus
 import com.quadro.team.domain.models.Project
 import com.quadro.team.domain.models.ProjectStatus
-import com.quadro.team.domain.repositories.CompanyRepository
 import com.quadro.team.domain.repositories.ProjectRepository
 import java.time.Instant
 import java.util.UUID
@@ -23,7 +16,6 @@ class ProjectEventProcessor(
     suspend fun processCreated(event: ProjectCreatedEvent) {
         val project = Project(
             id = UUID.fromString(event.projectId),
-            companyId = UUID.fromString(event.companyId),
             status = ProjectStatus.valueOf(event.status),
             updatedAt = Instant.ofEpochMilli(event.updatedAt).toKotlinInstant()
         )
@@ -34,7 +26,6 @@ class ProjectEventProcessor(
     suspend fun processUpdated(event: ProjectUpdatedEvent) {
         val project = Project(
             id = UUID.fromString(event.projectId),
-            companyId = UUID.fromString(event.companyId),
             status = ProjectStatus.valueOf(event.status),
             updatedAt = Instant.ofEpochMilli(event.updatedAt).toKotlinInstant()
         )

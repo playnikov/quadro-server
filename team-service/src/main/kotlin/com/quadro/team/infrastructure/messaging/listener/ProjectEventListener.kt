@@ -2,13 +2,9 @@ package com.quadro.team.infrastructure.messaging.listener
 
 import com.quadro.shared.data.messaging.EventConsumer
 import com.quadro.shared.data.messaging.KafkaTopics
-import com.quadro.shared.data.messaging.events.CompanyCreatedEvent
-import com.quadro.shared.data.messaging.events.CompanyDeletedEvent
-import com.quadro.shared.data.messaging.events.CompanyUpdatedEvent
 import com.quadro.shared.data.messaging.events.ProjectCreatedEvent
 import com.quadro.shared.data.messaging.events.ProjectDeletedEvent
 import com.quadro.shared.data.messaging.events.ProjectUpdatedEvent
-import com.quadro.team.infrastructure.messaging.processor.CompanyEventProcessor
 import com.quadro.team.infrastructure.messaging.processor.ProjectEventProcessor
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent

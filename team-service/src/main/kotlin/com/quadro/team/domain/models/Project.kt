@@ -11,7 +11,6 @@ enum class ProjectStatus {
 
 data class Project(
     val id: UUID,
-    val companyId: UUID,
     val status: ProjectStatus,
-    val updatedAt: Instant,
+    val updatedAt: Instant
 )

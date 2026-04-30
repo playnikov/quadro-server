@@ -41,7 +41,7 @@ class ProjectBindingController(
             projectId = UUID.fromString(request.projectId),
             requesterId = userId
         )
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.NoContent)
     }
 
     suspend fun getBindingByTeam(call: ApplicationCall) {

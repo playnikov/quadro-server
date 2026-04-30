@@ -11,7 +11,7 @@ class BindingRoutes(
     private val controller: ProjectBindingController
 ) {
     fun init(routing: Route) {
-        routing.route("/api/companies/{id}/teams/{teamId}") {
+        routing.route("/api/teams/{teamId}") {
             post("/bind") { controller.bind(call) }
             post("/unbind") { controller.unbind(call) }
             get("/bind") { controller.getBindingByTeam(call) }

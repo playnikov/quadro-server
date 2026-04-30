@@ -11,14 +11,13 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
 class TeamRoutes(
-    private val controller: TeamController,
+    private val controller: TeamController
 ) {
     fun init(routing: Route) {
-        routing.route("/api/companies/{id}/teams") {
+        routing.route("/api/teams") {
             authenticate("auth-jwt") {
                 post { controller.createTeam(call) }
                 get("/{teamId}") { controller.getById(call) }
-                get { controller.getByCompany(call) }
                 patch("/{teamId}") { controller.update(call) }
                 delete("/{teamId}") { controller.delete(call) }
             }

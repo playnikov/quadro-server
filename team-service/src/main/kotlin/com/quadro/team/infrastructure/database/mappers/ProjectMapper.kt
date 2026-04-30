@@ -13,7 +13,6 @@ import com.quadro.team.infrastructure.database.entities.TeamEntity
 object ProjectMapper {
     fun toDomain(entity: ProjectEntity): Project = Project(
         id = entity.id.value,
-        companyId = entity.companyId,
         status = ProjectStatus.valueOf(entity.status),
         updatedAt = entity.updatedAt.toKotlinInstant(),
     )
@@ -27,7 +26,6 @@ object ProjectMapper {
     }
 
     private fun applyDomainToEntity(entity: ProjectEntity, domain: Project) {
-        entity.companyId = domain.companyId
         entity.status = domain.status.name
         entity.updatedAt = domain.updatedAt.toOffsetDateTime()
     }

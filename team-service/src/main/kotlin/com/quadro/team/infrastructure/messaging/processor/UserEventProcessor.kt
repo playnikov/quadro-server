@@ -3,6 +3,7 @@ package com.quadro.team.infrastructure.messaging.processor
 import com.quadro.shared.data.messaging.events.UserCreatedEvent
 import com.quadro.shared.data.messaging.events.UserUpdatedEvent
 import com.quadro.team.domain.models.User
+import com.quadro.team.domain.models.UserRole
 import com.quadro.team.domain.repositories.UserRepository
 import java.util.UUID
 
@@ -12,6 +13,7 @@ class UserEventProcessor(
     suspend fun processCreated(event: UserCreatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
+            role = UserRole.valueOf(event.role),
             isActive = event.isActive
         )
         userRepository.upsert(user)
@@ -20,6 +22,7 @@ class UserEventProcessor(
     suspend fun processUpdated(event: UserUpdatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
+            role = UserRole.valueOf(event.role),
             isActive = event.isActive
         )
         userRepository.upsert(user)

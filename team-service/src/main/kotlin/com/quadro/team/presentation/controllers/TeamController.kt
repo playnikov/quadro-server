@@ -21,8 +21,6 @@ class TeamController(
     suspend fun createTeam(call: ApplicationCall) {
         val userId = call.getUserId()
             ?: throw DomainException.Forbidden("Not authorized")
-        val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: throw DomainException.ValidationError("Company ID is invalid")
         val request = call.receive<TeamCreateRequest>()
         val teamCreate = TeamCreate(
             name = request.name,
@@ -35,7 +33,7 @@ class TeamController(
             }
         )
 
-        val result = teamService.create(companyId, userId, teamCreate)
+        val result = teamService.create(userId, teamCreate)
         call.respond(HttpStatusCode.Created, result)
     }
 
@@ -44,15 +42,6 @@ class TeamController(
             ?: throw DomainException.ValidationError("Team ID is invalid")
 
         val result = teamService.getById(teamId)
-        call.respond(HttpStatusCode.OK, result)
-    }
-
-    suspend fun getByCompany(call: ApplicationCall) {
-        val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: throw DomainException.ValidationError("Company ID is invalid")
-        val page = call.request.queryParameters["page"]?.toInt() ?: 1
-        val size = call.request.queryParameters["size"]?.toInt() ?: 10
-        val result = teamService.getByCompany(companyId, page, size)
         call.respond(HttpStatusCode.OK, result)
     }
 
@@ -79,7 +68,7 @@ class TeamController(
             ?: throw DomainException.Forbidden("Not authorized")
         val teamId = call.parameters["teamId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Team ID is invalid")
-        val result = teamService.delete(teamId, userId)
-        call.respond(HttpStatusCode.OK, result)
+        teamService.delete(teamId, userId)
+        call.respond(HttpStatusCode.NoContent)
     }
 }

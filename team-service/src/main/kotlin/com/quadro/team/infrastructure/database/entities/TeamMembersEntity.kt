@@ -14,7 +14,6 @@ object TeamMembersTable : UUIDTable("team_members") {
     val joinedAt = timestampWithTimeZone("joined_at").nullable()
     val invitedBy = uuid("invited_by")
     val invitedAt = timestampWithTimeZone("invited_at").nullable()
-    val lastActiveAt = timestampWithTimeZone("last_active_at").nullable()
     val isActive = bool("is_active").default(false)
 }
 
@@ -27,6 +26,5 @@ class TeamMembersEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var joinedAt by TeamMembersTable.joinedAt
     var invitedBy by TeamMembersTable.invitedBy
     var invitedAt by TeamMembersTable.invitedAt
-    var lastActiveAt by TeamMembersTable.lastActiveAt
     var isActive by TeamMembersTable.isActive
 }

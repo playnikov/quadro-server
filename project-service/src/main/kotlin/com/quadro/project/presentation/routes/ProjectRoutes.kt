@@ -14,13 +14,12 @@ class ProjectRoutes(
     private val controller: ProjectController
 ) {
     fun init(routing: Route) {
-        routing.route("/api/companies/{id}/projects") {
+        routing.route("/api/projects") {
             authenticate("auth-jwt") {
                 post { controller.createProject(call) }
                 patch("/{projectId}") { controller.updateProject(call) }
                 delete("/{projectId}") { controller.deleteProject(call) }
 
-                get { controller.findByCompany(call) }
                 get("/{projectId}") { controller.findById(call) }
                 get("/search") { controller.findByName(call) }
 

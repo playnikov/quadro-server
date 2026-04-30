@@ -26,7 +26,6 @@ enum class ProjectVisibility {
 
 data class Project(
     val id: UUID,
-    val companyId: UUID,
     val type: ProjectType,
     val name: String,
     val key: String,
@@ -34,8 +33,6 @@ data class Project(
     val status: ProjectStatus,
     val priority: ProjectPriority,
     val visibility: ProjectVisibility,
-    val leadId: UUID,
-    val ownerId: UUID,
     val startDate: Instant?,
     val endDate: Instant?,
     val completedAt: Instant?,
@@ -44,7 +41,6 @@ data class Project(
 )
 
 data class ProjectCreate(
-    val companyId: UUID,
     val type: ProjectType = ProjectType.TEAM_MANAGED,
     val name: String,
     val key: String,
@@ -52,8 +48,7 @@ data class ProjectCreate(
     val priority: ProjectPriority = ProjectPriority.MEDIUM,
     val visibility: ProjectVisibility = ProjectVisibility.RESTRICTED,
     val startDate: Instant? = null,
-    val endDate: Instant? = null,
-    val leadId: UUID
+    val endDate: Instant? = null
 ) {
     fun validate() {
         require(name.isNotBlank()) { "Name must not be blank" }
@@ -62,7 +57,6 @@ data class ProjectCreate(
 }
 
 data class ProjectUpdate(
-    val companyId: UUID,
     val name: String? = null,
     val description: String? = null,
     val status: ProjectStatus? = null,
@@ -70,5 +64,4 @@ data class ProjectUpdate(
     val visibility: ProjectVisibility? = null,
     val startDate: Instant? = null,
     val endDate: Instant? = null,
-    val leadId: UUID? = null
 )

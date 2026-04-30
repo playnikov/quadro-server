@@ -9,7 +9,6 @@ import java.time.Instant
 import java.util.UUID
 
 object ProjectsTable : UUIDTable("projects") {
-    val companyId = uuid("company_id")
     val type = varchar("type", 50)
     val name = varchar("name", 50)
     val key = varchar("key", 20)
@@ -17,8 +16,6 @@ object ProjectsTable : UUIDTable("projects") {
     val status = varchar("status", 50)
     val priority = varchar("priority", 50)
     val visibility = varchar("visibility", 50)
-    val leadId = uuid("lead_id")
-    val ownerId = uuid("owner_id")
     val startDate = timestampWithTimeZone("start_date").nullable()
     val endDate = timestampWithTimeZone("end_date").nullable()
     val completedAt = timestampWithTimeZone("completed_at").nullable()
@@ -29,7 +26,6 @@ object ProjectsTable : UUIDTable("projects") {
 class ProjectEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<ProjectEntity>(ProjectsTable)
 
-    var companyId by ProjectsTable.companyId
     var type by ProjectsTable.type
     var name by ProjectsTable.name
     var key by ProjectsTable.key
@@ -37,8 +33,6 @@ class ProjectEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var status by ProjectsTable.status
     var priority by ProjectsTable.priority
     var visibility by ProjectsTable.visibility
-    var leadId by ProjectsTable.leadId
-    var ownerId by ProjectsTable.ownerId
     var startDate by ProjectsTable.startDate
     var endDate by ProjectsTable.endDate
     var completedAt by ProjectsTable.completedAt

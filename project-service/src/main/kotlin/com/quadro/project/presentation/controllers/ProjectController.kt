@@ -17,11 +17,8 @@ class ProjectController(
 ) {
     suspend fun createProject(call: ApplicationCall) {
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
-        val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: throw DomainException.ValidationError("Company ID is invalid")
         val request = call.receive<ProjectCreateRequest>()
         val projectCreate = ProjectCreate(
-            companyId = companyId,
             type = ProjectType.valueOf(request.type),
             name = request.name,
             key = request.key,
@@ -29,8 +26,7 @@ class ProjectController(
             priority = ProjectPriority.valueOf(request.priority),
             visibility = ProjectVisibility.valueOf(request.visibility),
             startDate = request.startDate,
-            endDate = request.endDate,
-            leadId = UUID.fromString(request.leadId)
+            endDate = request.endDate
         )
 
         val result = projectService.createProject(userId, projectCreate)
@@ -39,21 +35,17 @@ class ProjectController(
 
     suspend fun updateProject(call: ApplicationCall) {
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
-        val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: throw DomainException.ValidationError("Company ID is invalid")
         val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Project ID is invalid")
         val request = call.receive<ProjectUpdateRequest>()
         val projectUpdate = ProjectUpdate(
-            companyId = companyId,
             name = request.name,
             description = request.description,
             status = request.status?.let { ProjectStatus.valueOf(it) },
             priority = request.priority?.let { ProjectPriority.valueOf(it) },
             visibility = request.visibility?.let { ProjectVisibility.valueOf(it) },
             startDate = request.startDate,
-            endDate = request.endDate,
-            leadId = request.leadId?.let { UUID.fromString(it) }
+            endDate = request.endDate
         )
 
         val result = projectService.updateProject(userId, projectId, projectUpdate)
@@ -78,34 +70,18 @@ class ProjectController(
     }
 
     suspend fun findByName(call: ApplicationCall) {
-        val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: throw DomainException.ValidationError("Company ID is invalid")
         val name = call.parameters["name"] ?: throw DomainException.ValidationError("Name is required")
 
-        val result = projectService.findByName(companyId, name)
+        val result = projectService.findByName(name)
         call.respond(HttpStatusCode.OK, ProjectResponse.from(result))
     }
 
     suspend fun findByUser(call: ApplicationCall) {
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
-        val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
         val limit = call.parameters["limit"]?.toIntOrNull() ?: 10
         val offset = call.parameters["offset"]?.toIntOrNull() ?: 0
 
-        val projects = projectService.findByUser(userId, companyId, limit, offset)
-        val result = projects.map { project ->
-            ProjectResponse.from(project)
-        }
-        call.respond(HttpStatusCode.OK, result)
-    }
-
-    suspend fun findByCompany(call: ApplicationCall) {
-        val companyId = call.parameters["id"]?.let { UUID.fromString(it) }
-            ?: throw DomainException.ValidationError("Company ID is invalid")
-        val limit = call.parameters["limit"]?.toIntOrNull() ?: 10
-        val offset = call.parameters["offset"]?.toIntOrNull() ?: 0
-
-        val projects = projectService.findByCompany(companyId, limit, offset)
+        val projects = projectService.findByUser(userId, limit, offset)
         val result = projects.map { project ->
             ProjectResponse.from(project)
         }

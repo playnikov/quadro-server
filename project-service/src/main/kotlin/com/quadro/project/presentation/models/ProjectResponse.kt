@@ -11,7 +11,6 @@ import kotlin.time.Instant
 @Serializable
 data class ProjectResponse(
     val id: String,
-    val companyId: String,
     val type: ProjectType,
     val name: String,
     val key: String,
@@ -19,8 +18,6 @@ data class ProjectResponse(
     val status: ProjectStatus,
     val priority: ProjectPriority,
     val visibility: ProjectVisibility,
-    val leadId: String,
-    val ownerId: String,
     val startDate: Instant?,
     val endDate: Instant?,
     val completedAt: Instant?,
@@ -30,7 +27,6 @@ data class ProjectResponse(
     companion object {
         fun from(project: Project): ProjectResponse = ProjectResponse(
             id = project.id.toString(),
-            companyId = project.companyId.toString(),
             type = project.type,
             name = project.name,
             key = project.key,
@@ -38,8 +34,6 @@ data class ProjectResponse(
             status = project.status,
             priority = project.priority,
             visibility = project.visibility,
-            leadId = project.leadId.toString(),
-            ownerId = project.ownerId.toString(),
             startDate = project.startDate,
             endDate = project.endDate,
             completedAt = project.completedAt,

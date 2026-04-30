@@ -13,7 +13,6 @@ import kotlin.time.toJavaInstant
 object ProjectMapper {
     fun toDomain(entity: ProjectEntity) = Project(
         id = entity.id.value,
-        companyId = entity.companyId,
         type = ProjectType.valueOf(entity.type),
         name = entity.name,
         key = entity.key,
@@ -21,8 +20,6 @@ object ProjectMapper {
         status = ProjectStatus.valueOf(entity.status),
         priority = ProjectPriority.valueOf(entity.priority),
         visibility = ProjectVisibility.valueOf(entity.visibility),
-        leadId = entity.leadId,
-        ownerId = entity.ownerId,
         startDate = entity.startDate?.toKotlinInstant(),
         endDate = entity.endDate?.toKotlinInstant(),
         completedAt = entity.completedAt?.toKotlinInstant(),
@@ -41,7 +38,6 @@ object ProjectMapper {
 
 
     private fun applyDomainToEntity(entity: ProjectEntity, domain: Project) {
-        entity.companyId = domain.companyId
         entity.name = domain.name
         entity.type = domain.type.name
         entity.key = domain.key
@@ -49,8 +45,6 @@ object ProjectMapper {
         entity.status = domain.status.name
         entity.priority = domain.priority.name
         entity.visibility = domain.visibility.name
-        entity.leadId = domain.leadId
-        entity.ownerId = domain.ownerId
         entity.startDate = domain.startDate?.toOffsetDateTime()
         entity.endDate = domain.endDate?.toOffsetDateTime()
         entity.completedAt = domain.completedAt?.toOffsetDateTime()

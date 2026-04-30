@@ -1,5 +1,6 @@
 package com.quadro.project.plugins
 
+import com.quadro.project.presentation.routes.InvitationRoutes
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -12,6 +13,7 @@ import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
     val projectRoutes by inject<ProjectRoutes>()
+    val invitationRoutes by inject<InvitationRoutes>()
 
     routing {
         get("/") {
@@ -32,6 +34,7 @@ fun Application.configureRouting() {
 
         authenticate("auth-jwt") {
             projectRoutes.init(this)
+            invitationRoutes.init(this)
         }
     }
 }

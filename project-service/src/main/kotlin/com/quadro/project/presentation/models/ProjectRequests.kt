@@ -12,8 +12,7 @@ data class ProjectCreateRequest(
     val priority: String,
     val visibility: String,
     val startDate: Instant? = null,
-    val endDate: Instant? = null,
-    val leadId: String
+    val endDate: Instant? = null
 )
 
 @Serializable
@@ -24,6 +23,5 @@ data class ProjectUpdateRequest(
     val priority: String? = null,
     val visibility: String? = null,
     val startDate: Instant? = null,
-    val endDate: Instant? = null,
-    val leadId: String? = null
+    val endDate: Instant? = null
 )

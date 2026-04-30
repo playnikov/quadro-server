@@ -3,16 +3,14 @@ package com.quadro.project.infrastructure.database.repositories
 import com.quadro.project.domain.models.Project
 import com.quadro.project.domain.models.ProjectStatus
 import com.quadro.project.domain.repositories.ProjectRepository
-import com.quadro.project.infrastructure.database.entities.CompanyMembersTable
 import com.quadro.project.infrastructure.database.entities.ProjectEntity
+import com.quadro.project.infrastructure.database.entities.ProjectMembersTable
 import com.quadro.project.infrastructure.database.entities.ProjectsTable
 import com.quadro.project.infrastructure.database.mappers.ProjectMapper
 import com.quadro.shared.utils.toOffsetDateTime
+import io.ktor.util.debug.addToContextInDebugMode
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
@@ -27,24 +25,14 @@ class ProjectRepositoryImpl : ProjectRepository {
         ProjectEntity.findById(id)?.let { ProjectMapper.toDomain(it) }
     }
 
-    override suspend fun findByKey(
-        companyId: UUID,
-        key: String
-    ): Project? = newSuspendedTransaction {
-        ProjectEntity.find {
-            (ProjectsTable.companyId eq companyId) and
-                    (ProjectsTable.key eq key.uppercase())
-        }.firstOrNull()?.let { ProjectMapper.toDomain(it) }
+    override suspend fun findByKey(key: String): Project? = newSuspendedTransaction {
+        ProjectEntity.find { ProjectsTable.key eq key.uppercase() }
+            .firstOrNull()?.let { ProjectMapper.toDomain(it) }
     }
 
-    override suspend fun findByName(
-        companyId: UUID,
-        name: String
-    ): Project? = newSuspendedTransaction {
-        ProjectEntity.find {
-            (ProjectsTable.companyId eq companyId) and
-                    (ProjectsTable.name eq name)
-        }.firstOrNull()?.let { ProjectMapper.toDomain(it) }
+    override suspend fun findByName(name: String): Project? = newSuspendedTransaction {
+        ProjectEntity.find { ProjectsTable.name eq name }
+            .firstOrNull()?.let { ProjectMapper.toDomain(it) }
     }
 
     override suspend fun update(project: Project): Project = newSuspendedTransaction {
@@ -59,34 +47,17 @@ class ProjectRepositoryImpl : ProjectRepository {
         ProjectEntity.findById(id)?.delete() != null
     }
 
-    override suspend fun findByCompany(
-        companyId: UUID,
-        limit: Int,
-        offset: Int
-    ): List<Project> = newSuspendedTransaction {
-        ProjectEntity.find { ProjectsTable.companyId eq companyId }
-            .orderBy(ProjectsTable.createdAt to SortOrder.DESC)
-            .limit(limit)
-            .offset(offset.toLong())
-            .map { ProjectMapper.toDomain(it) }
-    }
-
     override suspend fun findByUser(
         userId: UUID,
-        companyId: UUID?,
         limit: Int,
         offset: Int
     ): List<Project> = newSuspendedTransaction {
-        var query = ProjectsTable.join(
-            CompanyMembersTable,
+        val query = ProjectsTable.join(
+            ProjectMembersTable,
             JoinType.INNER,
-            additionalConstraint = { ProjectsTable.companyId eq CompanyMembersTable.companyId }
+            additionalConstraint = { ProjectsTable.id eq ProjectMembersTable.projectId }
         ).selectAll()
-            .where { CompanyMembersTable.userId eq userId }
-
-        if (companyId != null) {
-            query = query.andWhere { ProjectsTable.companyId eq companyId }
-        }
+            .where { ProjectMembersTable.userId eq userId }
 
         query
             .orderBy(ProjectsTable.createdAt to SortOrder.DESC)
@@ -95,18 +66,12 @@ class ProjectRepositoryImpl : ProjectRepository {
             .map { ProjectMapper.toDomain(ProjectEntity.wrapRow(it)) }
     }
 
-    override suspend fun existsByKey(companyId: UUID, key: String): Boolean = newSuspendedTransaction {
-        !ProjectEntity.find {
-            (ProjectsTable.companyId eq companyId) and
-                    (ProjectsTable.key eq key.uppercase())
-        }.empty()
+    override suspend fun existsByName(name: String): Boolean = newSuspendedTransaction {
+        !ProjectEntity.find { ProjectsTable.name eq name}.empty()
     }
 
-    override suspend fun existsByName(companyId: UUID, name: String): Boolean = newSuspendedTransaction {
-        !ProjectEntity.find {
-            (ProjectsTable.companyId eq companyId) and
-                    (ProjectsTable.name eq name)
-        }.empty()
+    override suspend fun existsByKey(key: String): Boolean = newSuspendedTransaction {
+        !ProjectEntity.find { ProjectsTable.key eq key}.empty()
     }
 
     override suspend fun updateStatus(

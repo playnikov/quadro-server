@@ -70,6 +70,7 @@ class AuthServiceImpl(
                 lastName = createdUser.lastName,
                 middleName = createdUser.middleName,
                 avatar = createdUser.avatarUrl,
+                role = createdUser.role.name,
                 isActive = createdUser.isActive
             )
         )
@@ -109,6 +110,10 @@ class AuthServiceImpl(
 
         logger.info("Successful login for user: ${user.email}, IP: $ipAddress, User-Agent: $userAgent")
 
+        userRepository.update(user.copy(
+            lastLoginAt = Clock.System.now(),
+            lastLoginIp = ipAddress,
+        ))
         return AuthResult(
             token = accessToken,
             refreshToken = refreshToken,

@@ -22,11 +22,11 @@ x-common-env: &common-env
   APP_KAFKA_BROKERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
   APP_REDIS_PASSWORD: ${REDIS_PASSWORD}
   APP_JWT_SECRET: ${JWT_SECRET}
-  APP_JWT_ISSUER: ${JWT_ISSUER:-quadro}
-  APP_JWT_AUDIENCE: ${JWT_AUDIENCE:-quadro-api}
-  APP_JWT_REALM: ${JWT_REALM:-quadro}
-  APP_JWT_EXPIRATION_MS: ${JWT_ACCESS_EXPIRATION:-3600000}
-  APP_JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION:-604800000}
+  APP_JWT_ISSUER: ${JWT_ISSUER}
+  APP_JWT_AUDIENCE: ${JWT_AUDIENCE}
+  APP_JWT_REALM: ${JWT_REALM}
+  APP_JWT_EXPIRATION_MS: ${JWT_ACCESS_EXPIRATION}
+  APP_JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION}
 
 services:
   # ========== PostgreSQL ==========
@@ -36,9 +36,11 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DB: ${DB_NAME}
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${DB_NAME}" ]
@@ -103,9 +105,11 @@ services:
 #      - "6379:6379"
 #    volumes:
 #      - redis_data:/data
-#    command: redis-server --requirepass ${REDIS_PASSWORD}
+#    secrets:
+#      - redis_password
+#    command: redis-server --requirepass /run/secrets/redis_password
 #    healthcheck:
-#      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+#      test: [ "CMD", "redis-cli", "-a", "$(cat /run/secrets/redis_password)", "--raw", "incr", "ping" ]
 #      interval: 10s
 #      timeout: 5s
 #      retries: 5
@@ -122,9 +126,12 @@ services:
 #      - "9001:9001"
 #    volumes:
 #      - minio_data:/data
+#    secrets:
+#      - minio_access_key
+#      - minio_secret_key
 #    environment:
-#      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-#      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+#      MINIO_ROOT_USER_FILE: /run/secrets/minio_access_key
+#      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_secret_key
 #    command: server /data --console-address ":9001"
 #    healthcheck:
 #      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
@@ -136,7 +143,7 @@ services:
 
   # ========== API Gateway ==========
   auth-service:
-    image: ${DOCKERHUB_USERNAME}/${REPOSITORY}:auth-service.${VERSION:-latest}
+    image: ${CR_URI}/${REPOSITORY}:auth-service.${VERSION:-latest}
     container_name: auth-service
     restart: unless-stopped
     environment:
@@ -152,7 +159,7 @@ services:
       - quadro-net
 
   project-service:
-    image: ${DOCKERHUB_USERNAME}/${REPOSITORY}:project-service.${VERSION:-latest}
+    image: ${CR_URI}/${REPOSITORY}:project-service.${VERSION:-latest}
     container_name: project-service
     restart: unless-stopped
     environment:
@@ -168,7 +175,7 @@ services:
       - quadro-net
 
   team-service:
-    image: ${DOCKERHUB_USERNAME}/${REPOSITORY}:team-service.${VERSION:-latest}
+    image: ${CR_URI}/${REPOSITORY}:team-service.${VERSION:-latest}
     container_name: team-service
     restart: unless-stopped
     environment:
@@ -183,25 +190,24 @@ services:
     networks:
       - quadro-net
 
-#  task-service:
-#    image: ${DOCKERHUB_USERNAME}/${REPOSITORY}:task-service.${VERSION:-latest}
-#    container_name: task-service
-#    restart: unless-stopped
-#    environment:
-#      <<: *common-env
-#      APP_DATABASE: task_schema
-#    ports:
-#      - "8085:8085"
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#      kafka:
-#        condition: service_healthy
-#    networks:
-#      - quadro-net
+  task-service:
+    image: ${CR_URI}/${REPOSITORY}:task-service.${VERSION:-latest}
+    container_name: task-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      APP_DATABASE: task_schema
+      PORT: 8084
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - quadro-net
 
   api-gateway:
-    image: ${DOCKERHUB_USERNAME}/${REPOSITORY}:api-gateway.${VERSION:-latest}
+    image: ${CR_URI}/${REPOSITORY}:api-gateway.${VERSION:-latest}
     container_name: api-gateway
     restart: unless-stopped
     environment:
@@ -217,8 +223,6 @@ services:
       - auth-service
       - team-service
       - project-service
-#      - task-service
-#      - notification-service
-#      - redis
+      - task-service
     networks:
       - quadro-net

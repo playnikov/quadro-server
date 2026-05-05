@@ -15,5 +15,4 @@ interface AuthService {
     suspend fun forgotPassword(email: String)
     suspend fun resetPassword(token: String, newPassword: String)
     suspend fun verifyEmail(token: String)
-    suspend fun logout(userId: UUID)
 }

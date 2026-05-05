@@ -7,15 +7,15 @@ ktor:
 
 app:
     jwt:
-        secret: "$APP_JWT_SECRET:test"
-        issuer: "$APP_JWT_ISSUER:quadro"
-        audience: "$APP_JWT_AUDIENCE:quadro-api"
-        realm: "$APP_JWT_REALM:quadro"
+        secret: "$APP_JWT_SECRET"
+        issuer: "$APP_JWT_ISSUER"
+        audience: "$APP_JWT_AUDIENCE"
+        realm: "$APP_JWT_REALM"
         access_ms: "$APP_JWT_EXPIRATION_MS:3600000"
         refresh_ms: "$APP_JWT_REFRESH_EXPIRATION_MS:604800000"
     services:
         auth: "$APP_SERVICES_AUTH:http://localhost:8081"
         project: "$APP_SERVICES_PROJECT:http://localhost:8082"
         team: "$APP_SERVICES_TEAM:http://localhost:8083"
-        task: "$APP_SERVICES_TASK:http://localhost:8085"
-        notification: "$APP_SERVICES_NOTIFICATION:http://localhost:8086"
+        task: "$APP_SERVICES_TASK:http://localhost:8084"
+        notification: "$APP_SERVICES_NOTIFICATION:http://localhost:8085"

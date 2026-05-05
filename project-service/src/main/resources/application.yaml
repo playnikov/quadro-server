@@ -7,10 +7,10 @@ ktor:
 
 app:
     jwt:
-        secret: "$APP_JWT_SECRET:test"
-        issuer: "$APP_JWT_ISSUER:quadro"
-        audience: "$APP_JWT_AUDIENCE:quadro-api"
-        realm: "$APP_JWT_REALM:quadro"
+        secret: "$APP_JWT_SECRET"
+        issuer: "$APP_JWT_ISSUER"
+        audience: "$APP_JWT_AUDIENCE"
+        realm: "$APP_JWT_REALM"
         access_ms: "$APP_JWT_EXPIRATION_MS:3600000"
         refresh_ms: "$APP_JWT_REFRESH_EXPIRATION_MS:604800000"
     kafka:

@@ -6,7 +6,7 @@ fun Application.configure() = DomainConfig(
     domain = environment.config.propertyOrNull("app.domain")?.getString() ?: "localhost"
 )
 fun Application.loadDatabaseConfig() = DatabaseConfig(
-    url      = environment.config.property("app.database.url").getString(),
+    url      = "${environment.config.property("app.database.url").getString()}/${environment.config.property("app.database.db_name").getString()}",
     user     = environment.config.property("app.database.user").getString(),
     password = environment.config.property("app.database.password").getString(),
     maxPoolSize = environment.config.propertyOrNull("app.database.max_pool_size")?.getString()?.toInt() ?: 10,

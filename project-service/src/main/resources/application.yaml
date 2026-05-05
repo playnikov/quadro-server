@@ -16,7 +16,8 @@ app:
     kafka:
         bootstrap_servers: "$APP_KAFKA_BROKERS:localhost:9092"
     database:
-        url: ${APP_DATABASE_URL:jdbc:postgresql://localhost:5432/quadro_db}
+        url: ${APP_DATABASE_URL:jdbc:postgresql://localhost:5432}
+        db_name: ${DB_NAME:quadro_db}
         user: "$APP_DB_USER:postgres"
         password: "$APP_DB_PASSWORD:postgres"
         schema: "$APP_DATABASE:project_schema"

@@ -14,10 +14,10 @@ volumes:
     name: ${MINIO_VOLUME:-minio_data}
 
 x-common-env: &common-env
-  APP_DATABASE_URL: ${DATABASE_URL}
+  APP_DB_HOST: ${DB_HOST}
+  DB_NAME: ${DB_NAME}
   APP_DATABASE_USER: ${DB_USER}
   APP_DATABASE_PASSWORD: ${DB_PASSWORD}
-  DB_NAME: ${DB_NAME}
   APP_DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
   APP_KAFKA_BROKERS: kafka:${KAFKA_INTERNAL_PORT:-29092}
   APP_REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -30,7 +30,7 @@ x-common-env: &common-env
 
 services:
   # ========== PostgreSQL ==========
-  postgres:
+  postgres: # Используется только, если нет отдельного контейнера с БД. В таком случае указывает DB_HOST на этот контейнер.
     image: postgres-with-init:latest
     container_name: postgres
     restart: unless-stopped

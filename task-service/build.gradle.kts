@@ -6,7 +6,7 @@ plugins {
 }
 
 application {
-    mainClass.set("com.quadro.task.Application")
+    mainClass.set("com.quadro.task.ApplicationKt")
 }
 
 dependencies {
@@ -55,8 +55,6 @@ dependencies {
     // Testing
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.mockk)
-    testImplementation(libs.kotlin.test)
-    testImplementation(libs.kotlin.test.junit)
 }
 
 kotlin {

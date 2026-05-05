@@ -97,7 +97,7 @@ jobs:
           tags: ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
 
   deploy:
-    runs-on: img-ubuntu-22.04
+    runs-on: cloudru-runner
     needs: build
     steps:
       - name: Checkout code

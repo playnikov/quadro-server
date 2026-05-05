@@ -85,17 +85,15 @@ jobs:
           chmod +x gradlew
           ./gradlew ${{ matrix.service }}:build -x test
 
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.{{ gitverse.event.image_tag }} ./${{ matrix.service }}
-
-      - name: Log in to Cloud.ru Artifact Registry
-        run: |
-          docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} -p ${{ secrets.KEY_SECRET }}
-
-      - name: Push Docker image
-        run: |
-          docker push ${{ env.CR_URI}}/${{ env.REPOSITORY}}:${{ matrix.service }}.{{ gitverse.event.image_tag }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}-${{ inputs.image_tag }}
+          registry: ${{ env.CR_URI }}
+          username: ${{ secrets.CR_KEY_ID }}
+          password: ${{ secrets.CR_KEY_SECRET }}
 
   deploy:
     runs-on: img-ubuntu-22.04

@@ -48,11 +48,11 @@ fun gatewayModule(application: Application) = module {
 
     factory { AuthRoutes(get(), get()) }
 
-    factory { CompanyRoutes(get(), get()) }
-
     factory { InvitationRoutes(get(), get()) }
 
     factory { ProjectRoutes(get(), get()) }
 
     factory { TeamRoutes(get(), get()) }
+
+    factory { TaskRoutes(get(), get()) }
 }

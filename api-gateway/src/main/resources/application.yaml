@@ -15,8 +15,7 @@ app:
         refresh_ms: "$APP_JWT_REFRESH_EXPIRATION_MS:604800000"
     services:
         auth: "$APP_SERVICES_AUTH:http://localhost:8081"
-        company: "$APP_SERVICES_COMPANY:http://localhost:8082"
+        project: "$APP_SERVICES_PROJECT:http://localhost:8082"
         team: "$APP_SERVICES_TEAM:http://localhost:8083"
-        project: "$APP_SERVICES_PROJECT:http://localhost:8084"
         task: "$APP_SERVICES_TASK:http://localhost:8085"
         notification: "$APP_SERVICES_NOTIFICATION:http://localhost:8086"

@@ -13,9 +13,13 @@ class TeamRoutes(
     private val teamServiceBaseUrl = serviceBaseUrl.team
 
     fun protectedRoutes(routing: Route) {
-        routing.route("/api/companies/{id}/teams") {
+        routing.route("/api/teams") {
             proxyTo(client, teamServiceBaseUrl)
-            route("/{teamId}") { proxyTo(client, teamServiceBaseUrl) }
+            route("/{teamId}") {
+                proxyTo(client, teamServiceBaseUrl)
+                route("/bind") { proxyTo(client, teamServiceBaseUrl) }
+                route("/unbind") { proxyTo(client, teamServiceBaseUrl) }
+            }
         }
     }
 }

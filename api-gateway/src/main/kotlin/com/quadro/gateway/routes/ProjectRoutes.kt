@@ -12,7 +12,7 @@ class ProjectRoutes(
 ) {
     private val projectServiceBaseUrl = serviceBaseUrl.project
     fun protectedRoutes(routing: Route) {
-        routing.route("/api/companies/{id}/projects") {
+        routing.route("/api/projects") {
             proxyTo(client,projectServiceBaseUrl )
 
             route("/{projectId}") { proxyTo(client,projectServiceBaseUrl ) }

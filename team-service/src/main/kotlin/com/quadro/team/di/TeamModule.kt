@@ -36,9 +36,9 @@ val teamModules = module {
 
     single<UserRepository> { UserRepositoryImpl() }
 
-    single<TeamService> { TeamServiceImpl(get(), get(), get(), get()) }
-    single<TeamMemberService> { TeamMemberServiceImpl(get(), get()) }
-    single<ProjectBindingService> { ProjectBindingServiceImpl(get(), get(), get()) }
+    single<TeamService> { TeamServiceImpl(get(), get(), get(), get(), get()) }
+    single<TeamMemberService> { TeamMemberServiceImpl(get(), get(), get()) }
+    single<ProjectBindingService> { ProjectBindingServiceImpl(get(), get(), get(), get()) }
 
     factory { TeamController(get()) }
     factory { TeamMemberController(get()) }

@@ -15,6 +15,7 @@ data class UserCreatedEvent(
     val lastName: String,
     val middleName: String?,
     val avatar: String?,
+    val role: String,
     val isActive: Boolean
 ) : DomainEvent
 
@@ -30,6 +31,7 @@ data class UserUpdatedEvent(
     val middleName: String,
     val avatar: String,
     val isActive: Boolean,
+    val role: String,
     val updatedAt: Long
 ) : DomainEvent
 

@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.ktor) apply false
     alias(libs.plugins.kotlin.plugin.serialization) apply false
     alias(libs.plugins.flyway) apply false
-    id("org.jetbrains.kotlinx.kover") version "0.7.5" apply false
+    alias(libs.plugins.kover) apply false
 }
 
 allprojects {

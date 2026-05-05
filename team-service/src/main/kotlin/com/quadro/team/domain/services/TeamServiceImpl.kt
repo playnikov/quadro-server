@@ -3,7 +3,9 @@ package com.quadro.team.domain.services
 import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.shared.data.messaging.KafkaTopics
 import com.quadro.shared.data.messaging.events.TeamCreatedEvent
+import com.quadro.shared.data.messaging.events.TeamDeletedEvent
 import com.quadro.shared.data.messaging.events.TeamMemberAddedEvent
+import com.quadro.shared.data.messaging.events.TeamUpdatedEvent
 import com.quadro.shared.dto.DomainException
 import com.quadro.team.domain.models.Project
 import com.quadro.team.domain.models.Team
@@ -22,6 +24,7 @@ import com.quadro.team.domain.repositories.TeamMemberRepository
 import com.quadro.team.domain.repositories.TeamProjectBindingRepository
 import com.quadro.team.domain.repositories.TeamRepository
 import com.quadro.team.domain.repositories.UserRepository
+import io.ktor.client.request.request
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.time.Clock
@@ -68,6 +71,7 @@ class TeamServiceImpl(
             event = TeamCreatedEvent(
                 teamId = team.id.toString(),
                 name = team.name,
+                status = team.status.name,
                 createdBy = team.createdBy.toString()
             )
         )
@@ -89,9 +93,10 @@ class TeamServiceImpl(
             topic = KafkaTopics.TEAM_MEMBER_ADDED,
             key = lead.id.toString(),
             event = TeamMemberAddedEvent(
-                teamId = lead.id.toString(),
+                teamId = team.id.toString(),
                 userId = lead.userId.toString(),
-                role = lead.role.name
+                role = lead.role.name,
+                isActive = lead.isActive
             )
         )
 
@@ -120,9 +125,10 @@ class TeamServiceImpl(
                     topic = KafkaTopics.TEAM_MEMBER_ADDED,
                     key = member.id.toString(),
                     event = TeamMemberAddedEvent(
-                        teamId = member.id.toString(),
+                        teamId = team.id.toString(),
                         userId = member.userId.toString(),
-                        role = member.role.name
+                        role = member.role.name,
+                        isActive = member.isActive
                     )
                 )
             }
@@ -172,6 +178,18 @@ class TeamServiceImpl(
                 status = request.status ?: team.status
             )
         )
+
+        eventProducer.publish(
+            topic = KafkaTopics.TEAM_UPDATED,
+            key = team.id.toString(),
+            event = TeamUpdatedEvent(
+                teamId = teamUpdate.id.toString(),
+                name = teamUpdate.name,
+                status = teamUpdate.status.name,
+                updatedBy = requesterId.toString()
+            )
+        )
+
         logger.info("Updated team id=$id, changes: name=${request.name ?: "unchanged"}, leadId=${request.leadId ?: "unchanged"}")
         val response = TeamResponse.from(teamUpdate)
         val (members, projects) = getMembersAndProjects(teamUpdate.id)
@@ -186,6 +204,16 @@ class TeamServiceImpl(
         checkUserExists(requesterId)
         if (team.createdBy != requesterId) throw DomainException.Forbidden("Only creator can delete team")
         teamRepository.delete(id)
+
+        eventProducer.publish(
+            topic = KafkaTopics.TEAM_DELETED,
+            key = team.id.toString(),
+            event = TeamDeletedEvent(
+                teamId = id.toString(),
+                deletedBy = requesterId.toString()
+            )
+        )
+
         logger.info("Deleted team id=$id by user $requesterId")
     }
 

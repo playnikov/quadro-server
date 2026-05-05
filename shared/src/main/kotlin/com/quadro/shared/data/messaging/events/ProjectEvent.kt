@@ -9,8 +9,9 @@ data class ProjectCreatedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val projectId: String,
-    val companyId: String,
+    val ownerId: String,
     val name: String,
+    val key: String,
     val status: String,
     val updatedAt: Long = System.currentTimeMillis(),
 ) : DomainEvent
@@ -21,7 +22,8 @@ data class ProjectUpdatedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val projectId: String,
-    val companyId: String,
+    val ownerId: String,
+    val key: String,
     val name: String,
     val status: String,
     val updatedAt: Long = System.currentTimeMillis(),
@@ -33,7 +35,6 @@ data class ProjectArchivedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val projectId: String,
-    val companyId: String,
     val archivedBy: String,
 ) : DomainEvent
 
@@ -43,6 +44,34 @@ data class ProjectDeletedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val projectId: String,
-    val companyId: String,
     val deletedBy: String,
+) : DomainEvent
+
+@Serializable
+data class ProjectMemberAddedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val projectId: String,
+    val userId: String,
+    val role: String
+) : DomainEvent
+
+@Serializable
+data class ProjectMemberRemovedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val projectId: String,
+    val userId: String
+) : DomainEvent
+
+@Serializable
+data class ProjectMemberUpdatedRoleEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val projectId: String,
+    val userId: String,
+    val role: String
 ) : DomainEvent

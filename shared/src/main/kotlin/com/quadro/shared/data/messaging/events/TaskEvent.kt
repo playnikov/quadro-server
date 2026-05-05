@@ -10,7 +10,6 @@ data class TaskCreatedEvent(
     override val version: Int = 1,
     val taskId: String,
     val projectId: String,
-    val companyId: String,
     val title: String,
     val type: String,
     val priority: String,

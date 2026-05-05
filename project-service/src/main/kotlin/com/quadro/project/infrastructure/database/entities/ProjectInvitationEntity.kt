@@ -7,7 +7,7 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
 import java.util.UUID
 
-object ProjectInvitationsTable : UUIDTable("company_invitations") {
+object ProjectInvitationsTable : UUIDTable("project_invitations") {
     val projectId = uuid("project_id").references(ProjectsTable.id)
     val invitedBy = uuid("invited_by")
     val inviteType = varchar("invite_type", 50)
@@ -25,7 +25,7 @@ object ProjectInvitationsTable : UUIDTable("company_invitations") {
 class ProjectInvitationEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<ProjectInvitationEntity>(ProjectInvitationsTable)
 
-    var projectId by ProjectMembersTable.projectId
+    var projectId by ProjectInvitationsTable.projectId
     var invitedBy by ProjectInvitationsTable.invitedBy
     var inviteType by ProjectInvitationsTable.inviteType
     var identifier by ProjectInvitationsTable.identifier

@@ -60,7 +60,8 @@ class TeamMemberServiceImpl(
             event = TeamMemberAddedEvent(
                 teamId = member.id.toString(),
                 userId = member.userId.toString(),
-                role = member.role.name
+                role = member.role.name,
+                isActive = member.isActive
             )
         )
 
@@ -102,7 +103,8 @@ class TeamMemberServiceImpl(
             event = TeamMemberUpdatedEvent(
                 teamId = teamId.toString(),
                 userId = memberId.toString(),
-                role = role.name
+                role = role.name,
+                isActive = true
             )
         )
     }

@@ -108,7 +108,8 @@ class ProjectServiceImpl(
                 projectId = createdProject.id.toString(),
                 ownerId = userId.toString(),
                 name = createdProject.name,
-                status = createdProject.status.name
+                status = createdProject.status.name,
+                key = createdProject.key
             )
         )
 
@@ -168,7 +169,8 @@ class ProjectServiceImpl(
                 projectId = saved.id.toString(),
                 ownerId = userId.toString(),
                 name = saved.name,
-                status = saved.status.name
+                status = saved.status.name,
+                key = saved.key
             )
         )
 

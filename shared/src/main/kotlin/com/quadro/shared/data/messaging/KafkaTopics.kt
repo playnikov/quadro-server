@@ -6,26 +6,25 @@ object KafkaTopics {
     const val USER_UPDATED = "quadro.user.updated"
     const val USER_DEACTIVATED = "quadro.user.deactivated"
 
-    // Company events
-    const val COMPANY_CREATED = "quadro.company.created"
-    const val COMPANY_UPDATED = "quadro.company.updated"
-    const val COMPANY_DELETED = "quadro.company.deleted"
-    const val COMPANY_MEMBER_ADDED = "quadro.company.member.added"
-    const val COMPANY_MEMBER_REMOVED = "quadro.company.member.removed"
-    const val COMPANY_MEMBER_ROLE_UPDATED = "quadro.company.member.role.updated"
-
-    // Team events
-    const val TEAM_CREATED = "quadro.team.created"
-    const val TEAM_MEMBER_ADDED = "quadro.team.member.added"
-    const val TEAM_MEMBER_REMOVED = "quadro.team.member.removed"
-    const val TEAM_DELETED = "quadro.team.deleted"
-
     // Project events
     const val PROJECT_CREATED = "quadro.project.created"
     const val PROJECT_UPDATED = "quadro.project.updated"
     const val PROJECT_ARCHIVED = "quadro.project.archived"
     const val PROJECT_DELETED = "quadro.project.deleted"
-    const val PROJECT_TEAM_ASSIGNED = "quadro.project.team.assigned"
+    const val PROJECT_MEMBER_ADDED = "quadro.project.member.added"
+    const val PROJECT_MEMBER_REMOVED = "quadro.project.member.removed"
+    const val PROJECT_MEMBER_ROLE_UPDATED = "quadro.project.member.role.updated"
+
+    // Team events
+    const val TEAM_CREATED = "quadro.team.created"
+    const val TEAM_UPDATED = "quadro.team.updated"
+    const val TEAM_DELETED = "quadro.team.deleted"
+    const val TEAM_MEMBER_ADDED = "quadro.team.member.added"
+    const val TEAM_MEMBER_UPDATED = "quadro.team.member.updated"
+    const val TEAM_MEMBER_REMOVED = "quadro.team.member.removed"
+    const val TEAM_PROJECT_ASSIGNED = "quadro.team.project.assigned"
+    const val TEAM_PROJECT_UPDATED = "quadro.team.project.updated"
+    const val TEAM_PROJECT_UNASSIGNED = "quadro.team.project.unassigned"
 
     // Task events
     const val TASK_CREATED = "quadro.task.created"

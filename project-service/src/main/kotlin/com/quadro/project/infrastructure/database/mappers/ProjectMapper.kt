@@ -36,7 +36,6 @@ object ProjectMapper {
         applyDomainToEntity(entity, domain)
     }
 
-
     private fun applyDomainToEntity(entity: ProjectEntity, domain: Project) {
         entity.name = domain.name
         entity.type = domain.type.name

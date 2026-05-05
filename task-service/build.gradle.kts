@@ -6,7 +6,7 @@ plugins {
 }
 
 application {
-    mainClass.set("com.quadro.task.ApplicationKt")
+    mainClass.set("com.quadro.task.Application")
 }
 
 dependencies {
@@ -49,9 +49,14 @@ dependencies {
     // Logging
     implementation(libs.logback.classic)
 
+    // Config
+    implementation(libs.ktor.server.config.yaml)
+
     // Testing
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.mockk)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlin.test.junit)
 }
 
 kotlin {

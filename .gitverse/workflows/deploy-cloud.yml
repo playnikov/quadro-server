@@ -97,7 +97,7 @@ jobs:
           tags: ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
 
   deploy:
-    runs-on: cloudru-runner
+    runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Checkout code
@@ -129,30 +129,25 @@ jobs:
           API_GATEWAY_PORT=${{ env.API_GATEWAY_PORT }}
           EOF
 
-      - name: Create docker secrets directory
-        run: |
-          mkdir -p /tmp/docker-secrets
+      - name: Copy files to VM via SSH
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          source: ".env, docker-compose.yaml"
+          target: /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          strip_components: 2
 
-      - name: Create secret files
-        run: |
-          echo "${{ secrets.POSTGRES_PASSWORD }}" > /tmp/docker-secrets/postgres_password
-          echo "${{ secrets.DB_PASSWORD }}" > /tmp/docker-secrets/db_password
-          echo "${{ secrets.REDIS_PASSWORD }}" > /tmp/docker-secrets/redis_password
-          echo "${{ secrets.MINIO_ACCESS_KEY }}" > /tmp/docker-secrets/minio_access_key
-          echo "${{ secrets.MINIO_SECRET_KEY }}" > /tmp/docker-secrets/minio_secret_key
-          echo "${{ secrets.JWT_SECRET }}" > /tmp/docker-secrets/jwt_secret
-
-      - name: Pull images from Cloud.ru
-        run: |
-          docker compose pull
-
-      - name: Deploy with Docker Compose
-        run: |
-          docker compose down
-          POSTGRES_PASSWORD_FILE=/tmp/docker-secrets/postgres_password \
-          DB_PASSWORD_FILE=/tmp/docker-secrets/db_password \
-          REDIS_PASSWORD_FILE=/tmp/docker-secrets/redis_password \
-          MINIO_ACCESS_KEY_FILE=/tmp/docker-secrets/minio_access_key \
-          MINIO_SECRET_KEY_FILE=/tmp/docker-secrets/minio_secret_key \
-          JWT_SECRET_FILE=/tmp/docker-secrets/jwt_secret \
-          docker compose --env-file .env up -d
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+            docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} -p ${{ secrets.KEY_SECRET }}
+            docker compose pull
+            docker compose down
+            docker compose --env-file .env up -d

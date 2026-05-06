@@ -94,26 +94,22 @@ jobs:
         with:
           context: ./${{ matrix.service }}
           push: true
-          tags: ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
+          tags: |
+            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ gitverse.sha }}
+            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
 
   deploy:
-    runs-on: ubuntu-latest
-    needs: build
+    runs-on: self-hosted
+    #    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to Cloud.ru Artifact Registry
-        run: |
-          docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} -p ${{ secrets.KEY_SECRET }}
-
-      - name: Build PostgreSQL image with init scripts
-        run: |
-          docker build -f Dockerfile.postgres -t postgres-with-init:latest .
-
       - name: Create .env file
         run: |
+          echo "Creating a new '.env' configuration..."
           cat > .env <<EOF
+          VERSION=${{ inputs.image_tag }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           DB_USER=${{ secrets.DB_USER }}
           DB_NAME=${{ secrets.DB_NAME }}
@@ -125,29 +121,39 @@ jobs:
           JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
           CR_URI=${{ env.CR_URI }}
           REPOSITORY=${{ env.REPOSITORY }}
-          VERSION=${{ gitverse.event.image_tag }}
           API_GATEWAY_PORT=${{ env.API_GATEWAY_PORT }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          KAFKA_PORT_EXTERNAL=${{ secrets.KAFKA_PORT_EXTERNAL }}
           EOF
+          echo "Done!"
 
-      - name: Copy files to VM via SSH
-        uses: appleboy/scp-action@v0.1.5
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          source: ".env, docker-compose.yaml"
-          target: /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          strip_components: 2
+      - name: Copy files to VM via SCP
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "mkdir -p /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/"
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key \
+            .env docker-compose.yaml Dockerfile.postgres \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
+            init-scripts \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          rm -rf .env
 
       - name: Deploy to VM via SSH
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          script: |
-            cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-            docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} -p ${{ secrets.KEY_SECRET }}
-            docker compose pull
-            docker compose down
-            docker compose --env-file .env up -d
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          echo "${{ secrets.KEY_SECRET }}" | docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} --password-stdin
+          docker build -f Dockerfile.postgres -t postgres-with-init:latest .
+          docker compose pull
+          docker compose down
+          docker compose --env-file .env up -d
+          rm -rf .env
+          EOF

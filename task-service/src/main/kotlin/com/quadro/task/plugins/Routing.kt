@@ -25,7 +25,7 @@ fun Application.configureRouting() {
             call.respond(mapOf(
                 "service" to "Task Service",
                 "version" to "1.0.0",
-                "timestamp" to Clock.System.now()
+                "timestamp" to System.currentTimeMillis().toString()
             ))
         }
 
@@ -33,7 +33,7 @@ fun Application.configureRouting() {
             call.respond(mapOf(
                 "status" to "UP",
                 "service" to "task-service",
-                "timestamp" to Clock.System.now()
+                "timestamp" to System.currentTimeMillis().toString()
             ))
         }
 

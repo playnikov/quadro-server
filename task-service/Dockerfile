@@ -1,5 +1,6 @@
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
+RUN apk update && apk add --no-cache libc6-compat
 COPY build/libs/task-service-*.jar app.jar
 RUN addgroup -S quadro && adduser -S quadro -G quadro
 RUN mkdir -p /app/logs && chown -R quadro:quadro /app

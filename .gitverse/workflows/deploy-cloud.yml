@@ -128,7 +128,6 @@ jobs:
           MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
           MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
-          KAFKA_PORT_EXTERNAL=${{ secrets.KAFKA_PORT_EXTERNAL }}
           EOF
           echo "Done!"
 

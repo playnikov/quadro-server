@@ -1,5 +1,6 @@
 package com.quadro.task.presentation.controllers
 
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
 import com.quadro.task.domain.models.task.SprintCreate
@@ -32,7 +33,7 @@ class SprintController(
         )
 
         val result = sprintService.createSprint(sprintCreate)
-        call.respond(HttpStatusCode.Created, SprintResponse.from(result))
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(SprintResponse.from(result)))
     }
 
     suspend fun updateSprint(call: ApplicationCall) {
@@ -48,14 +49,14 @@ class SprintController(
         )
 
         val result = sprintService.updateSprint(sprintId, sprintUpdate)
-        call.respond(HttpStatusCode.OK, SprintResponse.from(result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(SprintResponse.from(result)))
     }
 
     suspend fun deleteSprint(call: ApplicationCall) {
         val sprintId = call.parameters["sprintId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Sprint ID is invalid")
         sprintService.deleteSprint(sprintId)
-        call.respond(HttpStatusCode.NoContent)
+        call.respond(HttpStatusCode.NoContent, ApiResponse.ok("Deleted sprint: $sprintId"))
     }
 
     suspend fun findById(call: ApplicationCall) {
@@ -66,7 +67,7 @@ class SprintController(
         if (result == null) {
             call.respond(HttpStatusCode.NotFound)
         } else {
-            call.respond(HttpStatusCode.OK, SprintResponse.from(result))
+            call.respond(HttpStatusCode.OK, ApiResponse.ok(SprintResponse.from(result)))
         }
     }
 
@@ -76,6 +77,6 @@ class SprintController(
 
         val sprints = sprintService.getSprintsByProject(projectId)
             .map(SprintResponse::from)
-        call.respond(HttpStatusCode.OK, sprints)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(sprints))
     }
 }

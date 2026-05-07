@@ -1,5 +1,6 @@
 package com.quadro.task.presentation.controllers
 
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.services.TaskStatusService
@@ -19,7 +20,7 @@ class TaskStatusController(
             ?: throw DomainException.ValidationError("Status is required")
 
         val result = taskStatusService.transitionStatus(taskId, status)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun validateTransition(call: ApplicationCall) {
@@ -29,7 +30,7 @@ class TaskStatusController(
             ?: throw DomainException.ValidationError("Status is required")
 
         val result = taskStatusService.validateStatusTransition(taskId, status)
-        call.respond(HttpStatusCode.OK, mapOf("valid" to result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("valid" to result)))
     }
 
     suspend fun start(call: ApplicationCall) {
@@ -37,7 +38,7 @@ class TaskStatusController(
             ?: throw DomainException.ValidationError("Task ID is invalid")
 
         val result = taskStatusService.startTask(taskId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun complete(call: ApplicationCall) {
@@ -45,7 +46,7 @@ class TaskStatusController(
             ?: throw DomainException.ValidationError("Task ID is invalid")
 
         val result = taskStatusService.completeTask(taskId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun cancel(call: ApplicationCall) {
@@ -53,7 +54,7 @@ class TaskStatusController(
             ?: throw DomainException.ValidationError("Task ID is invalid")
 
         val result = taskStatusService.cancelTask(taskId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun reopen(call: ApplicationCall) {
@@ -61,6 +62,6 @@ class TaskStatusController(
             ?: throw DomainException.ValidationError("Task ID is invalid")
 
         val result = taskStatusService.reopenTask(taskId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 }

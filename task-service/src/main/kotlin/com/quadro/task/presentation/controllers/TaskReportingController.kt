@@ -1,5 +1,6 @@
 package com.quadro.task.presentation.controllers
 
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.services.TaskReportingService
@@ -18,7 +19,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val count = taskReportingService.getBacklogCount(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("count" to count))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("count" to count)))
     }
 
     suspend fun getTodoCount(call: ApplicationCall) {
@@ -26,7 +27,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val count = taskReportingService.getTodoCount(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("count" to count))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("count" to count)))
     }
 
     suspend fun getInProgressCount(call: ApplicationCall) {
@@ -34,7 +35,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val count = taskReportingService.getInProgressCount(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("count" to count))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("count" to count)))
     }
 
     suspend fun getInReviewCount(call: ApplicationCall) {
@@ -42,7 +43,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val count = taskReportingService.getInReviewCount(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("count" to count))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("count" to count)))
     }
 
     suspend fun getDoneCount(call: ApplicationCall) {
@@ -50,7 +51,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val count = taskReportingService.getDoneCount(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("count" to count))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("count" to count)))
     }
 
     suspend fun getCancelledCount(call: ApplicationCall) {
@@ -58,7 +59,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val count = taskReportingService.getCancelledCount(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("count" to count))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("count" to count)))
     }
 
     suspend fun getTaskCounts(call: ApplicationCall) {
@@ -66,7 +67,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val counts = taskReportingService.getTaskCounts(projectId)
-        call.respond(HttpStatusCode.OK, counts)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(counts))
     }
 
     suspend fun getOverdueTasks(call: ApplicationCall) {
@@ -75,7 +76,7 @@ class TaskReportingController(
         val now = Clock.System.now()
 
         val tasks = taskReportingService.getOverdueTasks(projectId, now)
-        call.respond(HttpStatusCode.OK, tasks)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
 
     suspend fun getAverageCompletionDays(call: ApplicationCall) {
@@ -83,7 +84,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val days = taskReportingService.getAverageCompletionDays(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("days" to days))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("days" to days)))
     }
 
     suspend fun getCompletionRate(call: ApplicationCall) {
@@ -91,7 +92,7 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val rate = taskReportingService.getCompletionRate(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("rate" to rate))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("rate" to rate)))
     }
 
     suspend fun getVelocity(call: ApplicationCall) {
@@ -99,6 +100,6 @@ class TaskReportingController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val velocity = taskReportingService.getVelocity(projectId)
-        call.respond(HttpStatusCode.OK, mapOf("velocity" to velocity))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("velocity" to velocity)))
     }
 }

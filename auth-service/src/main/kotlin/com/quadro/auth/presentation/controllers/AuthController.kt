@@ -6,6 +6,7 @@ import com.quadro.auth.domain.services.AuthService
 import com.quadro.auth.presentation.models.LoginRequest
 import com.quadro.auth.presentation.models.RefreshTokenRequest
 import com.quadro.auth.presentation.models.RegisterRequest
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
 import io.ktor.http.HttpStatusCode
@@ -36,7 +37,7 @@ class AuthController(private val authService: AuthService) {
             ),
             clientIp
         )
-        call.respond(HttpStatusCode.Created, result)
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(result))
     }
 
     suspend fun login(call: ApplicationCall) {
@@ -53,12 +54,12 @@ class AuthController(private val authService: AuthService) {
         )
 
         val result = authService.login(userLogin, clientIp, userAgent)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun refreshToken(call: ApplicationCall) {
         val request = call.receive<RefreshTokenRequest>()
         val result = authService.refreshToken(request.refreshToken)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 }

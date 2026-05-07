@@ -3,6 +3,7 @@ package com.quadro.project.presentation.controllers
 import com.quadro.project.domain.models.*
 import com.quadro.project.domain.services.ProjectService
 import com.quadro.project.presentation.models.*
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
 import io.ktor.http.HttpStatusCode
@@ -30,7 +31,7 @@ class ProjectController(
         )
 
         val result = projectService.createProject(userId, projectCreate)
-        call.respond(HttpStatusCode.Created, ProjectResponse.from(result))
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(ProjectResponse.from(result)))
     }
 
     suspend fun updateProject(call: ApplicationCall) {
@@ -49,7 +50,7 @@ class ProjectController(
         )
 
         val result = projectService.updateProject(userId, projectId, projectUpdate)
-        call.respond(HttpStatusCode.OK, ProjectResponse.from(result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(ProjectResponse.from(result)))
     }
 
     suspend fun deleteProject(call: ApplicationCall) {
@@ -58,7 +59,7 @@ class ProjectController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         projectService.deleteProject(userId, projectId)
-        call.respond(HttpStatusCode.NoContent)
+        call.respond(HttpStatusCode.NoContent, ApiResponse.ok("Deleted project $projectId"))
     }
 
     suspend fun findById(call: ApplicationCall) {
@@ -66,14 +67,14 @@ class ProjectController(
             ?: throw DomainException.ValidationError("Project ID is invalid")
 
         val result = projectService.findById(projectId)
-        call.respond(HttpStatusCode.OK, ProjectResponse.from(result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(ProjectResponse.from(result)))
     }
 
     suspend fun findByName(call: ApplicationCall) {
         val name = call.parameters["name"] ?: throw DomainException.ValidationError("Name is required")
 
         val result = projectService.findByName(name)
-        call.respond(HttpStatusCode.OK, ProjectResponse.from(result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(ProjectResponse.from(result)))
     }
 
     suspend fun findByUser(call: ApplicationCall) {
@@ -85,7 +86,7 @@ class ProjectController(
         val result = projects.map { project ->
             ProjectResponse.from(project)
         }
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun updateStatus(call: ApplicationCall) {
@@ -97,7 +98,7 @@ class ProjectController(
 
         val result = projectService.updateStatus(userId, projectId, status)
         if (result) {
-            call.respond(HttpStatusCode.OK, mapOf("success" to true))
+            call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("success" to true)))
         } else {
             throw DomainException.NotFound("Project", "Project Not Found")
         }

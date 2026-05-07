@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.exceptions.TokenExpiredException
 import com.quadro.shared.data.config.JwtConfig
+import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
@@ -13,6 +14,7 @@ import io.ktor.server.auth.Principal
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.bearer
 import io.ktor.server.auth.principal
+import io.ktor.server.request.httpMethod
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import javax.naming.AuthenticationException
@@ -71,6 +73,7 @@ class JwtValidator(
 fun Application.configureSecurity(jwtValidator: JwtValidator) {
     install(Authentication) {
         bearer("auth-jwt") {
+            skipWhen { it.request.httpMethod == HttpMethod.Options }
             authenticate { tokenCredential ->
                 val token = jwtValidator.validateToken(tokenCredential.token)
                 if (token.isValid && token.userId != null) {

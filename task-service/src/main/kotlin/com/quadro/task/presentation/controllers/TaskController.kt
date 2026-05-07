@@ -1,5 +1,6 @@
 package com.quadro.task.presentation.controllers
 
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
 import com.quadro.task.domain.models.task.Task
@@ -41,7 +42,7 @@ class TaskController(
         )
 
         val result = taskService.createTask(taskCreate, reporterId)
-        call.respond(HttpStatusCode.Created, TaskResponse.from(result))
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(TaskResponse.from(result)))
     }
 
     suspend fun updateTask(call: ApplicationCall) {
@@ -64,14 +65,14 @@ class TaskController(
         )
 
         val result = taskService.updateTask(taskId, taskUpdate)
-        call.respond(HttpStatusCode.OK, TaskResponse.from(result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(TaskResponse.from(result)))
     }
 
     suspend fun deleteTask(call: ApplicationCall) {
         val taskId = call.parameters["taskId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Task ID is invalid")
         taskService.deleteTask(taskId)
-        call.respond(HttpStatusCode.NoContent)
+        call.respond(HttpStatusCode.NoContent, ApiResponse.ok("Deleted task: $taskId"))
     }
 
     suspend fun findById(call: ApplicationCall) {
@@ -83,7 +84,7 @@ class TaskController(
             call.respond(HttpStatusCode.NotFound)
             return
         }
-        call.respond(HttpStatusCode.OK, TaskResponse.from(result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(TaskResponse.from(result)))
     }
 
     suspend fun findByProject(call: ApplicationCall) {
@@ -94,7 +95,7 @@ class TaskController(
 
         val tasks = taskService.getTasksByProject(projectId, limit, offset)
             .map(TaskResponse::from)
-        call.respond(HttpStatusCode.OK, tasks)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
 
     suspend fun findBySprint(call: ApplicationCall) {
@@ -103,7 +104,7 @@ class TaskController(
 
         val tasks = taskService.getTasksBySprint(sprintId)
             .map(TaskResponse::from)
-        call.respond(HttpStatusCode.OK, tasks)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
 
     suspend fun findByAssignee(call: ApplicationCall) {
@@ -112,7 +113,7 @@ class TaskController(
 
         val tasks = taskService.getTasksByAssignee(userId)
             .map(TaskResponse::from)
-        call.respond(HttpStatusCode.OK, tasks)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
 
     suspend fun findByTeam(call: ApplicationCall) {
@@ -123,7 +124,7 @@ class TaskController(
 
         val tasks = taskService.getTasksByTeam(teamId, projectId)
             .map(TaskResponse::from)
-        call.respond(HttpStatusCode.OK, tasks)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
 
     suspend fun findByParent(call: ApplicationCall) {
@@ -132,6 +133,6 @@ class TaskController(
 
         val tasks = taskService.getTasksByParent(parentTaskId)
             .map(TaskResponse::from)
-        call.respond(HttpStatusCode.OK, tasks)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
 }

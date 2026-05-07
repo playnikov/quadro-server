@@ -1,5 +1,6 @@
 package com.quadro.task.presentation.controllers
 
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
 import com.quadro.task.domain.services.TaskAssignmentService
@@ -19,7 +20,7 @@ class TaskAssignmentController(
             ?: throw DomainException.ValidationError("User ID is invalid")
 
         val result = taskAssignmentService.assignTaskToUser(taskId, userId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun assignToTeam(call: ApplicationCall) {
@@ -29,7 +30,7 @@ class TaskAssignmentController(
             ?: throw DomainException.ValidationError("Team ID is invalid")
 
         val result = taskAssignmentService.assignTaskToTeam(taskId, teamId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun unassign(call: ApplicationCall) {
@@ -37,7 +38,7 @@ class TaskAssignmentController(
             ?: throw DomainException.ValidationError("Task ID is invalid")
 
         val result = taskAssignmentService.unassignTask(taskId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun validateUserAssignment(call: ApplicationCall) {
@@ -47,7 +48,7 @@ class TaskAssignmentController(
             ?: throw DomainException.ValidationError("User ID is invalid")
 
         val result = taskAssignmentService.validateUserAssignment(taskId, userId)
-        call.respond(HttpStatusCode.OK, mapOf("valid" to result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("valid" to result)))
     }
 
     suspend fun validateTeamAssignment(call: ApplicationCall) {
@@ -57,6 +58,6 @@ class TaskAssignmentController(
             ?: throw DomainException.ValidationError("Team ID is invalid")
 
         val result = taskAssignmentService.validateTeamAssignment(taskId, teamId)
-        call.respond(HttpStatusCode.OK, mapOf("valid" to result))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("valid" to result)))
     }
 }

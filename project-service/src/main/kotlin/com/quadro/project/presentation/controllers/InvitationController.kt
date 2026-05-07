@@ -3,6 +3,7 @@ package com.quadro.project.presentation.controllers
 import com.quadro.project.domain.models.InvitationCreate
 import com.quadro.project.domain.services.ProjectInvitationService
 import com.quadro.project.presentation.models.CreateInvitationRequest
+import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
 import io.ktor.http.HttpStatusCode
@@ -26,7 +27,7 @@ class InvitationController(
             expiresInDays = request.expiresInDays
         )
         val result = projectInvitationService.createInvitation(projectId, userId, invitationCreate)
-        call.respond(HttpStatusCode.Created, result)
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(result))
     }
 
     suspend fun getInvitations(call: ApplicationCall) {
@@ -34,14 +35,14 @@ class InvitationController(
         val projectId = call.parameters["id"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Project ID is invalid")
         val result = projectInvitationService.getInvitations(projectId, userId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun acceptInvitation(call: ApplicationCall) {
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val token = call.parameters["token"] ?: throw DomainException.ValidationError("Token is invalid")
         val result = projectInvitationService.acceptInvitation(token, userId)
-        call.respond(HttpStatusCode.OK, result)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
     suspend fun cancelInvitation(call: ApplicationCall) {
@@ -51,6 +52,6 @@ class InvitationController(
         val invitationId = call.parameters["invitationId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Invitation ID is invalid")
         projectInvitationService.cancelInvitation(projectId, userId, invitationId)
-        call.respond(HttpStatusCode.OK, mapOf("message" to "Invitation cancelled successfully"))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("message" to "Invitation cancelled successfully")))
     }
 }

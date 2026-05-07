@@ -92,69 +92,69 @@ services:
 
 
   # ========== API Gateway ==========
-#  auth-service:
-#    image: ${CR_URI}/${REPOSITORY}:auth-service.${VERSION:-latest}
-#    container_name: auth-service
-#    restart: unless-stopped
-#    environment:
-#      <<: *common-env
-#      APP_DATABASE: auth_schema
-#      PORT: 8081
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#      kafka:
-#        condition: service_healthy
-#    networks:
-#      - quadro-net
-#
-#  project-service:
-#    image: ${CR_URI}/${REPOSITORY}:project-service.${VERSION:-latest}
-#    container_name: project-service
-#    restart: unless-stopped
-#    environment:
-#      <<: *common-env
-#      APP_DATABASE: project_schema
-#      PORT: 8082
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#      kafka:
-#        condition: service_healthy
-#    networks:
-#      - quadro-net
-#
-#  team-service:
-#    image: ${CR_URI}/${REPOSITORY}:team-service.${VERSION:-latest}
-#    container_name: team-service
-#    restart: unless-stopped
-#    environment:
-#      <<: *common-env
-#      APP_DATABASE: team_schema
-#      PORT: 8083
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#      kafka:
-#        condition: service_healthy
-#    networks:
-#      - quadro-net
-#
-#  task-service:
-#    image: ${CR_URI}/${REPOSITORY}:task-service.${VERSION:-latest}
-#    container_name: task-service
-#    restart: unless-stopped
-#    environment:
-#      <<: *common-env
-#      APP_DATABASE: task_schema
-#      PORT: 8084
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
-#      kafka:
-#        condition: service_healthy
-#    networks:
-#      - quadro-net
+  auth-service:
+    image: ${CR_URI}/${REPOSITORY}:auth-service.${VERSION:-latest}
+    container_name: auth-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      APP_DATABASE: auth_schema
+      PORT: 8081
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - quadro-net
+
+  project-service:
+    image: ${CR_URI}/${REPOSITORY}:project-service.${VERSION:-latest}
+    container_name: project-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      APP_DATABASE: project_schema
+      PORT: 8082
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - quadro-net
+
+  team-service:
+    image: ${CR_URI}/${REPOSITORY}:team-service.${VERSION:-latest}
+    container_name: team-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      APP_DATABASE: team_schema
+      PORT: 8083
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - quadro-net
+
+  task-service:
+    image: ${CR_URI}/${REPOSITORY}:task-service.${VERSION:-latest}
+    container_name: task-service
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      APP_DATABASE: task_schema
+      PORT: 8084
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - quadro-net
 
   api-gateway:
     image: ${CR_URI}/${REPOSITORY}:api-gateway.${VERSION:-latest}

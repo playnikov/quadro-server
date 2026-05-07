@@ -14,17 +14,6 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
-    install(CORS) {
-        allowHost("localhost:8080", schemes = listOf("http"))
-        allowMethod(HttpMethod.Options)
-        allowMethod(HttpMethod.Post)
-        allowMethod(HttpMethod.Put)
-        allowMethod(HttpMethod.Delete)
-        allowMethod(HttpMethod.Patch)
-        allowHeader(HttpHeaders.Authorization)
-        allowHeader(HttpHeaders.ContentType)
-    }
-
     val authRoutes by inject<AuthRoutes>()
     val invitationRoutes by inject<InvitationRoutes>()
     val projectRoutes by inject<ProjectRoutes>()

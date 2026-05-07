@@ -8,10 +8,13 @@ import com.quadro.shared.plugins.configureMonitoring
 import com.quadro.shared.plugins.configureStatusPages
 import com.quadro.shared.security.JwtValidator
 import com.quadro.shared.security.configureSecurity
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.cors.routing.CORS
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
@@ -31,6 +34,17 @@ fun main(args: Array<String>)  {
 }
 
 fun Application.module() {
+    install(CORS) {
+        anyHost()
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Patch)
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.ContentType)
+    }
+
     install(Koin) {
         slf4jLogger()
         modules(

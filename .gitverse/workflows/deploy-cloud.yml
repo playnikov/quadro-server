@@ -60,7 +60,8 @@ jobs:
     #    needs: test
     strategy:
       matrix:
-        service: [api-gateway, auth-service, team-service, project-service, task-service]
+        service: api-gateway
+#        service: [api-gateway, auth-service, team-service, project-service, task-service]
       max-parallel: 4
     steps:
       - name: Checkout code

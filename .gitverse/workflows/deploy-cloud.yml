@@ -60,7 +60,7 @@ jobs:
     #    needs: test
     strategy:
       matrix:
-        service: api-gateway
+        service: api-gateway, auth-service
 #        service: [api-gateway, auth-service, team-service, project-service, task-service]
       max-parallel: 4
     steps:

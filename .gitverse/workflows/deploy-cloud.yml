@@ -3,10 +3,6 @@ name: Build and Deploy to Cloud.ru
 on:
   workflow_dispatch:
     inputs:
-      services:
-        description: 'Список сервисов через запятую (например: api-gateway,auth-service)'
-        required: true
-        default: 'api-gateway,auth-service,team-service,project-service,task-service'
       environment:
         type: choice
         options: [ dev, staging, production ]
@@ -63,20 +59,46 @@ jobs:
     runs-on: self-hosted
     #    needs: test
     strategy:
-      matrix:
-        service: ${{ split(inputs.services, ',') }}
+      include:
+        - service: api-gateway
+          path: api-gateway
+        - service: auth-service
+          path: auth-service
+        - service: team-service
+          path: team-service
+        - service: project-service
+          path: project-service
+        - service: task-service
+          path: task-service
       max-parallel: 4
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine changed services
+        id: changed-services
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          CHANGED_SERVICES=""
+          for SERVICE_DIR in api-gateway auth-service team-service project-service task-service; do
+            if echo "$CHANGED_FILES" | grep -q "^$SERVICE_DIR/"; then
+              echo "Service $SERVICE_DIR has changes"
+              CHANGED_SERVICES="$CHANGED_SERVICES $SERVICE_DIR"
+            fi
+          done
+          echo "services=$CHANGED_SERVICES" >> $GITVERSE_OUTPUT
 
       - name: Set up JDK 21
+        if: contains(steps.changed-services.outputs.services, matrix.service)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
       - name: Cache Gradle dependencies
+        if: contains(steps.changed-services.outputs.services, matrix.service)
         uses: actions/cache@v4
         with:
           path: ~/.cache/act
@@ -85,6 +107,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build JAR
+        if: contains(steps.changed-services.outputs.services, matrix.service)
         run: |
           echo Build JAR for ${{ matrix.service }}
           chmod +x gradlew

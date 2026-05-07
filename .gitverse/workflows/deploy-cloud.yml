@@ -3,13 +3,17 @@ name: Build and Deploy to Cloud.ru
 on:
   workflow_dispatch:
     inputs:
+      services:
+        description: 'Список сервисов через запятую (например: api-gateway,auth-service)'
+        required: true
+        default: 'api-gateway,auth-service,team-service,project-service,task-service'
       environment:
         type: choice
-        options: [dev, staging, production]
+        options: [ dev, staging, production ]
         default: staging
-        description: 'Target deployment environment'
+        description: 'Целевое окружение'
       image_tag:
-        description: 'The tag of the container'
+        description: 'Тег контейнера'
         required: true
         default: 'latest'
 
@@ -60,7 +64,7 @@ jobs:
     #    needs: test
     strategy:
       matrix:
-        service: [api-gateway, auth-service, team-service, project-service, task-service]
+        service: ${{ fromJSON(format('["{0}"]', replace(github.event.inputs.services, ',', '","'))) }}
       max-parallel: 4
     steps:
       - name: Checkout code
@@ -80,8 +84,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build JAR for ${{ matrix.service }}
+      - name: Build JAR
         run: |
+          echo Build JAR for ${{ matrix.service }}
           chmod +x gradlew
           ./gradlew ${{ matrix.service }}:build -x test
 

@@ -59,7 +59,7 @@ fun Route.proxyTo(client: HttpClient, targetBaseUrl: String) {
         val response: HttpResponse = client.request(targetUrl) {
             method = call.request.httpMethod
             headers.appendAll(call.request.headers)
-            if (call.request.httpMethod in listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Patch)) {
+            if (call.request.httpMethod in listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Patch, HttpMethod.Options)) {
                 setBody(call.receiveChannel())
             }
         }

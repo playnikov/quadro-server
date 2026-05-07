@@ -171,8 +171,8 @@ services:
       - "${API_GATEWAY_PORT:-80}:8080"
     depends_on:
       - auth-service
-#      - team-service
-#      - project-service
-#      - task-service
+      - team-service
+      - project-service
+      - task-service
     networks:
       - quadro-net

@@ -35,7 +35,7 @@ fun main(args: Array<String>)  {
 
 fun Application.module() {
     install(CORS) {
-        allowHost("localhost:8080", schemes = listOf("http"))
+        anyHost()
         allowMethod(HttpMethod.Options)
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)

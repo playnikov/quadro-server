@@ -37,6 +37,7 @@ fun Application.module() {
     install(CORS) {
         allowHost("localhost:8080", schemes = listOf("http"))
         allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)
         allowMethod(HttpMethod.Put)
         allowMethod(HttpMethod.Delete)

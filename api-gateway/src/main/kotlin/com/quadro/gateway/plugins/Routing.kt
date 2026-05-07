@@ -21,6 +21,10 @@ fun Application.configureRouting() {
     val teamRoutes by inject<TeamRoutes>()
 
     routing {
+        options("/{...}") {
+            call.respond(HttpStatusCode.OK)
+        }
+
         get("/") {
             call.respond(
                 mapOf(

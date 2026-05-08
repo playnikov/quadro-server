@@ -16,9 +16,6 @@ object ProjectsTable : UUIDTable("projects") {
     val status = varchar("status", 50)
     val priority = varchar("priority", 50)
     val visibility = varchar("visibility", 50)
-    val startDate = timestampWithTimeZone("start_date").nullable()
-    val endDate = timestampWithTimeZone("end_date").nullable()
-    val completedAt = timestampWithTimeZone("completed_at").nullable()
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")
 }
@@ -33,9 +30,6 @@ class ProjectEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var status by ProjectsTable.status
     var priority by ProjectsTable.priority
     var visibility by ProjectsTable.visibility
-    var startDate by ProjectsTable.startDate
-    var endDate by ProjectsTable.endDate
-    var completedAt by ProjectsTable.completedAt
     var createdAt by ProjectsTable.createdAt
     var updatedAt by ProjectsTable.updatedAt
 }

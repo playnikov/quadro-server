@@ -18,9 +18,6 @@ data class ProjectResponse(
     val status: ProjectStatus,
     val priority: ProjectPriority,
     val visibility: ProjectVisibility,
-    val startDate: Instant?,
-    val endDate: Instant?,
-    val completedAt: Instant?,
     val createdAt: Instant,
     val updatedAt: Instant,
 ) {
@@ -34,9 +31,6 @@ data class ProjectResponse(
             status = project.status,
             priority = project.priority,
             visibility = project.visibility,
-            startDate = project.startDate,
-            endDate = project.endDate,
-            completedAt = project.completedAt,
             createdAt = project.createdAt,
             updatedAt = project.updatedAt
         )

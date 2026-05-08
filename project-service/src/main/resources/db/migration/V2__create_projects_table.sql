@@ -7,9 +7,6 @@ CREATE TABLE projects (
     status VARCHAR(50) NOT NULL,
     priority VARCHAR(50) NOT NULL,
     visibility VARCHAR(50) NOT NULL,
-    start_date TIMESTAMPTZ,
-    end_date TIMESTAMPTZ,
-    completed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
 );

@@ -81,9 +81,6 @@ class ProjectServiceImpl(
             status = ProjectStatus.ACTIVE,
             priority = request.priority,
             visibility = request.visibility,
-            startDate = request.startDate,
-            endDate = request.endDate,
-            completedAt = null,
             createdAt = now,
             updatedAt = now
         )
@@ -139,10 +136,6 @@ class ProjectServiceImpl(
 
         checkProjectAccess(projectId, userId, ProjectRole.MANAGER)
 
-        if (project.completedAt != null) {
-            throw DomainException.AccessDenied("Project '${projectId}' completed")
-        }
-
         if (request.name != null && request.name != project.name && projectRepository.existsByName(request.name)) {
             logger.warn("User $userId attempted to rename project $projectId to existing name: ${request.name}")
             throw DomainException.AlreadyExists("Project with name ${request.name} already exists")
@@ -155,8 +148,6 @@ class ProjectServiceImpl(
             status = request.status ?: project.status,
             priority = request.priority ?: project.priority,
             visibility = request.visibility ?: project.visibility,
-            startDate = request.startDate ?: project.startDate,
-            endDate = request.endDate ?: project.endDate,
             updatedAt = now
         )
 

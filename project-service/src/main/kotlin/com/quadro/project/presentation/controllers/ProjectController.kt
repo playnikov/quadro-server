@@ -25,9 +25,7 @@ class ProjectController(
             key = request.key,
             description = request.description,
             priority = ProjectPriority.valueOf(request.priority),
-            visibility = ProjectVisibility.valueOf(request.visibility),
-            startDate = request.startDate,
-            endDate = request.endDate
+            visibility = ProjectVisibility.valueOf(request.visibility)
         )
 
         val result = projectService.createProject(userId, projectCreate)
@@ -44,9 +42,7 @@ class ProjectController(
             description = request.description,
             status = request.status?.let { ProjectStatus.valueOf(it) },
             priority = request.priority?.let { ProjectPriority.valueOf(it) },
-            visibility = request.visibility?.let { ProjectVisibility.valueOf(it) },
-            startDate = request.startDate,
-            endDate = request.endDate
+            visibility = request.visibility?.let { ProjectVisibility.valueOf(it) }
         )
 
         val result = projectService.updateProject(userId, projectId, projectUpdate)

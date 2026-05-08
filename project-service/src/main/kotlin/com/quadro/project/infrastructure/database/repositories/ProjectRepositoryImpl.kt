@@ -80,9 +80,6 @@ class ProjectRepositoryImpl : ProjectRepository {
     ): Boolean = newSuspendedTransaction {
         ProjectEntity.findById(id)?.apply {
             this.status = status.name
-            if (status == ProjectStatus.COMPLETED) {
-                completedAt = Clock.System.now().toOffsetDateTime()
-            }
             updatedAt = Clock.System.now().toOffsetDateTime()
         } != null
     }

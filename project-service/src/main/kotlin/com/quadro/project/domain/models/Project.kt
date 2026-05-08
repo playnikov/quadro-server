@@ -33,9 +33,6 @@ data class Project(
     val status: ProjectStatus,
     val priority: ProjectPriority,
     val visibility: ProjectVisibility,
-    val startDate: Instant?,
-    val endDate: Instant?,
-    val completedAt: Instant?,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -46,9 +43,7 @@ data class ProjectCreate(
     val key: String,
     val description: String? = null,
     val priority: ProjectPriority = ProjectPriority.MEDIUM,
-    val visibility: ProjectVisibility = ProjectVisibility.RESTRICTED,
-    val startDate: Instant? = null,
-    val endDate: Instant? = null
+    val visibility: ProjectVisibility = ProjectVisibility.RESTRICTED
 ) {
     fun validate() {
         require(name.isNotBlank()) { "Name must not be blank" }
@@ -61,7 +56,5 @@ data class ProjectUpdate(
     val description: String? = null,
     val status: ProjectStatus? = null,
     val priority: ProjectPriority? = null,
-    val visibility: ProjectVisibility? = null,
-    val startDate: Instant? = null,
-    val endDate: Instant? = null,
+    val visibility: ProjectVisibility? = null
 )

@@ -20,9 +20,6 @@ object ProjectMapper {
         status = ProjectStatus.valueOf(entity.status),
         priority = ProjectPriority.valueOf(entity.priority),
         visibility = ProjectVisibility.valueOf(entity.visibility),
-        startDate = entity.startDate?.toKotlinInstant(),
-        endDate = entity.endDate?.toKotlinInstant(),
-        completedAt = entity.completedAt?.toKotlinInstant(),
         createdAt = entity.createdAt.toKotlinInstant(),
         updatedAt = entity.updatedAt.toKotlinInstant(),
     )
@@ -44,9 +41,6 @@ object ProjectMapper {
         entity.status = domain.status.name
         entity.priority = domain.priority.name
         entity.visibility = domain.visibility.name
-        entity.startDate = domain.startDate?.toOffsetDateTime()
-        entity.endDate = domain.endDate?.toOffsetDateTime()
-        entity.completedAt = domain.completedAt?.toOffsetDateTime()
         entity.createdAt = domain.createdAt.toOffsetDateTime()
         entity.updatedAt = domain.updatedAt.toOffsetDateTime()
     }

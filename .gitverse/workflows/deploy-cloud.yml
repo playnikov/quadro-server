@@ -66,11 +66,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set JAVA_HOME
-        run: echo "JAVA_HOME=/opt/jdk-21" >> $GITVERSE_ENV
+      - name: Cache JDK
+        uses: actions/cache@v4
+        id: cache-jdk
+        with:
+          path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          key: jdk-21-${{ runner.os }}
 
-      - name: Verify Java
-        run: java -version
+      - name: Set up JDK 21
+        if: steps.cache-jdk.outputs.cache-hit != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Cache Gradle dependencies
         uses: actions/cache@v4

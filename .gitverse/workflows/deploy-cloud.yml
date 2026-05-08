@@ -56,7 +56,7 @@ jobs:
   #          ./gradlew ${{ matrix.service }}:test
 
   build:
-    runs-on: self-hosted
+    runs-on: img-ubuntu-22.04
     #    needs: test
     strategy:
       matrix:
@@ -101,7 +101,7 @@ jobs:
             ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
 
   deploy:
-    runs-on: self-hosted
+    runs-on: runner2
     needs: build
     steps:
       - name: Checkout code

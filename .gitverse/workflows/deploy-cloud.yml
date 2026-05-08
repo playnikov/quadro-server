@@ -56,7 +56,7 @@ jobs:
   #          ./gradlew ${{ matrix.service }}:test
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     #    needs: test
     strategy:
       matrix:

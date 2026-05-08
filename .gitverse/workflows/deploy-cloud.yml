@@ -72,6 +72,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           check-latest: false
+          run: |
+            https://api.adoptium.net/v3/assets/version/%5B1.0,100.0%5D?project=jdk&vendor=adoptium&heap_size=normal&sort_method=DEFAULT&sort_order=DESC&os=linux&architecture=x64&image_type=jdk&release_type=ga&jvm_impl=hotspot&page_size=20&page=0
 
       - name: Cache Gradle dependencies
         uses: actions/cache@v4

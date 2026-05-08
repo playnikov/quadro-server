@@ -65,48 +65,47 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Show tool cache path
-        run: echo "${{ runner.tool_cache }}"
-#      - name: Cache JDK
-#        uses: actions/cache@v4
-#        id: cache-jdk
-#        with:
-#          path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
-#          key: jdk-21-${{ runner.os }}
-#
-#      - name: Set up JDK 21
-#        if: steps.cache-jdk.outputs.cache-hit != 'true'
-#        uses: actions/setup-java@v4
-#        with:
-#          distribution: 'temurin'
-#          java-version: '21'
-#
-#      - name: Cache Gradle dependencies
-#        uses: actions/cache@v4
-#        with:
-#          path: ~/.cache/act
-#          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
-#          restore-keys: |
-#            ${{ runner.os }}-gradle-
-#
-#      - name: Build JAR
-#        run: |
-#          echo Build JAR for ${{ matrix.service }}
-#          chmod +x gradlew
-#          ./gradlew ${{ matrix.service }}:build -x test
-#
-#      - name: Log in to Cloud.ru Artifact Registry
-#        run: |
-#          docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} -p ${{ secrets.KEY_SECRET }}
-#
-#      - name: Build and push Docker image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: ./${{ matrix.service }}
-#          push: true
-#          tags: |
-#            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ gitverse.sha }}
-#            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
+
+      - name: Cache JDK
+        uses: actions/cache@v4
+        id: cache-jdk
+        with:
+          path: ${{ runner.tool_cache }}/Java_Temurin-Hotspot_jdk
+          key: jdk-21-${{ runner.os }}
+
+      - name: Set up JDK 21
+        if: steps.cache-jdk.outputs.cache-hit != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/act
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build JAR
+        run: |
+          echo Build JAR for ${{ matrix.service }}
+          chmod +x gradlew
+          ./gradlew ${{ matrix.service }}:build -x test
+
+      - name: Log in to Cloud.ru Artifact Registry
+        run: |
+          docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} -p ${{ secrets.KEY_SECRET }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ gitverse.sha }}
+            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
 
 #  deploy:
 #    runs-on: runner2

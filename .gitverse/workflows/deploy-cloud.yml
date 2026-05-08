@@ -56,7 +56,7 @@ jobs:
   #          ./gradlew ${{ matrix.service }}:test
 
   build:
-    runs-on: img-ubuntu-22.04
+    runs-on: self-hosted
     #    needs: test
     strategy:
       matrix:
@@ -65,103 +65,104 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Show tool cache path
+        run: echo "${{ runner.tool_cache }}"
+#      - name: Cache JDK
+#        uses: actions/cache@v4
+#        id: cache-jdk
+#        with:
+#          path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+#          key: jdk-21-${{ runner.os }}
+#
+#      - name: Set up JDK 21
+#        if: steps.cache-jdk.outputs.cache-hit != 'true'
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: 'temurin'
+#          java-version: '21'
+#
+#      - name: Cache Gradle dependencies
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.cache/act
+#          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+#          restore-keys: |
+#            ${{ runner.os }}-gradle-
+#
+#      - name: Build JAR
+#        run: |
+#          echo Build JAR for ${{ matrix.service }}
+#          chmod +x gradlew
+#          ./gradlew ${{ matrix.service }}:build -x test
+#
+#      - name: Log in to Cloud.ru Artifact Registry
+#        run: |
+#          docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} -p ${{ secrets.KEY_SECRET }}
+#
+#      - name: Build and push Docker image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./${{ matrix.service }}
+#          push: true
+#          tags: |
+#            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ gitverse.sha }}
+#            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
 
-      - name: Cache JDK
-        uses: actions/cache@v4
-        id: cache-jdk
-        with:
-          path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
-          key: jdk-21-${{ runner.os }}
-
-      - name: Set up JDK 21
-        if: steps.cache-jdk.outputs.cache-hit != 'true'
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/act
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Build JAR
-        run: |
-          echo Build JAR for ${{ matrix.service }}
-          chmod +x gradlew
-          ./gradlew ${{ matrix.service }}:build -x test
-
-      - name: Log in to Cloud.ru Artifact Registry
-        run: |
-          docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} -p ${{ secrets.KEY_SECRET }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./${{ matrix.service }}
-          push: true
-          tags: |
-            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ gitverse.sha }}
-            ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
-
-  deploy:
-    runs-on: runner2
-    needs: build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create .env file
-        run: |
-          echo "Creating a new '.env' configuration..."
-          cat > .env <<EOF
-          VERSION=${{ gitverse.sha }}
-          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          JWT_ISSUER=${{ secrets.JWT_ISSUER }}
-          JWT_AUDIENCE=${{ secrets.JWT_AUDIENCE }}
-          JWT_REALM=${{ secrets.JWT_REALM }}
-          JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
-          JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
-          CR_URI=${{ env.CR_URI }}
-          REPOSITORY=${{ env.REPOSITORY }}
-          API_GATEWAY_PORT=${{ env.API_GATEWAY_PORT }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-          MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
-          MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          EOF
-          echo "Done!"
-
-      - name: Copy files to VM via SCP
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "mkdir -p /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/"
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key \
-            .env docker-compose.yaml Dockerfile.postgres \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
-            init-scripts \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          rm -rf .env
-
-      - name: Deploy to VM via SSH
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
-          cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          echo "${{ secrets.KEY_SECRET }}" | docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} --password-stdin
-          docker build -f Dockerfile.postgres -t postgres-with-init:latest .
-          docker compose pull
-          docker compose down
-          docker compose --env-file .env up -d
-          rm -rf .env
-          EOF
+#  deploy:
+#    runs-on: runner2
+#    needs: build
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Create .env file
+#        run: |
+#          echo "Creating a new '.env' configuration..."
+#          cat > .env <<EOF
+#          VERSION=${{ gitverse.sha }}
+#          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+#          DB_USER=${{ secrets.DB_USER }}
+#          DB_NAME=${{ secrets.DB_NAME }}
+#          DB_HOST=${{ secrets.DB_HOST }}
+#          JWT_ISSUER=${{ secrets.JWT_ISSUER }}
+#          JWT_AUDIENCE=${{ secrets.JWT_AUDIENCE }}
+#          JWT_REALM=${{ secrets.JWT_REALM }}
+#          JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
+#          JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
+#          CR_URI=${{ env.CR_URI }}
+#          REPOSITORY=${{ env.REPOSITORY }}
+#          API_GATEWAY_PORT=${{ env.API_GATEWAY_PORT }}
+#          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+#          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+#          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+#          MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
+#          MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
+#          JWT_SECRET=${{ secrets.JWT_SECRET }}
+#          EOF
+#          echo "Done!"
+#
+#      - name: Copy files to VM via SCP
+#        run: |
+#          mkdir -p ~/.ssh
+#          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
+#          chmod 600 ~/.ssh/deploy_key
+#          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "mkdir -p /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/"
+#          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key \
+#            .env docker-compose.yaml Dockerfile.postgres \
+#            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+#          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
+#            init-scripts \
+#            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+#          rm -rf .env
+#
+#      - name: Deploy to VM via SSH
+#        run: |
+#          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+#          cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+#          echo "${{ secrets.KEY_SECRET }}" | docker login ${{ env.CR_URI }} -u ${{ secrets.CR_KEY_ID }} --password-stdin
+#          docker build -f Dockerfile.postgres -t postgres-with-init:latest .
+#          docker compose pull
+#          docker compose down
+#          docker compose --env-file .env up -d
+#          rm -rf .env
+#          EOF

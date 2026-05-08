@@ -110,7 +110,7 @@ jobs:
         run: |
           echo "Creating a new '.env' configuration..."
           cat > .env <<EOF
-          VERSION=${{ inputs.image_tag }}
+          VERSION=${{ gitverse.sha }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           DB_USER=${{ secrets.DB_USER }}
           DB_NAME=${{ secrets.DB_NAME }}

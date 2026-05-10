@@ -100,7 +100,7 @@ jobs:
             ${{ env.CR_URI }}/${{ env.REPOSITORY }}:${{ matrix.service }}.${{ inputs.image_tag }}
 
   deploy:
-    runs-on: runner2
+    runs-on: self-hosted
     needs: build
     steps:
       - name: Checkout code

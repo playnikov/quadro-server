@@ -14,10 +14,7 @@ class ProjectRoutes(
     fun protectedRoutes(routing: Route) {
         routing.route("/api/projects") {
             proxyTo(client,projectServiceBaseUrl )
-
-            route("/{projectId}") { proxyTo(client,projectServiceBaseUrl ) }
-            route("/{projectId}/{status}") { proxyTo(client,projectServiceBaseUrl ) }
-
+            route("/status") { proxyTo(client,projectServiceBaseUrl ) }
             route("/my") { proxyTo(client,projectServiceBaseUrl ) }
             route("/search") { proxyTo(client,projectServiceBaseUrl ) }
         }

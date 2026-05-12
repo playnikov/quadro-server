@@ -15,7 +15,7 @@ class TeamRoutes(
     fun protectedRoutes(routing: Route) {
         routing.route("/api/teams") {
             proxyTo(client, teamServiceBaseUrl)
-            route("/{teamId}") {
+            route("/team") {
                 proxyTo(client, teamServiceBaseUrl)
                 route("/bind") { proxyTo(client, teamServiceBaseUrl) }
                 route("/unbind") { proxyTo(client, teamServiceBaseUrl) }

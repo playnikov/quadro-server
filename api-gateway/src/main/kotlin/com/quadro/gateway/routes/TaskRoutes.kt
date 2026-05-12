@@ -32,11 +32,11 @@ class TaskRoutes(
                 proxyTo(client, taskServiceBaseUrl)
             }
 
-            route("/validate/status/{status}") {
+            route("/validate/status/status") {
                 proxyTo(client, taskServiceBaseUrl)
             }
 
-            route("/status/{status}") {
+            route("/status") {
                 proxyTo(client, taskServiceBaseUrl)
             }
 

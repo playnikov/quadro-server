@@ -17,15 +17,15 @@ class ProjectRoutes(
         routing.route("/api/projects") {
             authenticate("auth-jwt") {
                 post { controller.createProject(call) }
-                patch("/{projectId}") { controller.updateProject(call) }
-                delete("/{projectId}") { controller.deleteProject(call) }
+                patch { controller.updateProject(call) }
+                delete { controller.deleteProject(call) }
 
-                get("/{projectId}") { controller.findById(call) }
+                get { controller.findById(call) }
                 get("/search") { controller.findByName(call) }
 
                 get("/my") { controller.findByUser(call) }
 
-                patch("/{projectId}/{status}") { controller.updateStatus(call) }
+                patch("/status") { controller.updateStatus(call) }
             }
         }
     }

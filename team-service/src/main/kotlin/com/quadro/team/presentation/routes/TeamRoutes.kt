@@ -15,12 +15,10 @@ class TeamRoutes(
 ) {
     fun init(routing: Route) {
         routing.route("/api/teams") {
-            authenticate("auth-jwt") {
-                post { controller.createTeam(call) }
-                get("/{teamId}") { controller.getById(call) }
-                patch("/{teamId}") { controller.update(call) }
-                delete("/{teamId}") { controller.delete(call) }
-            }
+            post { controller.createTeam(call) }
+            get { controller.getById(call) }
+            patch { controller.update(call) }
+            delete { controller.delete(call) }
         }
     }
 }

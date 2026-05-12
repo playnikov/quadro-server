@@ -2,15 +2,20 @@ package com.quadro.gateway.plugins
 
 import com.quadro.gateway.routes.*
 import io.ktor.client.*
+import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.websocket.webSocket
+import io.ktor.util.filter
+import io.ktor.websocket.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
@@ -72,5 +77,56 @@ fun Route.proxyTo(client: HttpClient, targetBaseUrl: String) {
             contentType = ContentType.Application.Json,
             status = response.status
         )
+    }
+}
+
+fun Route.proxyWebSocket(client: HttpClient, targetUrl: String) {
+    webSocket {
+        val wsBaseUrl = targetUrl.replace("http://", "ws://").replace("https://", "wss://")
+
+        val targetUri = wsBaseUrl.trimEnd('/') + call.request.uri
+
+        val filteredHeaders = call.request.headers.filter { headerName, _ ->
+            !headerName.equals("Upgrade", ignoreCase = true) &&
+                    !headerName.equals("Connection", ignoreCase = true) &&
+                    !headerName.startsWith("Sec-WebSocket-", ignoreCase = true) &&
+                    !headerName.equals("Host", ignoreCase = true) &&
+                    !headerName.equals("Keep-Alive", ignoreCase = true) &&
+                    !headerName.equals("Transfer-Encoding", ignoreCase = true)
+        }
+
+        val targetSession: WebSocketSession = client.webSocketSession {
+            url(targetUri)
+            method = HttpMethod.Get
+            headers {
+                filteredHeaders.forEach { name, values ->
+                    values.forEach { value -> append(name, value) }
+                }
+            }
+        }
+
+        try {
+            coroutineScope {
+                launch {
+                    for (frame in incoming) {
+                        targetSession.send(frame)
+                        if (frame is Frame.Close) break
+                    }
+                }
+
+                launch {
+                    for (frame in targetSession.incoming) {
+                        send(frame)
+                        if (frame is Frame.Close) break
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            targetSession.close()
+            this.close(CloseReason(CloseReason.Codes.INTERNAL_ERROR, e.message ?: "Unknown error occurred"))
+        } finally {
+            targetSession.close()
+            this.close()
+        }
     }
 }

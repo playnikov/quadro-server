@@ -14,7 +14,7 @@ class InvitationRoutes(
     fun init(routing: Route) {
         routing.route("/api/projects") {
             authenticate("auth-jwt") {
-                route("/{id}/invitations") {
+                route("/invitations") {
                     post { invitationController.createInvitation(call) }
                     get { invitationController.getInvitations(call) }
                     delete { invitationController.cancelInvitation(call) }

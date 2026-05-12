@@ -13,7 +13,7 @@ class TeamMemberRoutes(
     private val controller: TeamMemberController
 ) {
     fun init(routing: Route) {
-        routing.route("/api/companies/{id}/teams/{teamId}/members") {
+        routing.route("/api/teams/members") {
             get { controller.getMembers(call) }
             post { controller.addMember(call) }
             delete { controller.removeMember(call) }

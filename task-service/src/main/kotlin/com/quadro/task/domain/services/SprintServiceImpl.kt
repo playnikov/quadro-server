@@ -47,7 +47,7 @@ class SprintServiceImpl(
             updatedAt = Clock.System.now()
         )
 
-        return sprintRepository.update(sprint)
+        return sprintRepository.update(updatedSprint)
     }
 
     override suspend fun deleteSprint(id: UUID) {

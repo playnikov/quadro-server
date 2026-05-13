@@ -11,7 +11,7 @@ enum class InvitationStatus {
 }
 
 @Serializable
-enum class InvitationType {
+enum class InviteType {
     EMAIL, LINK
 }
 
@@ -19,7 +19,7 @@ data class ProjectInvitation(
     val id: UUID,
     val projectId: UUID,
     val invitedBy: UUID,
-    val inviteType: InvitationType,
+    val inviteType: InviteType,
     val identifier: String,
     val role: ProjectRole,
     val status: InvitationStatus,
@@ -36,13 +36,13 @@ data class ProjectInvitation(
 
 data class InvitationCreate(
     val role: ProjectRole = ProjectRole.MEMBER,
-    val inviteType: InvitationType = InvitationType.LINK,
+    val inviteType: InviteType = InviteType.LINK,
     val identifier: String? = null,
     val message: String? = null,
     val expiresInDays: Int? = null
 ) {
     fun validate() {
-        if (inviteType == InvitationType.EMAIL) {
+        if (inviteType == InviteType.EMAIL) {
             requireNotNull(identifier) { "Email is required for EMAIL invite type" }
             require(identifier.contains("@")) { "Invalid email format" }
         }
@@ -57,7 +57,7 @@ data class InvitationResponse(
     val id: String,
     val project: ProjectResponse,
     val invitedBy: String,
-    val inviteType: InvitationType,
+    val inviteType: InviteType,
     val identifier: String,
     val role: ProjectRole,
     val status: InvitationStatus,

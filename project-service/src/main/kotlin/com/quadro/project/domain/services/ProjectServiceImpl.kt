@@ -63,12 +63,15 @@ class ProjectServiceImpl(
         userId: UUID,
         request: ProjectCreate
     ): Project {
-        existsUser(userId)
-        request.validate()
+        val requester = existsUser(userId)
+        if (requester.role !in listOf(UserRole.ADMIN, UserRole.SUPER_ADMIN)) {
+            throw DomainException.AccessDenied("Insufficient permissions")
+        }
 
+        request.validate()
         if (projectRepository.existsByKey(request.key)) {
             logger.warn("User $userId attempted to create project with existing key: ${request.key}")
-            throw DomainException.AlreadyExists("Project with key ${request.key} already exists")
+            throw DomainException.AlreadyExists("Project with key ${request.key}")
         }
 
         val now = Clock.System.now()
@@ -138,7 +141,7 @@ class ProjectServiceImpl(
 
         if (request.name != null && request.name != project.name && projectRepository.existsByName(request.name)) {
             logger.warn("User $userId attempted to rename project $projectId to existing name: ${request.name}")
-            throw DomainException.AlreadyExists("Project with name ${request.name} already exists")
+            throw DomainException.AlreadyExists("Project with name ${request.name}")
         }
 
         val now = Clock.System.now()

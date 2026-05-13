@@ -3,10 +3,29 @@ plugins {
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.flyway)
+    alias(libs.plugins.kover)
 }
 
 application {
     mainClass.set("com.quadro.auth.ApplicationKt")
+}
+
+kover {
+    reports {
+        total {
+            filters {
+                includes {
+                    packages("com.quadro.auth.domain.**")
+                }
+
+                excludes {
+                    packages("com.quadro.auth.presentation.**")
+                    packages("com.quadro.auth.plugins.**")
+                    packages("com.quadro.auth.di.**")
+                }
+            }
+        }
+    }
 }
 
 dependencies {

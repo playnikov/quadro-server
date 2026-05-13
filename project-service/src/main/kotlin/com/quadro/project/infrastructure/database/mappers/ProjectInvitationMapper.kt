@@ -1,7 +1,7 @@
 package com.quadro.project.infrastructure.database.mappers
 
 import com.quadro.project.domain.models.InvitationStatus
-import com.quadro.project.domain.models.InvitationType
+import com.quadro.project.domain.models.InviteType
 import com.quadro.project.domain.models.ProjectInvitation
 import com.quadro.project.domain.models.ProjectRole
 import com.quadro.project.infrastructure.database.entities.ProjectInvitationEntity
@@ -13,7 +13,7 @@ object ProjectInvitationMapper {
         id = entity.id.value,
         projectId = entity.projectId,
         invitedBy = entity.invitedBy,
-        inviteType = InvitationType.valueOf(entity.inviteType),
+        inviteType = InviteType.valueOf(entity.inviteType),
         identifier = entity.identifier,
         role = ProjectRole.valueOf(entity.role),
         status = InvitationStatus.valueOf(entity.status),

@@ -17,6 +17,8 @@ class UserEventProcessor(
     suspend fun processCreated(event: UserCreatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
+            lastName = event.lastName,
+            firstName = event.firstName,
             role = UserRole.valueOf(event.role),
             isActive = event.isActive
         )
@@ -27,6 +29,8 @@ class UserEventProcessor(
     suspend fun processUpdated(event: UserUpdatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
+            lastName = event.lastName,
+            firstName = event.firstName,
             role = UserRole.valueOf(event.role),
             isActive = event.isActive
         )

@@ -48,7 +48,7 @@ class TeamServiceImpl(
 
         if (teamRepository.existsByName(request.name)) {
             logger.warn("Attempt to create duplicate team '${request.name}' by user $createdBy")
-            throw DomainException.AlreadyExists("Team '${request.name}' already exists")
+            throw DomainException.AlreadyExists("Team '${request.name}'")
         }
 
         val now = Clock.System.now()

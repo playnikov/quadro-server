@@ -3,10 +3,29 @@ plugins {
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.flyway)
+    alias(libs.plugins.kover)
 }
 
 application {
     mainClass.set("com.quadro.team.ApplicationKt")
+}
+
+kover {
+    reports {
+        total {
+            filters {
+                includes {
+                    packages("com.quadro.team.domain.**")
+                }
+
+                excludes {
+                    packages("com.quadro.team.presentation.**")
+                    packages("com.quadro.team.plugins.**")
+                    packages("com.quadro.team.di.**")
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -54,6 +73,7 @@ dependencies {
 
     // Testing
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.mockk)
 }
 

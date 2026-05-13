@@ -40,7 +40,7 @@ class TeamMemberServiceImpl(
     ): TeamMemberResponse {
         checkTeamExists(teamId)
 
-        if (teamMemberRepository.exists(teamId, userId)) throw DomainException.AlreadyExists("User already in team")
+        if (teamMemberRepository.exists(teamId, userId)) throw DomainException.AlreadyExists("User in team")
         val member = teamMemberRepository.add(
             TeamMember(
                 id = UUID.randomUUID(),

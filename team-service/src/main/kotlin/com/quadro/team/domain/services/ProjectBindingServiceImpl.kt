@@ -36,7 +36,7 @@ class ProjectBindingServiceImpl(
     ): TeamProjectBindingResponse {
         checkTeamExists(teamId)
         projectRepository.findById(projectId) ?: throw DomainException.NotFound("Project", projectId.toString())
-        if (bindingRepository.exists(teamId, projectId)) throw DomainException.AlreadyExists("Binding already exists")
+        if (bindingRepository.exists(teamId, projectId)) throw DomainException.AlreadyExists("Binding")
         val bind = bindingRepository.bind(
             TeamProjectBinding(
                 id = UUID.randomUUID(),

@@ -7,6 +7,9 @@ import com.quadro.auth.domain.models.UserLogin
 import com.quadro.auth.domain.models.UserResponse
 import com.quadro.auth.domain.models.UserRole
 import com.quadro.auth.domain.repositories.UserRepository
+import com.quadro.auth.domain.utils.validateEmail
+import com.quadro.auth.domain.utils.validatePassword
+import com.quadro.auth.domain.utils.validateUsername
 import com.quadro.auth.infrastructure.security.JwtProvider
 import com.quadro.auth.infrastructure.security.PasswordEncoder
 import com.quadro.shared.dto.DomainException
@@ -56,7 +59,7 @@ class AuthServiceImpl(
             updatedAt = now
         )
 
-        val createdUser = userRepository.create(user)
+        val createdUser = userRepository.upsert(user)
         logger.info("User registered: ${createdUser.email}, IP: $ipAddress")
 
         eventProducer.publish(
@@ -109,7 +112,7 @@ class AuthServiceImpl(
 
         logger.info("Successful login for user: ${user.email}, IP: $ipAddress, User-Agent: $userAgent")
 
-        userRepository.update(user.copy(
+        userRepository.upsert(user.copy(
             lastLoginAt = Clock.System.now(),
             lastLoginIp = ipAddress,
         ))
@@ -179,7 +182,7 @@ class AuthServiceImpl(
             passwordHash = passwordEncoder.encode(newPassword),
             updatedAt = Clock.System.now()
         )
-        userRepository.update(updatedUser)
+        userRepository.upsert(updatedUser)
 
         logger.info("Password changed successfully for user: ${user.email}")
     }
@@ -212,7 +215,7 @@ class AuthServiceImpl(
             passwordHash = passwordEncoder.encode(newPassword),
             updatedAt = Clock.System.now()
         )
-        userRepository.update(updatedUser)
+        userRepository.upsert(updatedUser)
 
         logger.info("Password reset successful for user: ${user.email}")
     }
@@ -231,7 +234,7 @@ class AuthServiceImpl(
             isEmailVerified = true,
             updatedAt = Clock.System.now()
         )
-        userRepository.update(updatedUser)
+        userRepository.upsert(updatedUser)
 
         logger.info("Email verified for user: ${user.email}")
     }
@@ -240,33 +243,5 @@ class AuthServiceImpl(
         validateEmail(request.email)
         validateUsername(request.username)
         validatePassword(request.password)
-    }
-
-    private fun validateEmail(email: String) {
-        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
-        if (!email.matches(emailRegex.toRegex())) {
-            throw DomainException.ValidationError("Invalid email format")
-        }
-    }
-
-    private fun validateUsername(username: String) {
-        if (username.length !in 3..50) {
-            throw DomainException.ValidationError("Username must be between 3 and 50 characters")
-        }
-        if (!username.matches(Regex("^[a-zA-Z0-9._-]+$"))) {
-            throw DomainException.ValidationError("Username contains invalid characters")
-        }
-    }
-
-    private fun validatePassword(password: String) {
-        if (password.length < 8) {
-            throw DomainException.ValidationError("Password must be at least 8 characters")
-        }
-        if (!password.any { it.isDigit() }) {
-            throw DomainException.ValidationError("Password must contain at least one digit")
-        }
-        if (!password.any { it.isLetter() }) {
-            throw DomainException.ValidationError("Password must contain at least one letter")
-        }
     }
 }

@@ -13,8 +13,14 @@ import java.util.UUID
 import kotlin.time.Clock
 
 class UserRepositoryImpl : UserRepository {
-    override suspend fun create(user: User): User  = newSuspendedTransaction {
-        val entity = UserMapper.toEntity(user)
+    override suspend fun upsert(user: User): User  = newSuspendedTransaction {
+        val existing = UserEntity.findById(user.id)
+        val entity = if (existing != null) {
+            UserMapper.updateEntity(existing, user)
+            existing
+        } else {
+            UserMapper.toEntity(user)
+        }
         UserMapper.toDomain(entity)
     }
 
@@ -38,12 +44,6 @@ class UserRepositoryImpl : UserRepository {
 
     override suspend fun findById(id: UUID): User? = newSuspendedTransaction {
         UserEntity.findById(id)?.let { UserMapper.toDomain(it) }
-    }
-
-    override suspend fun update(user: User): User = newSuspendedTransaction {
-        val entity = UserEntity.findById(user.id) ?: throw IllegalArgumentException("User not found")
-        UserMapper.updateEntity(entity, user)
-        UserMapper.toDomain(entity)
     }
 
     override suspend fun delete(id: UUID): Boolean = newSuspendedTransaction {

@@ -3,8 +3,10 @@ package com.quadro.auth.domain.services
 import com.quadro.auth.domain.models.User
 import com.quadro.auth.domain.models.UserRole
 import com.quadro.auth.domain.repositories.UserRepository
+import com.quadro.auth.presentation.models.UpdateUserRequest
 import com.quadro.shared.dto.DomainException
 import java.util.UUID
+import kotlin.time.Clock
 
 class UserServiceImpl(
     private val userRepository: UserRepository
@@ -38,5 +40,30 @@ class UserServiceImpl(
 
     override suspend fun getUsersByIds(userIds: List<UUID>): List<User> {
         return userRepository.getByIds(userIds)
+    }
+
+    override suspend fun updateUser(requesterId: UUID, userId: UUID, request: UpdateUserRequest): User {
+        val requester = userRepository.findById(requesterId)
+            ?: throw DomainException.NotFound("User", requesterId.toString())
+
+        if (!requester.role.isAdmin()) {
+            throw DomainException.AccessDenied()
+        }
+
+        val user = userRepository.findById(userId)
+            ?: throw DomainException.NotFound("User", userId.toString())
+
+        val updateUser = user.copy(
+            username = request.username ?: user.username,
+            email = request.email ?: user.email,
+            firstName = request.firstName ?: user.firstName,
+            lastName = request.lastName ?: user.lastName,
+            middleName = request.middleName ?: user.middleName,
+            role = request.role ?: user.role,
+            isActive = request.isActive ?: user.isActive,
+            updatedAt = Clock.System.now()
+        )
+
+        return userRepository.upsert(updateUser)
     }
 }

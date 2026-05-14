@@ -53,6 +53,10 @@ class AuthRoutes(
             route("/change-password") {
                 proxyTo(client, authServiceBaseUrl)
             }
+
+            route("/update") {
+                proxyTo(client, authServiceBaseUrl)
+            }
         }
     }
 }

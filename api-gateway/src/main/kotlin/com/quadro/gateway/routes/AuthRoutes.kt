@@ -40,6 +40,8 @@ class AuthRoutes(
     fun protectedRoutes(routing: Route) {
 
         routing.route("/api/users") {
+            proxyTo(client, authServiceBaseUrl)
+
             route("/profile") {
                 proxyTo(client, authServiceBaseUrl)
             }

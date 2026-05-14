@@ -14,7 +14,9 @@ class UserController(
     private val userService: UserService
 ) {
     suspend fun getUsers(call: ApplicationCall) {
-        val users = userService.getAllUsers()
+        val userId = call.getUserId()
+            ?: throw DomainException.Forbidden()
+        val users = userService.getAllUsers(userId)
         val result = users.map { user ->
             UserResponse.from(user)
         }

@@ -14,11 +14,11 @@ class UserRoutes(
                 controller.getUsers(call)
             }
 
-            get("/{id}") {
+            get("/id") {
                 controller.getUserById(call)
             }
 
-            get("/{ids}") {
+            get("/ids") {
                 controller.getUsersByIds(call)
             }
 

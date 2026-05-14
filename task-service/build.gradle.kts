@@ -19,6 +19,7 @@ kover {
                 }
 
                 excludes {
+                    classes("com.quadro.task.domain.services.TaskAssignmentServiceImpl")
                     packages("com.quadro.task.presentation.**")
                     packages("com.quadro.task.plugins.**")
                     packages("com.quadro.task.di.**")

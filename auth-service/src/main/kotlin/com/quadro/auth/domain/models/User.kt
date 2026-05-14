@@ -5,7 +5,10 @@ import java.util.UUID
 import kotlin.time.Instant
 
 enum class UserRole {
-    SUPER_ADMIN, ADMIN, PROJECT_MANAGER, USER
+    SUPER_ADMIN, ADMIN, PROJECT_MANAGER, USER;
+
+    fun isAdmin() = this in listOf(SUPER_ADMIN, ADMIN)
+    fun isManager() = this == PROJECT_MANAGER
 }
 
 data class User(

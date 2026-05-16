@@ -57,6 +57,10 @@ class AuthRoutes(
             route("/update") {
                 proxyTo(client, authServiceBaseUrl)
             }
+
+            route("/create") {
+                proxyTo(client, authServiceBaseUrl)
+            }
         }
     }
 }

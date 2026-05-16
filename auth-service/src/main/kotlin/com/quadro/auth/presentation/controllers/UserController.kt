@@ -1,7 +1,9 @@
 package com.quadro.auth.presentation.controllers
 
+import com.quadro.auth.domain.models.UserCreate
 import com.quadro.auth.domain.models.UserResponse
 import com.quadro.auth.domain.services.UserService
+import com.quadro.auth.presentation.models.RegisterRequest
 import com.quadro.auth.presentation.models.UpdateAdminUserRequest
 import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
@@ -54,6 +56,22 @@ class UserController(
         val users = userService.getUsersByIds(userIds)
         val result = users.map { UserResponse.from(it) }
         call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
+    }
+
+    suspend fun createUser(call: ApplicationCall) {
+        val userId = call.getUserId() ?: throw DomainException.ValidationError("User ID is invalid")
+        val request = call.receive<RegisterRequest>()
+
+        val user = userService.adminCreateUser(userId, UserCreate(
+            username = request.username,
+            email = request.email,
+            lastName = request.lastName,
+            firstName = request.firstName,
+            middleName = request.middleName,
+            isNeedChangePassword = true,
+            password = request.password
+        ))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(UserResponse.from(user)))
     }
 
     suspend fun updateUser(call: ApplicationCall) {

@@ -33,6 +33,7 @@ class AuthController(private val authService: AuthService) {
                 password = request.password,
                 lastName = request.lastName,
                 firstName = request.firstName,
+                isNeedChangePassword = false,
                 middleName = request.middleName
             ),
             clientIp

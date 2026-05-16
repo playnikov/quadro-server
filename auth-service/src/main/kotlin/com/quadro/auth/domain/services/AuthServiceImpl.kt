@@ -180,6 +180,7 @@ class AuthServiceImpl(
 
         val updatedUser = user.copy(
             passwordHash = passwordEncoder.encode(newPassword),
+            isNeedChangePassword = false,
             updatedAt = Clock.System.now()
         )
         userRepository.upsert(updatedUser)
@@ -198,6 +199,7 @@ class AuthServiceImpl(
 
         val updatedUser = user.copy(
             passwordHash = passwordEncoder.encode(newPassword),
+            isNeedChangePassword = false,
             updatedAt = Clock.System.now()
         )
         userRepository.upsert(updatedUser)

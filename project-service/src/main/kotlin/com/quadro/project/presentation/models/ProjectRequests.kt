@@ -1,5 +1,6 @@
 package com.quadro.project.presentation.models
 
+import com.quadro.project.domain.models.ProjectRole
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
@@ -20,4 +21,9 @@ data class ProjectUpdateRequest(
     val status: String? = null,
     val priority: String? = null,
     val visibility: String? = null
+)
+
+@Serializable
+data class UpdateMemberRole(
+    val role: ProjectRole
 )

@@ -17,6 +17,11 @@ class ProjectRoutes(
             route("/status") { proxyTo(client,projectServiceBaseUrl ) }
             route("/my") { proxyTo(client,projectServiceBaseUrl ) }
             route("/search") { proxyTo(client,projectServiceBaseUrl ) }
+
+            route("/members") {
+                proxyTo(client,projectServiceBaseUrl )
+                route("/leave") { proxyTo(client,projectServiceBaseUrl ) }
+            }
         }
     }
 }

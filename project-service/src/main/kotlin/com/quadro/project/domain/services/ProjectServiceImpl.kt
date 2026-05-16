@@ -267,6 +267,9 @@ class ProjectServiceImpl(
         page: Int,
         size: Int
     ): List<ProjectMemberResponse> {
+        projectMemberRepository.findByProjectAndUser(projectId, userId)
+            ?: throw DomainException.NotFound("Project", projectId.toString())
+
         val offset = (page - 1) * size
         val members = projectMemberRepository.findByProject(projectId, size, offset)
 

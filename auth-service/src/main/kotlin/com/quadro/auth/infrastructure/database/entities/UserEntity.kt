@@ -18,6 +18,7 @@ object UsersTable : UUIDTable("users") {
     val role = varchar("role", 50)
     val isActive = bool("is_active").default(true)
     val isEmailVerified = bool("is_email_verified").default(false)
+    val isNeedChangePassword = bool("is_need_change_password").default(false)
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")
     val lastLoginAt = timestampWithTimeZone("last_login_at").nullable()
@@ -37,6 +38,7 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var role by UsersTable.role
     var isActive by UsersTable.isActive
     var isEmailVerified by UsersTable.isEmailVerified
+    var isNeedChangePassword by UsersTable.isNeedChangePassword
     var createdAt by UsersTable.createdAt
     var updatedAt by UsersTable.updatedAt
     var lastLoginAt by UsersTable.lastLoginAt

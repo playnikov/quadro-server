@@ -5,10 +5,10 @@ import java.util.UUID
 import kotlin.time.Instant
 
 enum class UserRole {
-    SUPER_ADMIN, ADMIN, PROJECT_MANAGER, USER;
+    SUPER_ADMIN, ADMIN, USER;
 
     fun isAdmin() = this in listOf(SUPER_ADMIN, ADMIN)
-    fun isManager() = this == PROJECT_MANAGER
+    fun isSuperAdmin() = this == SUPER_ADMIN
 }
 
 data class User(
@@ -23,6 +23,7 @@ data class User(
     val role: UserRole,
     val isActive: Boolean = true,
     val isEmailVerified: Boolean = false,
+    val isNeedChangePassword: Boolean = false,
     val createdAt: Instant,
     val updatedAt: Instant,
     val lastLoginAt: Instant? = null,
@@ -35,6 +36,7 @@ data class UserCreate(
     val lastName: String,
     val firstName: String,
     val middleName: String?,
+    val isNeedChangePassword: Boolean,
     val password: String
 )
 
@@ -55,6 +57,7 @@ data class UserResponse(
     val role: String,
     val isActive: Boolean,
     val isEmailVerified: Boolean,
+    val isNeedChangePassword: Boolean,
     val createdAt: Instant,
     val lastLoginAt: Instant?
 ) {
@@ -70,6 +73,7 @@ data class UserResponse(
             role = user.role.name,
             isActive = user.isActive,
             isEmailVerified = user.isEmailVerified,
+            isNeedChangePassword = user.isNeedChangePassword,
             createdAt = user.createdAt,
             lastLoginAt = user.lastLoginAt
         )

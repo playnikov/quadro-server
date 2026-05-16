@@ -21,6 +21,7 @@ object UserMapper {
         role = UserRole.valueOf(entity.role),
         isActive = entity.isActive,
         isEmailVerified = entity.isEmailVerified,
+        isNeedChangePassword = entity.isNeedChangePassword,
         createdAt = entity.createdAt.toKotlinInstant(),
         updatedAt = entity.updatedAt.toKotlinInstant(),
         lastLoginAt = entity.lastLoginAt?.toKotlinInstant(),
@@ -46,6 +47,7 @@ object UserMapper {
         entity.role = domain.role.name
         entity.isActive = domain.isActive
         entity.isEmailVerified = domain.isEmailVerified
+        entity.isNeedChangePassword = domain.isNeedChangePassword
         entity.createdAt = domain.createdAt.toOffsetDateTime()
         entity.updatedAt = domain.updatedAt.toOffsetDateTime()
         entity.lastLoginAt = domain.lastLoginAt?.toOffsetDateTime()

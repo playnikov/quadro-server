@@ -25,7 +25,15 @@ class ProjectRoutes(
 
                 get("/my") { controller.findByUser(call) }
 
+
                 patch("/status") { controller.updateStatus(call) }
+
+                route("/members") {
+                    get { controller.getProjectMembers(call) }
+                    patch { controller.updateProject(call) }
+                    delete { controller.removeMember(call) }
+                    delete("/leave") { controller.leaveProject(call) }
+                }
             }
         }
     }

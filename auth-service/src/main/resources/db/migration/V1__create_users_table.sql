@@ -10,6 +10,7 @@ CREATE TABLE users (
     role VARCHAR(50) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
     is_email_verified BOOLEAN NOT NULL DEFAULT false,
+    is_need_change_password BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
     last_login_at TIMESTAMPTZ,

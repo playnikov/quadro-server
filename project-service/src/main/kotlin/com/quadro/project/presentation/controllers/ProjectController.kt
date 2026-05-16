@@ -99,4 +99,41 @@ class ProjectController(
             throw DomainException.NotFound("Project", "Project Not Found")
         }
     }
+
+    suspend fun getProjectMembers(call: ApplicationCall) {
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
+        val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Project ID is invalid")
+        val page = call.parameters["page"]?.toIntOrNull() ?: 1
+        val size = call.parameters["size"]?.toIntOrNull() ?: 50
+
+        val result = projectService.getProjectMembers(projectId, userId, page, size)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
+    }
+
+    suspend fun updateMemberRole(call: ApplicationCall) {
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
+        val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Project ID is invalid")
+        val targetId = call.parameters["targetId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Target ID is invalid")
+        val request = call.receive<UpdateMemberRole>()
+
+        projectService.updateMemberRole(projectId, userId, targetId, request.role)
+        call.respond(HttpStatusCode.NoContent, ApiResponse.ok("Update successful"))
+    }
+
+    suspend fun removeMember(call: ApplicationCall) {
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
+        val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Project ID is invalid")
+        val targetId = call.parameters["targetId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Target ID is invalid")
+
+        projectService.removeMember(projectId, userId, targetId)
+        call.respond(HttpStatusCode.NoContent, ApiResponse.ok("Removed successful"))
+    }
+
+    suspend fun leaveProject(call: ApplicationCall) {
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
+        val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Project ID is invalid")
+
+        projectService.leaveProject(projectId, userId)
+        call.respond(HttpStatusCode.NoContent, ApiResponse.ok("Leaved successful"))
+    }
 }

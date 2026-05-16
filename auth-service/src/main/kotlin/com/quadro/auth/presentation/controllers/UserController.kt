@@ -80,6 +80,6 @@ class UserController(
         val request = call.receive<UpdateAdminUserRequest>()
 
         val user = userService.updateUserByAdmin(requesterId, userId, request)
-        call.respond(HttpStatusCode.OK, ApiResponse.ok(user))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(UserResponse.from(user)))
     }
 }

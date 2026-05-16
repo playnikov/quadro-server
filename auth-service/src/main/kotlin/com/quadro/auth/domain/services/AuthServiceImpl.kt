@@ -187,6 +187,24 @@ class AuthServiceImpl(
         logger.info("Password changed successfully for user: ${user.email}")
     }
 
+    override suspend fun changePassword(userId: UUID, newPassword: String) {
+        val user = userRepository.findById(userId)
+            ?: throw DomainException.NotFound("User", userId.toString())
+        if (passwordEncoder.verify(newPassword, user.passwordHash)) {
+            logger.warn("Password change failed for user: ${user.email}")
+            throw DomainException.ValidationError("The new password cannot be equal to the current one.t")
+        }
+        validatePassword(newPassword)
+
+        val updatedUser = user.copy(
+            passwordHash = passwordEncoder.encode(newPassword),
+            updatedAt = Clock.System.now()
+        )
+        userRepository.upsert(updatedUser)
+
+        logger.info("Password changed successfully for user: ${user.email}")
+    }
+
     override suspend fun forgotPassword(email: String) {
         logger.info("Password reset requested for email: $email")
         val user = userRepository.findByEmail(email)

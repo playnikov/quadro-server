@@ -12,6 +12,7 @@ interface AuthService {
     suspend fun refreshToken(refreshToken: String): AuthResult
     suspend fun validateToken(token: String): UserResponse
     suspend fun changePassword(userId: UUID, currentPassword: String, newPassword: String)
+    suspend fun changePassword(userId: UUID, newPassword: String)
     suspend fun forgotPassword(email: String)
     suspend fun resetPassword(token: String, newPassword: String)
     suspend fun verifyEmail(token: String)

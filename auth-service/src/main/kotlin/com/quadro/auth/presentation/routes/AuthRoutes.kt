@@ -3,6 +3,7 @@ package com.quadro.auth.presentation.routes
 import com.quadro.auth.presentation.controllers.AuthController
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
@@ -21,6 +22,10 @@ class AuthRoutes(
 
             post("/refresh") {
                 authController.refreshToken(call)
+            }
+
+            patch("/change-password") {
+                authController.changePassword(call)
             }
         }
     }

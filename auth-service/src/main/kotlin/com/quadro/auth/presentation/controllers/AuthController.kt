@@ -3,6 +3,7 @@ package com.quadro.auth.presentation.controllers
 import com.quadro.auth.domain.models.UserCreate
 import com.quadro.auth.domain.models.UserLogin
 import com.quadro.auth.domain.services.AuthService
+import com.quadro.auth.presentation.models.ChangePasswordRequest
 import com.quadro.auth.presentation.models.LoginRequest
 import com.quadro.auth.presentation.models.RefreshTokenRequest
 import com.quadro.auth.presentation.models.RegisterRequest
@@ -62,5 +63,17 @@ class AuthController(private val authService: AuthService) {
         val request = call.receive<RefreshTokenRequest>()
         val result = authService.refreshToken(request.refreshToken)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
+    }
+
+    suspend fun changePassword(call: ApplicationCall) {
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
+        val request = call.receive<ChangePasswordRequest>()
+
+        if (request.currentPassword == null) {
+            authService.changePassword(userId, request.newPassword)
+        } else {
+            authService.changePassword(userId, request.currentPassword, request.newPassword)
+        }
+        call.respond(HttpStatusCode.OK, ApiResponse.ok("Password changed"))
     }
 }

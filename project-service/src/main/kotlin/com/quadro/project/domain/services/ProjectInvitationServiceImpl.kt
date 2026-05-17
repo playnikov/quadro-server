@@ -36,11 +36,8 @@ class ProjectInvitationServiceImpl(
         userId: UUID,
         request: InvitationCreate
     ): InvitationResponse {
-        val project = projectRepository.findById(projectId)
-            ?: throw DomainException.NotFound("Project", projectId.toString())
-
         val inviter = projectMemberRepository.findByProjectAndUser(projectId, userId)
-        if (inviter == null || inviter.role !in listOf(ProjectRole.OWNER, ProjectRole.ADMIN, ProjectRole.MANAGER)) {
+        if (inviter == null || inviter.role !in listOf(ProjectRole.OWNER, ProjectRole.MANAGER)) {
             throw DomainException.AccessDenied("Insufficient permissions")
         }
 
@@ -80,7 +77,7 @@ class ProjectInvitationServiceImpl(
         projectInvitationRepository.create(finalInvitation)
 
         val inviteLink = "${config.domain}/invite?token=$token"
-        val result = InvitationResponse.from(project, finalInvitation, inviteLink)
+        val result = InvitationResponse.from(finalInvitation, inviteLink)
 
         logger.info("Invitation created: ${invitation.id} for project: $projectId by user: $userId")
         return result
@@ -148,7 +145,7 @@ class ProjectInvitationServiceImpl(
         userId: UUID
     ): List<InvitationResponse> {
         val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
-        if (member == null || (member.role != ProjectRole.OWNER && member.role != ProjectRole.ADMIN)) {
+        if (member == null || (member.role != ProjectRole.OWNER)) {
             throw DomainException.AccessDenied("Insufficient permissions")
         }
 
@@ -158,7 +155,7 @@ class ProjectInvitationServiceImpl(
         val invitations = projectInvitationRepository.findByProject(projectId, null)
         return invitations.map { invitation ->
             val inviteLink = "${config.domain}/invite?token=${invitation.token}"
-            InvitationResponse.from(project, invitation, inviteLink)
+            InvitationResponse.from(invitation, inviteLink)
         }
     }
 
@@ -168,7 +165,7 @@ class ProjectInvitationServiceImpl(
         invitationId: UUID
     ) {
         val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
-        if (member == null || (member.role != ProjectRole.OWNER && member.role != ProjectRole.ADMIN)) {
+        if (member == null || (member.role != ProjectRole.OWNER)) {
             throw DomainException.AccessDenied("Insufficient permissions")
         }
 

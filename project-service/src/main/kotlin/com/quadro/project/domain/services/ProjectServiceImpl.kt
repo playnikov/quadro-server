@@ -42,12 +42,7 @@ class ProjectServiceImpl(
         val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
             ?: throw DomainException.AccessDenied("User is not a member of the project")
 
-        if (member.role !in listOf(ProjectRole.OWNER, ProjectRole.ADMIN) && 
-            userRepository.findById(userId)?.role == UserRole.ADMIN) {
-            return member.copy(role = ProjectRole.ADMIN)
-        }
-
-        if (member.role !in listOf(ProjectRole.OWNER, ProjectRole.ADMIN) && 
+        if (member.role !in listOf(ProjectRole.OWNER) &&
             userRepository.findById(userId)?.role == UserRole.SUPER_ADMIN) {
             return member.copy(role = ProjectRole.OWNER)
         }
@@ -292,7 +287,7 @@ class ProjectServiceImpl(
         
         val requestingMember = checkProjectAccess(projectId, userId, ProjectRole.MANAGER)
         
-        if (requestingMember.role == ProjectRole.MANAGER && role in listOf(ProjectRole.ADMIN, ProjectRole.OWNER)) {
+        if (requestingMember.role == ProjectRole.MANAGER && role == ProjectRole.OWNER) {
             throw DomainException.AccessDenied("Manager cannot grant ADMIN or OWNER roles")
         }
         

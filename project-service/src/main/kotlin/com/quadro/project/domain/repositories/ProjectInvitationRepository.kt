@@ -9,6 +9,7 @@ interface ProjectInvitationRepository {
     suspend fun findById(id: UUID): ProjectInvitation?
     suspend fun findByToken(token: String): ProjectInvitation?
     suspend fun findByProject(projectId: UUID, status: InvitationStatus?): List<ProjectInvitation>
+    suspend fun findByEmail(email: String): List<ProjectInvitation>
 
     suspend fun updateStatus(id: UUID, status: InvitationStatus): Boolean
     suspend fun acceptInvitation(id: UUID, userId: UUID): Boolean

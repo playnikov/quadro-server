@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
 import java.util.UUID
 
 object UsersTable : UUIDTable("users_copy") {
+    val email = varchar("email", 255)
     val role = varchar("role", 50)
     val isActive = bool("is_active").default(true)
 }
@@ -15,6 +16,7 @@ object UsersTable : UUIDTable("users_copy") {
 class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<UserEntity>(UsersTable)
 
+    var email by UsersTable.email
     var role by UsersTable.role
     var isActive by UsersTable.isActive
 }

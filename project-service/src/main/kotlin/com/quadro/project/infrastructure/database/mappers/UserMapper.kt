@@ -11,6 +11,7 @@ import kotlin.time.toJavaInstant
 object UserMapper {
     fun toDomain(entity: UserEntity): User = User(
         id = entity.id.value,
+        email = entity.email,
         role = UserRole.valueOf(entity.role),
         isActive = entity.isActive
     )
@@ -24,6 +25,7 @@ object UserMapper {
     }
 
     private fun applyDomainToEntity(entity: UserEntity, domain: User) {
+        entity.email = domain.email
         entity.isActive = domain.isActive
         entity.role = domain.role.name
     }

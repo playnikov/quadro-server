@@ -29,6 +29,12 @@ class UserRepositoryImpl : UserRepository {
         }.map { UserMapper.toDomain(it) }
     }
 
+    override suspend fun findByEmail(email: String): User? = newSuspendedTransaction {
+        UserEntity.find {
+            UsersTable.email eq email
+        }.firstOrNull()?.let(UserMapper::toDomain)
+    }
+
     override suspend fun findById(id: UUID): User? = newSuspendedTransaction {
         UserEntity.findById(id)?.let(UserMapper::toDomain)
     }

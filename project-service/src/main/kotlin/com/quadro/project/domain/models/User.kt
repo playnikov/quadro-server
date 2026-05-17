@@ -8,6 +8,7 @@ enum class UserRole {
 
 data class User(
     val id: UUID,
+    val email: String,
     val role: UserRole,
     val isActive: Boolean,
 )

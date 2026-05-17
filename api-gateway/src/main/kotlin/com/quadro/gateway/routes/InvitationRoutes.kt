@@ -23,6 +23,8 @@ class InvitationRoutes(
         routing.route("/api/projects") {
             route("/invitations") {
                 proxyTo(client, companyServiceBaseUrl)
+
+                get("/email") { proxyTo(client, companyServiceBaseUrl) }
             }
 
             route("/invite") {

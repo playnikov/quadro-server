@@ -149,13 +149,17 @@ class ProjectInvitationServiceImpl(
             throw DomainException.AccessDenied("Insufficient permissions")
         }
 
-        val project = projectRepository.findById(projectId)
-            ?: throw DomainException.NotFound("Project", projectId.toString())
-
         val invitations = projectInvitationRepository.findByProject(projectId, null)
         return invitations.map { invitation ->
             val inviteLink = "${config.domain}/invite?token=${invitation.token}"
             InvitationResponse.from(invitation, inviteLink)
+        }
+    }
+
+    override suspend fun getInvitationsByEmail(email: String): List<InvitationResponse> {
+        val invitations = projectInvitationRepository.findByEmail(email)
+        return invitations.map { invitation ->
+            InvitationResponse.from(invitation, "")
         }
     }
 

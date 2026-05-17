@@ -1,6 +1,7 @@
 package com.quadro.project.infrastructure.database.repositories
 
 import com.quadro.project.domain.models.InvitationStatus
+import com.quadro.project.domain.models.InviteType
 import com.quadro.project.domain.models.ProjectInvitation
 import com.quadro.project.domain.repositories.ProjectInvitationRepository
 import com.quadro.project.infrastructure.database.entities.ProjectInvitationEntity
@@ -37,6 +38,13 @@ class ProjectInvitationRepositoryImpl : ProjectInvitationRepository {
             query.filter { it.status == status.name }
         } else query
         filtered.map { ProjectInvitationMapper.toDomain(it) }
+    }
+
+    override suspend fun findByEmail(email: String): List<ProjectInvitation> = newSuspendedTransaction {
+        ProjectInvitationEntity.find {
+            (ProjectInvitationsTable.inviteType eq InviteType.EMAIL.name) and
+                    (ProjectInvitationsTable.identifier eq email)
+        }.map(ProjectInvitationMapper::toDomain)
     }
 
     override suspend fun updateStatus(

@@ -38,6 +38,13 @@ class InvitationController(
         call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
+    suspend fun getInvitationsByEmail(call: ApplicationCall) {
+        val email = call.parameters["email"]
+            ?: throw DomainException.ValidationError("Email is invalid")
+        val result = projectInvitationService.getInvitationsByEmail(email)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
+    }
+
     suspend fun acceptInvitation(call: ApplicationCall) {
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val token = call.parameters["token"] ?: throw DomainException.ValidationError("Token is invalid")

@@ -13,6 +13,7 @@ class UserEventProcessor(
     suspend fun processCreated(event: UserCreatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
+            email = event.email,
             role = UserRole.valueOf(event.role),
             isActive = event.isActive
         )
@@ -23,6 +24,7 @@ class UserEventProcessor(
         val user = User(
             id = UUID.fromString(event.userId),
             role = UserRole.valueOf(event.role),
+            email = event.email,
             isActive = event.isActive
         )
         userRepository.upsert(user)

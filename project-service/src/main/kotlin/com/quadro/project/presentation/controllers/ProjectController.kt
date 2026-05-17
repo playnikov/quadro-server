@@ -117,7 +117,7 @@ class ProjectController(
         val request = call.receive<UpdateMemberRole>()
 
         projectService.updateMemberRole(projectId, userId, targetId, request.role)
-        call.respond(HttpStatusCode.NoContent, ApiResponse.ok("Update successful"))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok("Update successful"))
     }
 
     suspend fun removeMember(call: ApplicationCall) {
@@ -126,7 +126,7 @@ class ProjectController(
         val targetId = call.parameters["targetId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Target ID is invalid")
 
         projectService.removeMember(projectId, userId, targetId)
-        call.respond(HttpStatusCode.NoContent, ApiResponse.ok("Removed successful"))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok("Removed successful"))
     }
 
     suspend fun leaveProject(call: ApplicationCall) {

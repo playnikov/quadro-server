@@ -47,12 +47,6 @@ class UserController(
         } catch (e: IllegalArgumentException) {
             throw DomainException.ValidationError("One or more User IDs are invalid")
         }
-
-        if (userIds.isEmpty()) {
-            call.respond(HttpStatusCode.OK, ApiResponse.ok(emptyList<UserResponse>()))
-            return
-        }
-
         val users = userService.getUsersByIds(userIds)
         val result = users.map { UserResponse.from(it) }
         call.respond(HttpStatusCode.OK, ApiResponse.ok(result))

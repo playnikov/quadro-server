@@ -6,7 +6,7 @@ import kotlin.time.Instant
 
 @Serializable
 enum class ProjectRole {
-    GUEST, MEMBER, MANAGER, ADMIN, OWNER;
+    GUEST, MEMBER, MANAGER, OWNER;
 
     fun isAtLeast(other: ProjectRole) = ordinal >= other.ordinal
     fun isHigherThan(other: ProjectRole) = ordinal > other.ordinal

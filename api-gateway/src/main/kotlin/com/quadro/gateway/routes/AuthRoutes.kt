@@ -50,6 +50,14 @@ class AuthRoutes(
                 proxyTo(client, authServiceBaseUrl)
             }
 
+            route("/id") {
+                proxyTo(client, authServiceBaseUrl)
+            }
+
+            route("/ids") {
+                proxyTo(client, authServiceBaseUrl)
+            }
+
             route("/logout") {
                 proxyTo(client, authServiceBaseUrl)
             }

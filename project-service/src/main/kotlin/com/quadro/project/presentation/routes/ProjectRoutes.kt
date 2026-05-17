@@ -30,7 +30,7 @@ class ProjectRoutes(
 
                 route("/members") {
                     get { controller.getProjectMembers(call) }
-                    patch { controller.updateProject(call) }
+                    patch { controller.updateMemberRole(call) }
                     delete { controller.removeMember(call) }
                     delete("/leave") { controller.leaveProject(call) }
                 }

@@ -3,7 +3,7 @@ package com.quadro.project.domain.models
 import java.util.UUID
 
 enum class UserRole {
-    SUPER_ADMIN, ADMIN, PROJECT_MANAGER, USER
+    SUPER_ADMIN, ADMIN, USER
 }
 
 data class User(

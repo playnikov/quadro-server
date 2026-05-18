@@ -4,7 +4,7 @@ import java.util.UUID
 
 sealed class DomainException(message: String) : Exception(message) {
     class NotFound(entity: String, id: String) :
-        DomainException("$entity with id '$id' not found")
+        DomainException("$entity with '$id' not found")
 
     class AlreadyExists(entity: String) :
         DomainException("$entity already exists")

@@ -28,9 +28,9 @@ fun gatewayModule(application: Application) = module {
                 })
             }
             install(HttpTimeout) {
-                requestTimeoutMillis = 3000
+                requestTimeoutMillis = 5000
                 connectTimeoutMillis = 5000
-                socketTimeoutMillis = 3000
+                socketTimeoutMillis = 5000
             }
             install(DefaultRequest) {
                 header("User-Agent", "Quadro-API-Gateway/1.0")
@@ -55,4 +55,6 @@ fun gatewayModule(application: Application) = module {
     factory { TeamRoutes(get(), get()) }
 
     factory { TaskRoutes(get(), get()) }
+
+    factory { WebSocket(get(), get()) }
 }

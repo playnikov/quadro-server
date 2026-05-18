@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Quadro",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "{{DB_NAME}}",
+      "Username": "{{POSTGRES_USER}}",
+      "Password": "{{POSTGRES_PASSWORD}}"
+    }
+  }
+}

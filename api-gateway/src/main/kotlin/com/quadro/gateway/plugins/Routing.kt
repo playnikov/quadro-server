@@ -1,5 +1,6 @@
 package com.quadro.gateway.plugins
 
+import com.quadro.gateway.config.ServiceUrls
 import com.quadro.gateway.routes.*
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.webSocketSession
@@ -24,6 +25,7 @@ fun Application.configureRouting() {
     val projectRoutes by inject<ProjectRoutes>()
     val taskRoutes by inject<TaskRoutes>()
     val teamRoutes by inject<TeamRoutes>()
+    val webSocket by inject<WebSocket>()
 
     routing {
         options("/{...}") {
@@ -58,6 +60,8 @@ fun Application.configureRouting() {
             projectRoutes.protectedRoutes(this)
             teamRoutes.protectedRoutes(this)
             taskRoutes.protectedRoutes(this)
+
+            webSocket.init(this)
         }
     }
 }
@@ -80,26 +84,37 @@ fun Route.proxyTo(client: HttpClient, targetBaseUrl: String) {
     }
 }
 
-fun Route.proxyWebSocket(client: HttpClient, targetUrl: String) {
+fun Route.proxyWebSocket(client: HttpClient, targetBaseUrl: String) {
     webSocket {
-        val wsBaseUrl = targetUrl.replace("http://", "ws://").replace("https://", "wss://")
+        val wsBaseUrl = targetBaseUrl
+            .replace("http://", "ws://")
+            .replace("https://", "wss://")
+            .removeSuffix("/")
 
-        val targetUri = wsBaseUrl.trimEnd('/') + call.request.uri
-
-        val filteredHeaders = call.request.headers.filter { headerName, _ ->
-            !headerName.equals("Upgrade", ignoreCase = true) &&
-                    !headerName.equals("Connection", ignoreCase = true) &&
-                    !headerName.startsWith("Sec-WebSocket-", ignoreCase = true) &&
-                    !headerName.equals("Host", ignoreCase = true) &&
-                    !headerName.equals("Keep-Alive", ignoreCase = true) &&
-                    !headerName.equals("Transfer-Encoding", ignoreCase = true)
+        val targetUri = buildString {
+            append(wsBaseUrl)
+            append(call.request.path())
+            if (!call.request.queryParameters.isEmpty()) {
+                append("?")
+                append(call.request.queryParameters.toString())
+            }
         }
 
-        val targetSession: WebSocketSession = client.webSocketSession {
+        val filteredHeaders = call.request.headers.entries()
+            .filter { (name, _) ->
+                !name.equals("Upgrade", ignoreCase = true) &&
+                        !name.equals("Connection", ignoreCase = true) &&
+                        !name.startsWith("Sec-WebSocket-", ignoreCase = true) &&
+                        !name.equals("Host", ignoreCase = true) &&
+                        !name.equals("Keep-Alive", ignoreCase = true) &&
+                        !name.equals("Transfer-Encoding", ignoreCase = true)
+            }
+
+        val targetSession = client.webSocketSession {
             url(targetUri)
             method = HttpMethod.Get
             headers {
-                filteredHeaders.forEach { name, values ->
+                filteredHeaders.forEach { (name, values) ->
                     values.forEach { value -> append(name, value) }
                 }
             }
@@ -112,21 +127,19 @@ fun Route.proxyWebSocket(client: HttpClient, targetUrl: String) {
                         targetSession.send(frame)
                         if (frame is Frame.Close) break
                     }
+                    targetSession.close()
                 }
-
                 launch {
                     for (frame in targetSession.incoming) {
                         send(frame)
                         if (frame is Frame.Close) break
                     }
+                    close()
                 }
             }
         } catch (e: Exception) {
             targetSession.close()
-            this.close(CloseReason(CloseReason.Codes.INTERNAL_ERROR, e.message ?: "Unknown error occurred"))
-        } finally {
-            targetSession.close()
-            this.close()
+            close(CloseReason(CloseReason.Codes.INTERNAL_ERROR, e.message ?: "Unknown error"))
         }
     }
 }

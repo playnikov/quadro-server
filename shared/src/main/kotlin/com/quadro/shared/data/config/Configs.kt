@@ -8,7 +8,7 @@ data class DatabaseConfig(
     val url: String,
     val user: String,
     val password: String,
-    val maxPoolSize: Int = 10,
+    val maxPoolSize: Int = 50,
     val minIdle: Int = 2,
     val schema: String = "public"
 )

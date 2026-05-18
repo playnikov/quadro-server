@@ -22,6 +22,7 @@ class InvitationController(
         val request = call.receive<CreateInvitationRequest>()
         val invitationCreate = InvitationCreate(
             role = request.role,
+            inviteType = request.type,
             identifier = request.identifier,
             message = request.message,
             expiresInDays = request.expiresInDays

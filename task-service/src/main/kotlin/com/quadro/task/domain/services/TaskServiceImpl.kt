@@ -89,6 +89,13 @@ class TaskServiceImpl(
             loggedHours = taskUpdate.loggedHours ?: existingTask.loggedHours,
             dueDate = taskUpdate.dueDate ?: existingTask.dueDate,
             labels = taskUpdate.labels ?: existingTask.labels,
+            completedAt = taskUpdate.status?.let {
+                if (it == TaskStatus.DONE) {
+                    Clock.System.now()
+                } else {
+                    null
+                }
+            },
             updatedAt = Clock.System.now()
         )
 

@@ -47,7 +47,9 @@ data class Task(
     val completedAt: Instant?,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val labels: List<String> = emptyList()
+    val labels: List<String> = emptyList(),
+    val commentCount: Int = 0,
+    val comments: List<TaskComment> = emptyList()
 )
 
 data class TaskCreate(

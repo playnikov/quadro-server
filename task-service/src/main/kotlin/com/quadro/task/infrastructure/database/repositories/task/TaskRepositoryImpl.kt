@@ -1,5 +1,6 @@
 package com.quadro.task.infrastructure.database.repositories.task
 
+import com.quadro.shared.utils.toKotlinInstant
 import com.quadro.shared.utils.toOffsetDateTime
 import com.quadro.task.domain.models.task.Task
 import com.quadro.task.domain.models.task.TaskStatus
@@ -108,11 +109,15 @@ class TaskRepositoryImpl : TaskRepository {
         from: Instant,
         to: Instant
     ): Long = newSuspendedTransaction {
+        val column = when (status) {
+            TaskStatus.DONE -> TasksTable.completedAt
+            else -> TasksTable.updatedAt
+        }
         TaskEntity.find {
             (TasksTable.projectId eq projectId) and
                     (TasksTable.status eq status.name) and
-                    (TasksTable.startedAt greaterEq from.toOffsetDateTime()) and
-                    (TasksTable.completedAt lessEq to.toOffsetDateTime())
+                    (column greaterEq from.toOffsetDateTime()) and
+                    (column lessEq to.toOffsetDateTime())
         }.count()
     }
 
@@ -140,5 +145,59 @@ class TaskRepositoryImpl : TaskRepository {
 
 
         if (completionDurations.isEmpty()) 0.0 else completionDurations.average()
+    }
+
+    override suspend fun countCreatedByPeriod(
+        projectId: UUID,
+        from: Instant,
+        to: Instant
+    ): Long = newSuspendedTransaction {
+        TaskEntity.find {
+            (TasksTable.projectId eq projectId) and
+                    (TasksTable.createdAt greaterEq from.toOffsetDateTime()) and
+                    (TasksTable.createdAt lessEq to.toOffsetDateTime())
+        }.count()
+    }
+
+    override suspend fun countCompletedByPeriod(
+        projectId: UUID,
+        from: Instant,
+        to: Instant
+    ): Long = newSuspendedTransaction {
+        TaskEntity.find {
+            (TasksTable.projectId eq projectId) and
+                    (TasksTable.status eq TaskStatus.DONE.name) and
+                    (TasksTable.completedAt greaterEq from.toOffsetDateTime()) and
+                    (TasksTable.completedAt lessEq to.toOffsetDateTime())
+        }.count()
+    }
+
+    override suspend fun getTasksCreatedGroupedByDay(
+        projectId: UUID,
+        from: Instant,
+        to: Instant
+    ): Map<Instant, Long> = newSuspendedTransaction {
+        TaskEntity.find {
+            (TasksTable.projectId eq projectId) and
+                    (TasksTable.createdAt greaterEq from.toOffsetDateTime()) and
+                    (TasksTable.createdAt lessEq to.toOffsetDateTime())
+        }.groupBy { entity ->
+            entity.createdAt.toKotlinInstant()
+        }.mapValues { it.value.size.toLong() }
+    }
+
+    override suspend fun getTasksCompletedGroupedByDay(
+        projectId: UUID,
+        from: Instant,
+        to: Instant
+    ): Map<Instant, Long> = newSuspendedTransaction {
+        TaskEntity.find {
+            (TasksTable.projectId eq projectId) and
+                    (TasksTable.status eq TaskStatus.DONE.name) and
+                    (TasksTable.completedAt greaterEq from.toOffsetDateTime()) and
+                    (TasksTable.completedAt lessEq to.toOffsetDateTime())
+        }.groupBy { entity ->
+            entity.completedAt!!.toKotlinInstant()
+        }.mapValues { it.value.size.toLong() }
     }
 }

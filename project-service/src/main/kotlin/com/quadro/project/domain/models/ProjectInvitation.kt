@@ -55,7 +55,7 @@ data class InvitationCreate(
 @Serializable
 data class InvitationResponse(
     val id: String,
-    val projectId: String,
+    val projectName: String,
     val invitedBy: String,
     val inviteType: InviteType,
     val identifier: String,
@@ -71,11 +71,12 @@ data class InvitationResponse(
 ) {
     companion object {
         fun from(
+            projectName: String,
             invitation: ProjectInvitation,
             link: String
         ): InvitationResponse  = InvitationResponse(
             id = invitation.id.toString(),
-            projectId = invitation.projectId.toString(),
+            projectName = projectName,
             invitedBy = invitation.invitedBy.toString(),
             inviteType = invitation.inviteType,
             identifier = invitation.identifier,

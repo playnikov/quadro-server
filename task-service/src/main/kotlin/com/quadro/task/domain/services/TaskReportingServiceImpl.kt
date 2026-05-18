@@ -1,5 +1,7 @@
 package com.quadro.task.domain.services
 
+import com.quadro.shared.dto.DomainException
+import com.quadro.task.domain.models.task.PeriodReport
 import com.quadro.task.domain.models.task.Task
 import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.repositories.task.TaskRepository
@@ -70,5 +72,37 @@ class TaskReportingServiceImpl(
         )
 
         return completedLastWeek.toDouble()
+    }
+
+    override suspend fun getPeriodReport(
+        projectId: UUID,
+        from: Instant,
+        to: Instant
+    ): PeriodReport {
+        val created = taskRepository.countCreatedByPeriod(projectId, from, to)
+        val completed = taskRepository.countCompletedByPeriod(projectId, from, to)
+
+        val statusBreakdown = TaskStatus.entries.associate { status ->
+            status.name to taskRepository.countByStatusAndPeriod(projectId, status, from, to)
+        }
+
+        val dailyCreation = taskRepository.getTasksCreatedGroupedByDay(projectId, from, to)
+            .mapKeys { it.key.toString() } // LocalDate -> "yyyy-MM-dd"
+        val dailyCompletion = taskRepository.getTasksCompletedGroupedByDay(projectId, from, to)
+            .mapKeys { it.key.toString() }
+
+        val avgCompletionDays = taskRepository.avgCompletionDays(projectId)
+
+        val overdueCount = taskRepository.findOverdue(projectId, to).size.toLong()
+
+        return PeriodReport(
+            created = created,
+            completed = completed,
+            statusBreakdown = statusBreakdown,
+            dailyCreation = dailyCreation,
+            dailyCompletion = dailyCompletion,
+            averageCompletionDays = avgCompletionDays,
+            overdueCount = overdueCount
+        )
     }
 }

@@ -1,5 +1,6 @@
 package com.quadro.task.infrastructure.database.repositories.task
 
+import com.quadro.shared.utils.toOffsetDateTime
 import com.quadro.task.domain.models.task.TaskComment
 import com.quadro.task.domain.repositories.task.TaskCommentRepository
 import com.quadro.task.infrastructure.database.entities.task.TaskCommentEntity
@@ -9,6 +10,7 @@ import com.quadro.task.infrastructure.database.mappers.task.TaskCommentMapper
 import com.quadro.task.infrastructure.database.mappers.task.TaskMapper
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
+import kotlin.time.Clock
 
 class TaskCommentRepositoryImpl : TaskCommentRepository {
     override suspend fun findById(id: UUID): TaskComment? = newSuspendedTransaction {
@@ -38,7 +40,12 @@ class TaskCommentRepositoryImpl : TaskCommentRepository {
     }
 
     override suspend fun softDelete(id: UUID) {
-        TODO("Not yet implemented")
+        newSuspendedTransaction {
+            val entity = TaskCommentEntity.findById(id)
+                ?: throw IllegalArgumentException("Comment not found with id: $id")
+            entity.isDeleted = true
+            entity.updatedAt = Clock.System.now().toOffsetDateTime()
+        }
     }
 
     override suspend fun countByTask(taskId: UUID): Long = newSuspendedTransaction {

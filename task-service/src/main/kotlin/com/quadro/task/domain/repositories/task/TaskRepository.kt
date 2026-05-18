@@ -28,4 +28,9 @@ interface TaskRepository {
     ): Long
     suspend fun findOverdue(projectId: UUID, now: Instant): List<Task>
     suspend fun avgCompletionDays(projectId: UUID): Double
+
+    suspend fun countCreatedByPeriod(projectId: UUID, from: Instant, to: Instant): Long
+    suspend fun countCompletedByPeriod(projectId: UUID, from: Instant, to: Instant): Long
+    suspend fun getTasksCreatedGroupedByDay(projectId: UUID, from: Instant, to: Instant): Map<Instant, Long>
+    suspend fun getTasksCompletedGroupedByDay(projectId: UUID, from: Instant, to: Instant): Map<Instant, Long>
 }

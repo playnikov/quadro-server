@@ -1,5 +1,6 @@
 package com.quadro.task.domain.services
 
+import com.quadro.task.domain.models.task.PeriodReport
 import com.quadro.task.domain.models.task.Task
 import com.quadro.task.domain.models.task.TaskStatus
 import java.util.UUID
@@ -17,4 +18,5 @@ interface TaskReportingService {
     suspend fun getAverageCompletionDays(projectId: UUID): Double
     suspend fun getCompletionRate(projectId: UUID): Double
     suspend fun getVelocity(projectId: UUID): Double
+    suspend fun getPeriodReport(projectId: UUID, from: Instant, to: Instant): PeriodReport
 }

@@ -4,12 +4,15 @@ import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.services.TaskReportingService
+import com.quadro.task.presentation.models.TaskResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import java.util.UUID
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class TaskReportingController(
     private val taskReportingService: TaskReportingService
@@ -76,6 +79,9 @@ class TaskReportingController(
         val now = Clock.System.now()
 
         val tasks = taskReportingService.getOverdueTasks(projectId, now)
+        tasks.forEach {
+            TaskResponse.from(it)
+        }
         call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
 
@@ -101,5 +107,14 @@ class TaskReportingController(
 
         val velocity = taskReportingService.getVelocity(projectId)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("velocity" to velocity)))
+    }
+
+    suspend fun getReporting(call: ApplicationCall) {
+        val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
+            ?: throw DomainException.ValidationError("Project ID is invalid")
+        val from = Instant.parse(call.request.queryParameters["from"] ?: throw DomainException.ValidationError("Missing 'from'"))
+        val to = Instant.parse(call.request.queryParameters["to"] ?: throw DomainException.ValidationError("Missing 'to'"))
+        val report = taskReportingService.getPeriodReport(projectId, from, to)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(report))
     }
 }

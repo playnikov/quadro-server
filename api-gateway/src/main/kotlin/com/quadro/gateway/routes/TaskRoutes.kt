@@ -78,6 +78,8 @@ class TaskRoutes(
         }
 
         routing.route("/api/tasks/reporting") {
+            proxyTo(client, taskServiceBaseUrl)
+
             route("/backlog") {
                 proxyTo(client, taskServiceBaseUrl)
             }

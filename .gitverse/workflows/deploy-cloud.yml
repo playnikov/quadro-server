@@ -150,7 +150,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "mkdir -p /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/grafana"
           tar czf configs.tar.gz \
             docker-compose.yaml Dockerfile.postgres \
-            loki-config.yaml prometheus.yaml promtail-config.yaml servers.json \
+            loki-config.yaml prometheus.yml promtail-config.yaml servers.json \
             grafana/datasources.yaml init-scripts/
           scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key \
             configs.tar.gz \

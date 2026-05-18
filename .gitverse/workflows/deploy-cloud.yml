@@ -153,6 +153,21 @@ jobs:
           scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
             init-scripts \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
+            loki-config.yaml \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
+            prometheus.yaml \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
+            promtail-config.yaml \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
+            servers.json \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
+            grafana/datasources.yaml \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/grafana/
           rm -rf .env
 
       - name: Deploy to VM via SSH

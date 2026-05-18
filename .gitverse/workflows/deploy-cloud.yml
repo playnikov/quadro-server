@@ -110,7 +110,7 @@ jobs:
 
   deploy:
     runs-on: self-hosted
-#    needs: build
+    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -147,7 +147,6 @@ jobs:
           echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "mkdir -p /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/"
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "mkdir -p /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/grafana"
           tar czf configs.tar.gz \
             docker-compose.yaml Dockerfile.postgres \
             loki-config.yaml prometheus.yml promtail-config.yaml servers.json \
@@ -156,7 +155,7 @@ jobs:
             configs.tar.gz \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
           ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/ && tar xzf configs.tar.gz && rm configs.tar.gz"
+            "cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/ && tar --overwrite -xzf configs.tar.gz && rm configs.tar.gz"
             rm -rf .env
 
       - name: Deploy to VM via SSH

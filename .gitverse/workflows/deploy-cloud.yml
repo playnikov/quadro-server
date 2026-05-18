@@ -110,7 +110,7 @@ jobs:
 
   deploy:
     runs-on: self-hosted
-    needs: build
+#    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -147,28 +147,17 @@ jobs:
           echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "mkdir -p /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "mkdir -p /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/grafana"
+          tar czf configs.tar.gz \
+            docker-compose.yaml Dockerfile.postgres \
+            loki-config.yaml prometheus.yaml promtail-config.yaml servers.json \
+            grafana/datasources.yaml init-scripts/
           scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key \
-            .env docker-compose.yaml Dockerfile.postgres \
+            configs.tar.gz \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
-            init-scripts \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
-            loki-config.yaml \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
-            prometheus.yaml \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
-            promtail-config.yaml \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
-            servers.json \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -r \
-            grafana/datasources.yaml \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/grafana/
-          rm -rf .env
+          ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/ && tar xzf configs.tar.gz && rm configs.tar.gz"
+            rm -rf .env
 
       - name: Deploy to VM via SSH
         run: |

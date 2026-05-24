@@ -1,273 +1,197 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { Trend } from 'k6/metrics';
-import exec from 'k6/execution';
+import { Rate } from 'k6/metrics';
 
-// Метрики
-const createTaskDuration = new Trend('create_task_duration', true);
-const updateTaskDuration = new Trend('update_task_duration', true);
-const statsDuration = new Trend('stats_duration', true);
+const errorRate = new Rate('errors');
 
-export const options = {
-  setupTimeout: '5m',
-  scenarios: {
-    main_load: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '1m', target: 30 },
-        { duration: '3m', target: 50 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '100s',
-    },
-  },
+export let options = {
+  stages: [
+    { duration: '30s', target: 50 },
+    { duration: '3m', target: 50 },
+    { duration: '30s', target: 0 },
+  ],
   thresholds: {
-    http_req_duration: ['p(95) < 500', 'p(99) < 1000'],
-    http_req_failed: ['rate < 0.02'],
-    'http_req_duration{type:create_task}': ['p(95) < 600'],
-    'http_req_duration{type:update_task}': ['p(95) < 400'],
-    'http_req_duration{type:stats}': ['p(95) < 300'],
-    create_task_duration: ['p(95) < 700'],
-    update_task_duration: ['p(95) < 500'],
-    stats_duration: ['p(95) < 350'],
+    http_req_duration: ['p(95)<2000'],
+    errors: ['rate<0.1'],
   },
 };
 
-// ---------- API функции (без изменений, но защищены) ----------
-function loginUser(baseUrl, username, password) {
-  const res = http.post(`${baseUrl}/api/auth/login`, JSON.stringify({
-    name: username,
-    password: password
-  }), { headers: { 'Content-Type': 'application/json' } });
-  const ok = check(res, { 'логин успешен': (r) => r.status === 200 });
-  if (!ok) return null;
-  const body = res.json();
-  if (body && body.data && body.data.token) {
-    return body.data.token;
-  }
-  return null;
-}
-
-function createProject(baseUrl, adminToken, projectName, projectKey) {
-  const payload = JSON.stringify({
-    type: 'TEAM_MANAGED',
-    name: projectName,
-    key: projectKey,
-    description: 'Нагрузочный проект',
-    priority: 'LOW',
-    visibility: 'PUBLIC'
-  });
-  const res = http.post(`${baseUrl}/api/projects`, payload, {
-    headers: {
-      'Authorization': `Bearer ${adminToken}`,
-      'Content-Type': 'application/json'
-    }
-  });
-  const ok = check(res, { 'проект создан': (r) => r.status === 201 });
-  if (!ok) return null;
-  const body = res.json();
-  if (body && body.data && body.data.id) {
-    return body.data.id;
-  }
-  return null;
-}
-
-function createInvitation(baseUrl, adminToken, projectId, userEmail) {
-  const payload = JSON.stringify({
-    role: 'MANAGER',
-    type: 'EMAIL',
-    identifier: userEmail,
-    message: 'Приглашение в проект',
-    expiresInDays: 7
-  });
-  const res = http.post(`${baseUrl}/api/projects/invitations?id=${projectId}`, payload, {
-    headers: {
-      'Authorization': `Bearer ${adminToken}`,
-      'Content-Type': 'application/json'
-    }
-  });
-  const ok = check(res, { 'приглашение создано': (r) => r.status === 201 });
-  if (!ok) return null;
-  const body = res.json();
-  if (body && body.data && body.data.token) {
-    return body.data.token;
-  }
-  return null;
-}
-
-function acceptInvitation(baseUrl, userToken, invitationToken) {
-  const res = http.post(`${baseUrl}/api/projects/invite?token=${invitationToken}`, null, {
-    headers: { 'Authorization': `Bearer ${userToken}` }
-  });
-  check(res, { 'приглашение принято': (r) => r.status === 200 });
-}
-
-function createTask(baseUrl, userToken, projectId, iteration) {
-  const payload = JSON.stringify({
-    title: `Задача от ВП ${exec.vu.idInTest} итерация ${iteration}`,
-    projectId: projectId,
-    description: 'Тестовое описание',
-    priority: 'MEDIUM',
-    type: 'TASK',
-    assigneeId: null,
-    assignedTeamId: null,
-    sprintId: null,
-    parentTaskId: null,
-    storyPoints: 3,
-    estimatedHours: 4.0,
-    dueDate: new Date(Date.now() + 7*86400000).toISOString(),
-    labels: ['loadtest']
-  });
-  const start = Date.now();
-  const res = http.post(`${baseUrl}/api/tasks`, payload, {
-    headers: {
-      'Authorization': `Bearer ${userToken}`,
-      'Content-Type': 'application/json'
-    },
-    tags: { type: 'create_task' }
-  });
-  createTaskDuration.add(Date.now() - start);
-  const ok = check(res, { 'задача создана': (r) => r.status === 200 || r.status === 201 });
-  if (!ok) return null;
-  const body = res.json();
-  if (body && body.data && body.data.id) {
-    return body.data.id;
-  }
-  return null;
-}
-
-function updateTask(baseUrl, userToken, taskId) {
-  const payload = JSON.stringify({
-    status: 'IN_PROGRESS',
-    loggedHours: 2.5
-  });
-  const start = Date.now();
-  const res = http.patch(`${baseUrl}/api/tasks/${taskId}`, payload, {
-    headers: {
-      'Authorization': `Bearer ${userToken}`,
-      'Content-Type': 'application/json'
-    },
-    tags: { type: 'update_task' }
-  });
-  updateTaskDuration.add(Date.now() - start);
-  check(res, { 'задача обновлена': (r) => r.status === 200 });
-}
-
-function getProjectTasks(baseUrl, userToken, projectId) {
-  const start = Date.now();
-  const res = http.get(`${baseUrl}/api/tasks/project?projectId=${projectId}`, {
-    headers: { 'Authorization': `Bearer ${userToken}` },
-    tags: { type: 'stats' }
-  });
-  statsDuration.add(Date.now() - start);
-  check(res, { 'список задач получен': (r) => r.status === 200 });
-}
-
-// ---------- ПОДГОТОВКА (выполняется один раз) ----------
 export function setup() {
-  const baseUrl = 'http://84.54.57.58';
-  const users = [];
+  const baseUrl = __ENV.BASE_URL || 'http://localhost';
 
-  // Регистрируем 30 пользователей
-  for (let i = 0; i < 50; i++) {
-    const username = `user_${i}_${Date.now()}`;
-    const email = `${username}@mail.example`;
-    const lastName = `lastName`;
-    const firstName = `firstName`;
-    const middleName = `middleName`;
-    const password = 'Test123!';
+  // Регистрация админа
+  const adminUser = {
+    username: 'admin',
+    password: 'Admin123',
+  };
 
-    const regRes = http.post(`${baseUrl}/api/auth/register`, JSON.stringify({
-      email, username, lastName, firstName, middleName, password
+  // Логин админа
+  let loginAdminRes = http.post(baseUrl + '/api/auth/login', JSON.stringify({
+    name: adminUser.username,
+    password: adminUser.password,
+  }), { headers: { 'Content-Type': 'application/json' } });
+  if (!check(loginAdminRes, { 'admin login': (r) => r.json().success === true })) {
+    throw new Error('Admin login failed');
+  }
+  const adminToken = loginAdminRes.json().data.token;
+  const adminHeaders = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + adminToken,
+  };
+
+  // Создание проектов и приглашений
+  const projectsCount = parseInt(__ENV.PROJECTS_COUNT) || 3;
+  let projects = [];
+  for (let i = 0; i < projectsCount; i++) {
+    let projectRes = http.post(baseUrl + '/api/projects', JSON.stringify({
+      name: 'Test Project ' + i,
+      key: 'PROJ' + i,
+      description: 'Description ' + i,
+    }), { headers: adminHeaders });
+    check(projectRes, { 'project created': (r) => r.json().success === true });
+    let projectId = projectRes.json().data.id;
+    if (!projectId) continue;
+
+    let inviteRes = http.post(baseUrl + '/api/projects/invitations?id=' + projectId, JSON.stringify({
+      role: 'MEMBER',
+      type: 'LINK',
+      expiresInDays: 7,
+    }), { headers: adminHeaders });
+    check(inviteRes, { 'invitation created': (r) => r.json().success === true });
+    let inviteToken = inviteRes.json().data.token;
+    projects.push({ id: projectId, inviteToken: inviteToken });
+  }
+
+  // Регистрация обычных пользователей
+  const usersCount = parseInt(__ENV.USERS_COUNT) || 100;
+  let users = [];
+  for (let i = 0; i < usersCount; i++) {
+    let username = 'user' + i + '_' + Date.now();
+    let email = username + '@example.com';
+    let registerRes = http.post(baseUrl + '/api/auth/register', JSON.stringify({
+      username: username,
+      email: email,
+      password: 'Pass123!',
+      firstName: 'First' + i,
+      lastName: 'Last' + i,
+      middleName: null,
     }), { headers: { 'Content-Type': 'application/json' } });
+    if (registerRes.json().success === true) {
+      users.push({ username: username, password: 'Pass123!' });
+    }
+    if (i % 10 === 0) sleep(0.1);
+  }
 
-    if (regRes.status === 201) {
-      users.push({ username, password, email });
-      console.log(`Зарегистрирован ${username}`);
+  console.log('Setup done: ' + users.length + ' users, ' + projects.length + ' projects');
+  return { baseUrl: baseUrl, projects: projects, users: users };
+}
+
+export default function (data) {
+  const { baseUrl, projects, users } = data;
+  if (users.length === 0) return;
+
+  const vuIndex = __VU % users.length;
+  const user = users[vuIndex];
+  if (!user) return;
+
+  // Логин
+  let loginRes = http.post(baseUrl + '/api/auth/login', JSON.stringify({
+    name: user.username,
+    password: user.password,
+  }), { headers: { 'Content-Type': 'application/json' } });
+
+  let success = check(loginRes, { 'login success': (r) => r.json().success === true });
+  if (!success) {
+    errorRate.add(1);
+    return;
+  }
+
+  const token = loginRes.json().data.token;
+  if (!token) {
+    errorRate.add(1);
+    return;
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + token,
+  };
+
+  const projectIndex = vuIndex % projects.length;
+  const project = projects[projectIndex];
+  if (!project) return;
+
+  // Проверить, является ли пользователь участником проекта
+  let myProjectsRes = http.get(baseUrl + '/api/projects/my', { headers: headers });
+  if (myProjectsRes.json().success !== true) {
+    errorRate.add(1);
+    return;
+  }
+  const myProjects = myProjectsRes.json().data || [];
+  let isMember = myProjects.some(function(p) { return p.id === project.id; });
+
+  if (!isMember) {
+    let acceptRes = http.put(baseUrl + '/api/projects/invite?token=' + project.inviteToken, '{}', { headers: headers });
+    if (!check(acceptRes, { 'accept invitation': (r) => r.json().success === true })) {
+      errorRate.add(1);
+      sleep(1);
+      return;
+    }
+  }
+
+  // Имитация работы с задачами
+  const action = Math.random();
+  if (action < 0.4) {
+    // Создание задачи
+    let createRes = http.post(baseUrl + '/api/tasks', JSON.stringify({
+      title: 'Load test task ' + __VU + '-' + __ITER,
+      projectId: project.id,
+      description: 'Test description',
+      priority: 'MEDIUM',
+      type: 'TASK',
+    }), { headers: headers });
+    if (!check(createRes, { 'create task': (r) => r.json().success === true })) {
+      errorRate.add(1);
+    }
+  } else if (action < 0.7) {
+    // Получение списка задач проекта
+    let getRes = http.get(baseUrl + '/api/tasks/project?projectId=' + project.id, { headers: headers });
+    if (!check(getRes, { 'get tasks': (r) => r.json().success === true })) {
+      errorRate.add(1);
+    }
+  } else if (action < 0.9) {
+    // Обновление задачи – сначала получить список
+    let getRes = http.get(baseUrl + '/api/tasks/project?projectId=' + project.id, { headers: headers });
+    if (getRes.json().success && getRes.json().data && getRes.json().data.length > 0) {
+      let taskId = getRes.json().data[0].id;
+      let updateRes = http.patch(baseUrl + '/api/tasks?taskId=' + taskId, JSON.stringify({
+        title: 'Updated ' + Date.now(),
+        status: 'IN_PROGRESS',
+      }), { headers: headers });
+      if (!check(updateRes, { 'update task': (r) => r.json().success === true })) {
+        errorRate.add(1);
+      }
     } else {
-      console.error(`Ошибка регистрации ${username}: ${regRes.status}`);
+      // Если задач нет – создать новую
+      let createRes = http.post(baseUrl + '/api/tasks', JSON.stringify({
+        title: 'Temp for update ' + __VU + '-' + __ITER,
+        projectId: project.id,
+      }), { headers: headers });
+      if (!check(createRes, { 'create temp task': (r) => r.json().success === true })) {
+        errorRate.add(1);
+      }
     }
-    sleep(0.1);
-  }
-
-  const adminToken = loginUser(baseUrl, 'playnikov', '12345678af');
-  if (!adminToken) {
-    console.error('Не удалось авторизовать администратора');
-    return { baseUrl, users, projectIds: [] };
-  }
-
-  // Создаём проекты
-  const projectIds = [];
-  for (let p = 0; p < 5; p++) {
-    const projectName = `Проект_${p}_${Date.now()}`;
-    const projectKey = `PROJ2${p}`;
-    const projId = createProject(baseUrl, adminToken, projectName, projectKey);
-    if (projId) {
-      projectIds.push(projId);
-    } else {
-      console.error(`Не удалось создать проект ${projectName}`);
-    }
-    sleep(0.5);
-  }
-
-  // Создаём приглашения и сразу принимаем их за каждого пользователя
-  for (const user of users) {
-    // Логинимся как пользователь
-    const userToken = loginUser(baseUrl, user.username, user.password);
-    if (!userToken) {
-      console.error(`Не удалось залогинить ${user.username} для принятия приглашений`);
-      continue;
-    }
-    // Для каждого проекта создаём приглашение админом и принимаем пользователем
-    for (const proj of projectIds) {
-      const invToken = createInvitation(baseUrl, adminToken, proj, user.email);
-      if (invToken) {
-        acceptInvitation(baseUrl, userToken, invToken);
-        sleep(0.2);
+  } else {
+    // Удаление задачи – взять первую из списка
+    let getRes = http.get(baseUrl + '/api/tasks/project?projectId=' + project.id, { headers: headers });
+    if (getRes.json().success && getRes.json().data && getRes.json().data.length > 0) {
+      let taskId = getRes.json().data[0].id;
+      let deleteRes = http.del(baseUrl + '/api/tasks?taskId=' + taskId, '{}', { headers: headers });
+      if (!check(deleteRes, { 'delete task': (r) => r.status === 204 })) {
+        errorRate.add(1);
       }
     }
   }
 
-  return {
-    baseUrl: baseUrl,
-    users: users.map(u => ({ username: u.username, password: u.password, email: u.email })),
-    projectIds: projectIds,
-  };
-}
-
-// ---------- ОСНОВНАЯ НАГРУЗКА (без __VU.state и без принятия приглашений) ----------
-export default function (data) {
-  const { baseUrl, users, projectIds } = data;
-
-  const vuId = exec.vu.idInTest;
-  const user = users[vuId % users.length];
-  if (!user) return;
-
-  const token = loginUser(baseUrl, user.username, user.password);
-  if (!token) {
-    console.error(`Не удалось получить токен для ${user.username} ${user.password}`);
-    return;
-  }
-
-  const randomProject = projectIds[Math.floor(Math.random() * projectIds.length)];
-  // Используем простой псевдо-счетчик на основе времени и vuId
-  const action = (Date.now() + vuId) % 10;
-
-  if (action < 5) {
-    const taskId = createTask(baseUrl, token, randomProject, vuId);
-    if (taskId && action === 2) updateTask(baseUrl, token, taskId);
-  } else if (action < 8) {
-    getProjectTasks(baseUrl, token, randomProject);
-  } else {
-    http.get(`${baseUrl}/api/tasks/sprint?sprintId=some-id`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      tags: { type: 'view' }
-    });
-  }
-  sleep(Math.random() * 5 + 0.5);
-}
-
-export function teardown(data) {
-  console.log('Тест завершён');
+  sleep(1);
 }

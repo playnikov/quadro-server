@@ -3,6 +3,8 @@ package com.quadro.auth
 import com.quadro.auth.di.authModule
 import com.quadro.auth.di.kafkaModule
 import com.quadro.auth.di.userModule
+import com.quadro.auth.domain.models.UserCreate
+import com.quadro.auth.domain.services.UserService
 import com.quadro.auth.plugins.configureDatabase
 import com.quadro.auth.plugins.configureKafka
 import com.quadro.shared.plugins.configureMonitoring
@@ -13,6 +15,7 @@ import com.quadro.shared.plugins.configureStatusPages
 import com.quadro.shared.security.JwtValidator
 import com.quadro.shared.security.configureSecurity
 import io.ktor.server.application.*
+import org.koin.ktor.ext.get
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger

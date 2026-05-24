@@ -166,7 +166,9 @@ class ProjectInvitationServiceImpl(
             )
         )
 
-        projectInvitationRepository.acceptInvitation(invitation.id, user.id)
+        if (invitation.type == InviteType.EMAIL) {
+            projectInvitationRepository.acceptInvitation(invitation.id, user.id)
+        }
 
         logger.info("Invitation accepted: ${invitation.id} by user ${user.id}")
         return ProjectResponse.from(project)

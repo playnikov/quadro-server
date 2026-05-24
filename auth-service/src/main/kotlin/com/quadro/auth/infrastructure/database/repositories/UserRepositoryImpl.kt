@@ -61,7 +61,6 @@ class UserRepositoryImpl : UserRepository {
     override suspend fun updateLastLogin(id: UUID, ip: String?): Boolean = newSuspendedTransaction {
         UserEntity.findById(id)?.apply {
             lastLoginAt = Clock.System.now().toOffsetDateTime()
-            lastLoginIp = ip
         } != null
     }
 }

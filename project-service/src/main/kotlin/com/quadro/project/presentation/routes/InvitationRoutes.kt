@@ -6,6 +6,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 
 class InvitationRoutes(
@@ -18,11 +19,11 @@ class InvitationRoutes(
                     post { invitationController.createInvitation(call) }
                     get { invitationController.getInvitations(call) }
                     delete { invitationController.cancelInvitation(call) }
-                    get("/email") { invitationController.getInvitationsByEmail(call) }
+                    get("/my") { invitationController.getMyInvitations(call) }
                 }
 
                 route("/invite") {
-                    post { invitationController.acceptInvitation(call) }
+                    put { invitationController.acceptInvitation(call) }
                 }
             }
         }

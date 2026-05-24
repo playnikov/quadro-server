@@ -8,7 +8,7 @@ import com.quadro.shared.data.messaging.events.ProjectMemberUpdatedRoleEvent
 import com.quadro.shared.data.messaging.events.ProjectUpdatedEvent
 import com.quadro.task.domain.models.project.Project
 import com.quadro.task.domain.models.project.ProjectMember
-import com.quadro.task.domain.models.project.ProjectRole
+import com.quadro.task.domain.models.project.MemberRole
 import com.quadro.task.domain.models.project.ProjectStatus
 import com.quadro.task.domain.repositories.project.ProjectMemberRepository
 import com.quadro.task.domain.repositories.project.ProjectRepository
@@ -47,7 +47,7 @@ class ProjectEventProcessor(
         val member = ProjectMember(
             projectId = UUID.fromString(event.projectId),
             userId = UUID.fromString(event.userId),
-            role = ProjectRole.valueOf(event.role)
+            role = MemberRole.valueOf(event.role)
         )
 
         projectMemberRepository.upsert(member)
@@ -57,7 +57,7 @@ class ProjectEventProcessor(
         val member = ProjectMember(
             projectId = UUID.fromString(event.projectId),
             userId = UUID.fromString(event.userId),
-            role = ProjectRole.valueOf(event.role)
+            role = MemberRole.valueOf(event.role)
         )
 
         projectMemberRepository.upsert(member)

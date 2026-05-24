@@ -7,4 +7,5 @@ interface UserRepository {
     suspend fun upsert(user: User): User
     suspend fun findById(id: UUID): User?
     suspend fun delete(id: UUID): Boolean
+    suspend fun findAll(): List<User>
 }

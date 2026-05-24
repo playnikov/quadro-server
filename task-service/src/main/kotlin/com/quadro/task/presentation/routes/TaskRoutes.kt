@@ -23,7 +23,6 @@ class TaskRoutes(
             get("/project") { controller.findByProject(call) }
             get("/sprint") { controller.findBySprint(call) }
             get("/assignee") { controller.findByAssignee(call) }
-            get("/team/project") { controller.findByTeam(call) }
             get("/parent") { controller.findByParent(call) }
         }
     }

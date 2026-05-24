@@ -4,6 +4,6 @@ import com.quadro.project.domain.models.InvitationValidationResult
 import java.util.UUID
 
 interface InvitationTokenService {
-    fun generateToken(invitationId: UUID, projectId: UUID, expiresInDays: Int? = 7): String
+    fun generateToken(invitationId: UUID, projectId: UUID): String
     fun validateToken(token: String): InvitationValidationResult
 }

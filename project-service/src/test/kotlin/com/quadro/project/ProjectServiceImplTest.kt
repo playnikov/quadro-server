@@ -4,7 +4,7 @@ import com.quadro.project.domain.models.Project
 import com.quadro.project.domain.models.ProjectCreate
 import com.quadro.project.domain.models.ProjectMember
 import com.quadro.project.domain.models.ProjectPriority
-import com.quadro.project.domain.models.ProjectRole
+import com.quadro.project.domain.models.MemberRole
 import com.quadro.project.domain.models.ProjectStatus
 import com.quadro.project.domain.models.ProjectType
 import com.quadro.project.domain.models.ProjectUpdate
@@ -16,7 +16,6 @@ import com.quadro.project.domain.repositories.ProjectRepository
 import com.quadro.project.domain.repositories.UserRepository
 import com.quadro.project.domain.services.ProjectServiceImpl
 import com.quadro.shared.data.messaging.EventProducer
-import com.quadro.shared.data.messaging.KafkaTopics
 import com.quadro.shared.dto.DomainException
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -67,7 +66,7 @@ class ProjectServiceImplTest {
         id = testMemberId,
         projectId = testProjectId,
         userId = testUserId,
-        role = ProjectRole.OWNER,
+        role = MemberRole.OWNER,
         joinedAt = now,
         invitedBy = testUserId,
         invitedAt = now
@@ -277,7 +276,7 @@ class ProjectServiceImplTest {
     @Test
     fun `deleteProject - fails when not owner and not admin`() = runBlocking {
         val normalUser = testUser.copy(role = UserRole.USER)
-        val member = testMember.copy(role = ProjectRole.MEMBER)
+        val member = testMember.copy(role = MemberRole.MEMBER)
         coEvery { userRepository.findById(testUserId) } returns normalUser
         coEvery { projectRepository.findById(testProjectId) } returns testProject
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns member
@@ -388,34 +387,34 @@ class ProjectServiceImplTest {
     @Test
     fun `updateMemberRole - success by OWNER`() = runBlocking {
         val targetUserId = UUID.randomUUID()
-        val targetMember = testMember.copy(id = UUID.randomUUID(), userId = targetUserId, role = ProjectRole.MEMBER)
+        val targetMember = testMember.copy(id = UUID.randomUUID(), userId = targetUserId, role = MemberRole.MEMBER)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember // OWNER
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, targetUserId) } returns targetMember
-        coEvery { projectMemberRepository.updateRole(targetMember.id, ProjectRole.ADMIN) } returns Unit
-        coEvery { projectMemberRepository.findByProjectAndRole(testProjectId, ProjectRole.OWNER) } returns listOf(testMember)
+        coEvery { projectMemberRepository.updateRole(targetMember.id, MemberRole.ADMIN) } returns Unit
+        coEvery { projectMemberRepository.findByProjectAndRole(testProjectId, MemberRole.OWNER) } returns listOf(testMember)
 
-        projectService.updateMemberRole(testProjectId, testUserId, targetUserId, ProjectRole.ADMIN)
+        projectService.updateMemberRole(testProjectId, testUserId, targetUserId, MemberRole.ADMIN)
 
-        coVerify { projectMemberRepository.updateRole(targetMember.id, ProjectRole.ADMIN) }
+        coVerify { projectMemberRepository.updateRole(targetMember.id, MemberRole.ADMIN) }
     }
 
     @Test
     fun `updateMemberRole - cannot change own role`() = runBlocking {
         val ex = assertFailsWith<DomainException.Forbidden> {
-            projectService.updateMemberRole(testProjectId, testUserId, testUserId, ProjectRole.ADMIN)
+            projectService.updateMemberRole(testProjectId, testUserId, testUserId, MemberRole.ADMIN)
         }
         assertEquals("Not allowed", ex.message)
     }
 
     @Test
     fun `updateMemberRole - manager cannot grant ADMIN`() = runBlocking {
-        val managerMember = testMember.copy(role = ProjectRole.MANAGER)
+        val managerMember = testMember.copy(role = MemberRole.MANAGER)
         val targetUserId = UUID.randomUUID()
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns managerMember
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, targetUserId) } returns mockk()
 
         val ex = assertFailsWith<DomainException.AccessDenied> {
-            projectService.updateMemberRole(testProjectId, testUserId, targetUserId, ProjectRole.ADMIN)
+            projectService.updateMemberRole(testProjectId, testUserId, targetUserId, MemberRole.ADMIN)
         }
         assertEquals("Manager cannot grant ADMIN or OWNER roles", ex.message)
     }
@@ -426,14 +425,14 @@ class ProjectServiceImplTest {
         val targetOwner = testMember.copy(
             id = UUID.randomUUID(),
             userId = targetUserId,
-            role = ProjectRole.OWNER
+            role = MemberRole.OWNER
         )
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember // текущий OWNER
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, targetUserId) } returns targetOwner
-        coEvery { projectMemberRepository.findByProjectAndRole(testProjectId, ProjectRole.OWNER) } returns listOf(targetOwner) // только один OWNER
+        coEvery { projectMemberRepository.findByProjectAndRole(testProjectId, MemberRole.OWNER) } returns listOf(targetOwner) // только один OWNER
 
         val ex = assertFailsWith<DomainException.BusinessRule> {
-            projectService.updateMemberRole(testProjectId, testUserId, targetUserId, ProjectRole.MEMBER)
+            projectService.updateMemberRole(testProjectId, testUserId, targetUserId, MemberRole.MEMBER)
         }
         assertEquals("Project must have at least one OWNER", ex.message)
     }
@@ -443,7 +442,7 @@ class ProjectServiceImplTest {
     @Test
     fun `removeMember - success by OWNER`() = runBlocking {
         val targetUserId = UUID.randomUUID()
-        val targetMember = testMember.copy(id = UUID.randomUUID(), userId = targetUserId, role = ProjectRole.MEMBER)
+        val targetMember = testMember.copy(id = UUID.randomUUID(), userId = targetUserId, role = MemberRole.MEMBER)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember // OWNER
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, targetUserId) } returns targetMember
         coEvery { projectMemberRepository.remove(targetMember.id) } returns Unit
@@ -455,7 +454,7 @@ class ProjectServiceImplTest {
 
     @Test
     fun `removeMember - manager cannot remove themselves`() = runBlocking {
-        val managerMember = testMember.copy(role = ProjectRole.MANAGER, userId = testUserId)
+        val managerMember = testMember.copy(role = MemberRole.MANAGER, userId = testUserId)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns managerMember
 
         val ex = assertFailsWith<DomainException.Forbidden> {
@@ -466,8 +465,8 @@ class ProjectServiceImplTest {
 
     @Test
     fun `removeMember - only OWNER can remove another OWNER`() = runBlocking {
-        val targetOwner = testMember.copy(role = ProjectRole.OWNER, userId = UUID.randomUUID())
-        val managerMember = testMember.copy(role = ProjectRole.MANAGER)
+        val targetOwner = testMember.copy(role = MemberRole.OWNER, userId = UUID.randomUUID())
+        val managerMember = testMember.copy(role = MemberRole.MANAGER)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns managerMember
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, targetOwner.userId) } returns targetOwner
 
@@ -481,7 +480,7 @@ class ProjectServiceImplTest {
 
     @Test
     fun `leaveProject - success as MEMBER`() = runBlocking {
-        val member = testMember.copy(role = ProjectRole.MEMBER)
+        val member = testMember.copy(role = MemberRole.MEMBER)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns member
         coEvery { projectMemberRepository.remove(member.id) } returns Unit
 
@@ -492,9 +491,9 @@ class ProjectServiceImplTest {
 
     @Test
     fun `leaveProject - last OWNER cannot leave`() = runBlocking {
-        val owner = testMember.copy(role = ProjectRole.OWNER)
+        val owner = testMember.copy(role = MemberRole.OWNER)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns owner
-        coEvery { projectMemberRepository.findByProjectAndRole(testProjectId, ProjectRole.OWNER) } returns listOf(owner)
+        coEvery { projectMemberRepository.findByProjectAndRole(testProjectId, MemberRole.OWNER) } returns listOf(owner)
 
         val ex = assertFailsWith<DomainException.BusinessRule> {
             projectService.leaveProject(testProjectId, testUserId)

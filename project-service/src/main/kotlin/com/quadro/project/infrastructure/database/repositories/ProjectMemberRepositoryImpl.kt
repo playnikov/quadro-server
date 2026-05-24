@@ -1,7 +1,7 @@
 package com.quadro.project.infrastructure.database.repositories
 
 import com.quadro.project.domain.models.ProjectMember
-import com.quadro.project.domain.models.ProjectRole
+import com.quadro.project.domain.models.MemberRole
 import com.quadro.project.domain.repositories.ProjectMemberRepository
 import com.quadro.project.infrastructure.database.entities.ProjectMemberEntity
 import com.quadro.project.infrastructure.database.entities.ProjectMembersTable
@@ -10,9 +10,7 @@ import com.quadro.shared.utils.toOffsetDateTime
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.update
 import java.util.UUID
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 class ProjectMemberRepositoryImpl : ProjectMemberRepository {
@@ -42,11 +40,11 @@ class ProjectMemberRepositoryImpl : ProjectMemberRepository {
 
     override suspend fun findByProjectAndRole(
         projectId: UUID,
-        role: ProjectRole
+        role: MemberRole
     ): List<ProjectMember> = newSuspendedTransaction {
         ProjectMemberEntity.find {
             (ProjectMembersTable.projectId eq projectId) and
-                    (ProjectMembersTable.role eq role.name)
+                    (ProjectMembersTable.role eq role)
         }.map { ProjectMemberMapper.toDomain(it) }
     }
 
@@ -66,9 +64,9 @@ class ProjectMemberRepositoryImpl : ProjectMemberRepository {
         ProjectMemberEntity.findById(id)?.delete()
     }
 
-    override suspend fun updateRole(id: UUID, role: ProjectRole): Unit = newSuspendedTransaction {
+    override suspend fun updateRole(id: UUID, role: MemberRole): Unit = newSuspendedTransaction {
         ProjectMemberEntity.findById(id)?.apply {
-            this.role = role.name
+            this.role = role
         } != null
     }
 

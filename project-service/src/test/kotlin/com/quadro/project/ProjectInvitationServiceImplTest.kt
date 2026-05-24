@@ -1,14 +1,14 @@
 package com.quadro.project
 
 import com.quadro.project.domain.models.InvitationCreate
-import com.quadro.project.domain.models.InvitationStatus
+import com.quadro.project.domain.models.InviteStatus
 import com.quadro.project.domain.models.InvitationValidationResult
 import com.quadro.project.domain.models.InviteType
 import com.quadro.project.domain.models.Project
 import com.quadro.project.domain.models.ProjectInvitation
 import com.quadro.project.domain.models.ProjectMember
 import com.quadro.project.domain.models.ProjectPriority
-import com.quadro.project.domain.models.ProjectRole
+import com.quadro.project.domain.models.MemberRole
 import com.quadro.project.domain.models.ProjectStatus
 import com.quadro.project.domain.models.ProjectType
 import com.quadro.project.domain.models.ProjectVisibility
@@ -71,7 +71,7 @@ class ProjectInvitationServiceImplTest {
         id = UUID.randomUUID(),
         projectId = testProjectId,
         userId = testUserId,
-        role = ProjectRole.OWNER,
+        role = MemberRole.OWNER,
         joinedAt = now,
         invitedBy = testUserId,
         invitedAt = now
@@ -81,10 +81,10 @@ class ProjectInvitationServiceImplTest {
         id = testInvitationId,
         projectId = testProjectId,
         invitedBy = testUserId,
-        inviteType = InviteType.EMAIL,
+        type = InviteType.EMAIL,
         identifier = "user@example.com",
-        role = ProjectRole.MEMBER,
-        status = InvitationStatus.PENDING,
+        role = MemberRole.MEMBER,
+        status = InviteStatus.PENDING,
         token = testToken,
         expiresAt = now.plus(7.days),
         createdAt = now,
@@ -118,7 +118,7 @@ class ProjectInvitationServiceImplTest {
         val request = InvitationCreate(
             inviteType = InviteType.EMAIL,
             identifier = "new@example.com",
-            role = ProjectRole.MEMBER,
+            role = MemberRole.MEMBER,
             expiresInDays = 5,
             message = "Welcome"
         )
@@ -206,7 +206,7 @@ class ProjectInvitationServiceImplTest {
     @Test
     fun `acceptInvitation - invitation already accepted`() = runTest {
         val validation = InvitationValidationResult(isValid = true, invitationId = testInvitationId, projectId = testProjectId)
-        val expiredInvitation = testInvitation.copy(status = InvitationStatus.ACCEPTED)
+        val expiredInvitation = testInvitation.copy(status = InviteStatus.ACCEPTED)
         coEvery { invitationTokenService.validateToken(testToken) } returns validation
         coEvery { projectInvitationRepository.findById(testInvitationId) } returns expiredInvitation
 
@@ -233,7 +233,7 @@ class ProjectInvitationServiceImplTest {
 
     @Test
     fun `getInvitations - success as ADMIN`() = runTest {
-        val adminMember = testMember.copy(role = ProjectRole.ADMIN)
+        val adminMember = testMember.copy(role = MemberRole.ADMIN)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns adminMember
         coEvery { projectRepository.findById(testProjectId) } returns testProject
         coEvery { projectInvitationRepository.findByProject(testProjectId, null) } returns listOf(testInvitation)
@@ -263,7 +263,7 @@ class ProjectInvitationServiceImplTest {
 
         projectInvitationService.cancelInvitation(testProjectId, testUserId, testInvitationId)
 
-        coVerify { projectInvitationRepository.updateStatus(testInvitationId, InvitationStatus.CANCELLED) }
+        coVerify { projectInvitationRepository.updateStatus(testInvitationId, InviteStatus.CANCELLED) }
     }
 
     @Test

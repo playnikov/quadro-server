@@ -8,5 +8,6 @@ interface UserRepository {
     suspend fun findByIds(ids: Set<UUID>): List<User>
     suspend fun findByEmail(email: String): User?
     suspend fun findById(id: UUID): User?
+    suspend fun findByIds(ids: List<UUID>): List<User>
     suspend fun delete(id: UUID): Boolean
 }

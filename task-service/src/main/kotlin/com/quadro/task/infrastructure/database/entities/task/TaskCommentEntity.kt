@@ -1,5 +1,6 @@
 package com.quadro.task.infrastructure.database.entities.task
 
+import com.quadro.task.infrastructure.database.entities.UsersTable
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -10,7 +11,7 @@ import java.util.UUID
 
 object TaskCommentsTable : UUIDTable("task_comments") {
     val taskId = uuid("task_id").references(TasksTable.id)
-    val authorId = uuid("author_id")
+    val authorId = uuid("author_id").references(UsersTable.id)
     val content = text("content")
     val parentId = uuid("parent_id").nullable()
     val isEdited = bool("is_edited").default(false)

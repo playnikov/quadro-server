@@ -5,9 +5,11 @@ import com.quadro.shared.data.messaging.EventConsumer
 import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.shared.data.messaging.KafkaTopics
 import com.quadro.notification.infrastructure.messaging.listener.ProjectEventListener
+import com.quadro.notification.infrastructure.messaging.listener.TaskEventListener
 import com.quadro.notification.infrastructure.messaging.listener.TeamEventListener
 import com.quadro.notification.infrastructure.messaging.listener.UserEventListener
 import com.quadro.notification.infrastructure.messaging.processor.ProjectEventProcessor
+import com.quadro.notification.infrastructure.messaging.processor.TaskEventProcessor
 import com.quadro.notification.infrastructure.messaging.processor.TeamEventProcessor
 import com.quadro.notification.infrastructure.messaging.processor.UserEventProcessor
 import org.koin.core.qualifier.named
@@ -60,12 +62,27 @@ val kafkaModule = module {
             )
         )
     }
+    
+    single(named("taskConsumer")) {
+        EventConsumer(
+            get<KafkaConfig>().bootstrapServers,
+            get<KafkaConfig>().groupId,
+            listOf(
+                KafkaTopics.TASK_CREATED,
+                KafkaTopics.TASK_UPDATED,
+                KafkaTopics.TASK_ASSIGNED,
+                KafkaTopics.TASK_COMMENT
+            )
+        )
+    }
 
     single { UserEventListener() }
     single { ProjectEventListener() }
     single { TeamEventListener() }
+    single { TaskEventListener() }
 
-    single { UserEventProcessor(get(), get(), get()) }
-    single { ProjectEventProcessor(get(), get()) }
-    single { TeamEventProcessor(get(), get(), get(), get()) }
+    single { UserEventProcessor() }
+    single { ProjectEventProcessor() }
+    single { TeamEventProcessor() }
+    single { TaskEventProcessor() }
 }

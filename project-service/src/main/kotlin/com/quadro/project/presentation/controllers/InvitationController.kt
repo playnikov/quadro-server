@@ -22,7 +22,6 @@ class InvitationController(
         val request = call.receive<CreateInvitationRequest>()
         val invitationCreate = InvitationCreate(
             role = request.role,
-            inviteType = request.type,
             identifier = request.identifier,
             message = request.message,
             expiresInDays = request.expiresInDays
@@ -39,10 +38,9 @@ class InvitationController(
         call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 
-    suspend fun getInvitationsByEmail(call: ApplicationCall) {
-        val email = call.parameters["email"]
-            ?: throw DomainException.ValidationError("Email is invalid")
-        val result = projectInvitationService.getInvitationsByEmail(email)
+    suspend fun getMyInvitations(call: ApplicationCall) {
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
+        val result = projectInvitationService.getInvitations(userId)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 

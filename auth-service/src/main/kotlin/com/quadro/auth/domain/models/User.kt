@@ -26,8 +26,7 @@ data class User(
     val isNeedChangePassword: Boolean = false,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val lastLoginAt: Instant? = null,
-    val lastLoginIp: String? = null
+    val lastLoginAt: Instant? = null
 )
 
 data class UserCreate(

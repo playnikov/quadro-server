@@ -1,9 +1,11 @@
 package com.quadro.task.domain.services
 
-import com.quadro.shared.dto.DomainException
 import com.quadro.task.domain.models.task.PeriodReport
 import com.quadro.task.domain.models.task.Task
 import com.quadro.task.domain.models.task.TaskStatus
+import com.quadro.task.domain.repositories.UserRepository
+import com.quadro.task.domain.repositories.project.ProjectMemberRepository
+import com.quadro.task.domain.repositories.project.ProjectRepository
 import com.quadro.task.domain.repositories.task.TaskRepository
 import java.util.UUID
 import kotlin.time.Clock
@@ -11,7 +13,10 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 class TaskReportingServiceImpl(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val userRepository: UserRepository,
+    private val projectRepository: ProjectRepository,
+    private val projectMemberRepository: ProjectMemberRepository
 ) : TaskReportingService {
 
     override suspend fun getBacklogCount(projectId: UUID): Long {
@@ -102,7 +107,7 @@ class TaskReportingServiceImpl(
             dailyCreation = dailyCreation,
             dailyCompletion = dailyCompletion,
             averageCompletionDays = avgCompletionDays,
-            overdueCount = overdueCount
+            overdueCount = overdueCount,
         )
     }
 }

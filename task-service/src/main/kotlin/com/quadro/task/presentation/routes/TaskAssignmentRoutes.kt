@@ -14,11 +14,7 @@ class TaskAssignmentRoutes(
     fun init(routing: Route) {
         routing.route("/api/tasks") {
             patch("/assign/user") { controller.assignToUser(call) }
-            patch("/assign/team") { controller.assignToTeam(call) }
             patch("/unassign") { controller.unassign(call) }
-
-            get("/validate/user") { controller.validateUserAssignment(call) }
-            get("/validate/team") { controller.validateTeamAssignment(call) }
         }
     }
 }

@@ -6,12 +6,12 @@ dependencyResolutionManagement {
     }
 }
 
-
 include(
     ":shared",
     ":api-gateway",
     ":auth-service",
     ":team-service",
     ":project-service",
-    ":task-service"
+    ":task-service",
+    ":notification-service"
 )

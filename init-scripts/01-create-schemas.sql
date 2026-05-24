@@ -3,3 +3,5 @@ CREATE SCHEMA IF NOT EXISTS project_schema;
 CREATE SCHEMA IF NOT EXISTS task_schema;
 CREATE SCHEMA IF NOT EXISTS team_schema;
 CREATE SCHEMA IF NOT EXISTS notification_schema;
+
+CREATE EXTENSION pg_cron;

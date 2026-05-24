@@ -20,12 +20,9 @@ class ProjectController(
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val request = call.receive<ProjectCreateRequest>()
         val projectCreate = ProjectCreate(
-            type = ProjectType.valueOf(request.type),
             name = request.name,
             key = request.key,
-            description = request.description,
-            priority = ProjectPriority.valueOf(request.priority),
-            visibility = ProjectVisibility.valueOf(request.visibility)
+            description = request.description
         )
 
         val result = projectService.createProject(userId, projectCreate)
@@ -40,9 +37,7 @@ class ProjectController(
         val projectUpdate = ProjectUpdate(
             name = request.name,
             description = request.description,
-            status = request.status?.let { ProjectStatus.valueOf(it) },
-            priority = request.priority?.let { ProjectPriority.valueOf(it) },
-            visibility = request.visibility?.let { ProjectVisibility.valueOf(it) }
+            status = request.status?.let { ProjectStatus.valueOf(it) }
         )
 
         val result = projectService.updateProject(userId, projectId, projectUpdate)

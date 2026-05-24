@@ -5,11 +5,10 @@ import com.quadro.project.domain.models.ProjectStatus
 import java.util.UUID
 
 interface ProjectRepository {
-    suspend fun create(project: Project): Project
+    suspend fun upsert(project: Project): Project
     suspend fun findById(id: UUID): Project?
     suspend fun findByKey(key: String): Project?
     suspend fun findByName(name: String): Project?
-    suspend fun update(project: Project): Project
     suspend fun delete(id: UUID): Boolean
 
     suspend fun findByUser(userId: UUID, limit: Int, offset: Int): List<Project>

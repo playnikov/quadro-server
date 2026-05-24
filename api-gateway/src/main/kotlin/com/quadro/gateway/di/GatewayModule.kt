@@ -8,10 +8,12 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.Application
 import kotlinx.serialization.json.Json
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 fun gatewayModule(application: Application) = module {
@@ -46,6 +48,18 @@ fun gatewayModule(application: Application) = module {
         }
     }
 
+    single<HttpClient>(named("webSocketClient")) {
+        HttpClient(CIO) {
+            install(WebSockets)
+            install(DefaultRequest) {
+                header("User-Agent", "Quadro-API-Gateway/1.0")
+            }
+            engine {
+                maxConnectionsCount = 1000
+            }
+        }
+    }
+
     factory { AuthRoutes(get(), get()) }
 
     factory { InvitationRoutes(get(), get()) }
@@ -56,5 +70,5 @@ fun gatewayModule(application: Application) = module {
 
     factory { TaskRoutes(get(), get()) }
 
-    factory { WebSocket(get(), get()) }
+    factory { WebSocket(get(named("webSocketClient")), get()) }
 }

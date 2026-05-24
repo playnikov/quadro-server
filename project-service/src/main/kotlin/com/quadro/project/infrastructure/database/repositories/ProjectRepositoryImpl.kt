@@ -17,8 +17,15 @@ import java.util.UUID
 import kotlin.time.Clock
 
 class ProjectRepositoryImpl : ProjectRepository {
-    override suspend fun create(project: Project): Project = newSuspendedTransaction {
-        ProjectMapper.toDomain(ProjectMapper.toEntity(project))
+    override suspend fun upsert(project: Project): Project = newSuspendedTransaction {
+        val existing = ProjectEntity.findById(project.id)
+        val entity = if (existing != null) {
+            ProjectMapper.updateEntity(existing, project)
+            existing
+        } else {
+            ProjectMapper.toEntity(project)
+        }
+        ProjectMapper.toDomain(entity)
     }
 
     override suspend fun findById(id: UUID): Project? = newSuspendedTransaction {
@@ -33,14 +40,6 @@ class ProjectRepositoryImpl : ProjectRepository {
     override suspend fun findByName(name: String): Project? = newSuspendedTransaction {
         ProjectEntity.find { ProjectsTable.name eq name }
             .firstOrNull()?.let { ProjectMapper.toDomain(it) }
-    }
-
-    override suspend fun update(project: Project): Project = newSuspendedTransaction {
-        val entity = ProjectEntity.findById(project.id)
-            ?: throw IllegalArgumentException("Project not found with id: ${'$'}{project.id}")
-
-        ProjectMapper.updateEntity(entity, project)
-        ProjectMapper.toDomain(entity)
     }
 
     override suspend fun delete(id: UUID): Boolean = newSuspendedTransaction {
@@ -77,10 +76,7 @@ class ProjectRepositoryImpl : ProjectRepository {
     override suspend fun updateStatus(
         id: UUID,
         status: ProjectStatus
-    ): Boolean = newSuspendedTransaction {
-        ProjectEntity.findById(id)?.apply {
-            this.status = status.name
-            updatedAt = Clock.System.now().toOffsetDateTime()
-        } != null
+    ): Boolean {
+        TODO("Not yet implemented")
     }
 }

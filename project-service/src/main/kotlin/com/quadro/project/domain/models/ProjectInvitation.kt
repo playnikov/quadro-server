@@ -1,12 +1,11 @@
 package com.quadro.project.domain.models
 
-import com.quadro.project.presentation.models.ProjectResponse
 import kotlinx.serialization.Serializable
 import java.util.UUID
 import kotlin.time.Instant
 
 @Serializable
-enum class InvitationStatus {
+enum class InviteStatus {
     PENDING, ACCEPTED, EXPIRED, CANCELLED
 }
 
@@ -19,10 +18,10 @@ data class ProjectInvitation(
     val id: UUID,
     val projectId: UUID,
     val invitedBy: UUID,
-    val inviteType: InviteType,
+    val type: InviteType,
     val identifier: String,
-    val role: ProjectRole,
-    val status: InvitationStatus,
+    val role: MemberRole,
+    val status: InviteStatus,
     val token: String,
     val expiresAt: Instant,
     val createdAt: Instant,
@@ -31,18 +30,18 @@ data class ProjectInvitation(
     val message: String?
 ) {
     fun isExpired(now: Instant) = expiresAt < now
-    fun isUsable() = status == InvitationStatus.PENDING
+    fun isUsable() = status == InviteStatus.PENDING
 }
 
 data class InvitationCreate(
-    val role: ProjectRole = ProjectRole.MEMBER,
-    val inviteType: InviteType = InviteType.LINK,
+    val role: MemberRole = MemberRole.MEMBER,
+    val type: InviteType = InviteType.LINK,
     val identifier: String? = null,
     val message: String? = null,
     val expiresInDays: Int? = null
 ) {
     fun validate() {
-        if (inviteType == InviteType.EMAIL) {
+        if (type == InviteType.EMAIL) {
             requireNotNull(identifier) { "Email is required for EMAIL invite type" }
             require(identifier.contains("@")) { "Invalid email format" }
         }
@@ -59,8 +58,8 @@ data class InvitationResponse(
     val invitedBy: String,
     val inviteType: InviteType,
     val identifier: String,
-    val role: ProjectRole,
-    val status: InvitationStatus,
+    val role: MemberRole,
+    val status: InviteStatus,
     val token: String,
     val expiresAt: Instant,
     val createdAt: Instant,
@@ -78,7 +77,7 @@ data class InvitationResponse(
             id = invitation.id.toString(),
             projectName = projectName,
             invitedBy = invitation.invitedBy.toString(),
-            inviteType = invitation.inviteType,
+            inviteType = invitation.type,
             identifier = invitation.identifier,
             role = invitation.role,
             status = invitation.status,

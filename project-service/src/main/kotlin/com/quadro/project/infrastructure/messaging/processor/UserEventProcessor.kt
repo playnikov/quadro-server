@@ -14,6 +14,9 @@ class UserEventProcessor(
         val user = User(
             id = UUID.fromString(event.userId),
             email = event.email,
+            lastName = event.lastName,
+            firstName = event.firstName,
+            middleName = event.middleName,
             role = UserRole.valueOf(event.role),
             isActive = event.isActive
         )
@@ -25,6 +28,9 @@ class UserEventProcessor(
             id = UUID.fromString(event.userId),
             role = UserRole.valueOf(event.role),
             email = event.email,
+            lastName = event.lastName,
+            firstName = event.firstName,
+            middleName = event.middleName,
             isActive = event.isActive
         )
         userRepository.upsert(user)

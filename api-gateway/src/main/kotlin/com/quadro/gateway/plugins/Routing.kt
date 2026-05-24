@@ -1,6 +1,5 @@
 package com.quadro.gateway.plugins
 
-import com.quadro.gateway.config.ServiceUrls
 import com.quadro.gateway.routes.*
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.webSocketSession
@@ -12,9 +11,8 @@ import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.websocket.webSocket
-import io.ktor.util.filter
 import io.ktor.websocket.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
@@ -84,62 +82,41 @@ fun Route.proxyTo(client: HttpClient, targetBaseUrl: String) {
     }
 }
 
-fun Route.proxyWebSocket(client: HttpClient, targetBaseUrl: String) {
-    webSocket {
-        val wsBaseUrl = targetBaseUrl
-            .replace("http://", "ws://")
-            .replace("https://", "wss://")
-            .removeSuffix("/")
-
-        val targetUri = buildString {
-            append(wsBaseUrl)
-            append(call.request.path())
-            if (!call.request.queryParameters.isEmpty()) {
-                append("?")
-                append(call.request.queryParameters.toString())
+suspend fun DefaultWebSocketSession.proxyTo(client: HttpClient, baseUrl: String, userId: String, path: String) {
+    val wsUrl = baseUrl
+        .replace("http://", "ws://")
+        .replace("https://", "wss://")
+        .removeSuffix("/") + path
+    val upstream = client.webSocketSession(wsUrl) {
+        header("X-User-Id", userId)
+    }
+    coroutineScope {
+        launch {
+            try {
+                for (frame in incoming) {
+                    if (frame is Frame.Close) break
+                    upstream.send(frame)
+                }
+                upstream.close()
+            } catch (e: ClosedReceiveChannelException) {
+                println(e.message)
+            } catch (e: Exception) {
+                println(e.message)
             }
         }
 
-        val filteredHeaders = call.request.headers.entries()
-            .filter { (name, _) ->
-                !name.equals("Upgrade", ignoreCase = true) &&
-                        !name.equals("Connection", ignoreCase = true) &&
-                        !name.startsWith("Sec-WebSocket-", ignoreCase = true) &&
-                        !name.equals("Host", ignoreCase = true) &&
-                        !name.equals("Keep-Alive", ignoreCase = true) &&
-                        !name.equals("Transfer-Encoding", ignoreCase = true)
-            }
-
-        val targetSession = client.webSocketSession {
-            url(targetUri)
-            method = HttpMethod.Get
-            headers {
-                filteredHeaders.forEach { (name, values) ->
-                    values.forEach { value -> append(name, value) }
+        launch {
+            try {
+                for (frame in upstream.incoming) {
+                    if (frame is Frame.Close) break
+                    send(frame)
                 }
+                close()
+            } catch (e: ClosedReceiveChannelException) {
+                println(e.message)
+            } catch (e: Exception) {
+                println(e.message)
             }
-        }
-
-        try {
-            coroutineScope {
-                launch {
-                    for (frame in incoming) {
-                        targetSession.send(frame)
-                        if (frame is Frame.Close) break
-                    }
-                    targetSession.close()
-                }
-                launch {
-                    for (frame in targetSession.incoming) {
-                        send(frame)
-                        if (frame is Frame.Close) break
-                    }
-                    close()
-                }
-            }
-        } catch (e: Exception) {
-            targetSession.close()
-            close(CloseReason(CloseReason.Codes.INTERNAL_ERROR, e.message ?: "Unknown error"))
         }
     }
 }

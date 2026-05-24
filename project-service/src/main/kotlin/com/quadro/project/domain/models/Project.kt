@@ -5,45 +5,24 @@ import java.util.UUID
 import kotlin.time.Instant
 
 @Serializable
-enum class ProjectType {
-    TEAM_MANAGED, COMPANY_MANAGED
-}
-
-@Serializable
 enum class ProjectStatus {
     ACTIVE, ON_HOLD, COMPLETED, ARCHIVED, CANCELLED
 }
 
-@Serializable
-enum class ProjectPriority {
-    HIGHEST, HIGH, MEDIUM, LOW, LOWEST
-}
-
-@Serializable
-enum class ProjectVisibility {
-    PUBLIC, RESTRICTED, PRIVATE
-}
-
 data class Project(
     val id: UUID,
-    val type: ProjectType,
     val name: String,
     val key: String,
     val description: String?,
     val status: ProjectStatus,
-    val priority: ProjectPriority,
-    val visibility: ProjectVisibility,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
 
 data class ProjectCreate(
-    val type: ProjectType = ProjectType.TEAM_MANAGED,
     val name: String,
     val key: String,
     val description: String? = null,
-    val priority: ProjectPriority = ProjectPriority.MEDIUM,
-    val visibility: ProjectVisibility = ProjectVisibility.RESTRICTED
 ) {
     fun validate() {
         require(name.isNotBlank()) { "Name must not be blank" }
@@ -55,6 +34,4 @@ data class ProjectUpdate(
     val name: String? = null,
     val description: String? = null,
     val status: ProjectStatus? = null,
-    val priority: ProjectPriority? = null,
-    val visibility: ProjectVisibility? = null
 )

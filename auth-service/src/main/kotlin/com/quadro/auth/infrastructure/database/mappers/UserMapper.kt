@@ -18,14 +18,13 @@ object UserMapper {
         lastName = entity.lastName,
         middleName = entity.middleName,
         avatarUrl = entity.avatar,
-        role = UserRole.valueOf(entity.role),
+        role = entity.role,
         isActive = entity.isActive,
         isEmailVerified = entity.isEmailVerified,
         isNeedChangePassword = entity.isNeedChangePassword,
         createdAt = entity.createdAt.toKotlinInstant(),
         updatedAt = entity.updatedAt.toKotlinInstant(),
-        lastLoginAt = entity.lastLoginAt?.toKotlinInstant(),
-        lastLoginIp = entity.lastLoginIp
+        lastLoginAt = entity.lastLoginAt?.toKotlinInstant()
     )
 
     fun toEntity(domain: User): UserEntity = UserEntity.findById(domain.id) ?: UserEntity.new(domain.id) {
@@ -44,13 +43,12 @@ object UserMapper {
         entity.lastName = domain.lastName
         entity.middleName = domain.middleName
         entity.avatar = domain.avatarUrl
-        entity.role = domain.role.name
+        entity.role = domain.role
         entity.isActive = domain.isActive
         entity.isEmailVerified = domain.isEmailVerified
         entity.isNeedChangePassword = domain.isNeedChangePassword
         entity.createdAt = domain.createdAt.toOffsetDateTime()
         entity.updatedAt = domain.updatedAt.toOffsetDateTime()
         entity.lastLoginAt = domain.lastLoginAt?.toOffsetDateTime()
-        entity.lastLoginIp = domain.lastLoginIp
     }
 }

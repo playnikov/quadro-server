@@ -32,7 +32,7 @@ val projectModules = module {
     single<ProjectRepository> { ProjectRepositoryImpl() }
 
     single<ProjectService> { ProjectServiceImpl(get(), get(), get(), get()) }
-    single<ProjectInvitationService> { ProjectInvitationServiceImpl(get(), get(), get(), get(), get(), get()) }
+    single<ProjectInvitationService> { ProjectInvitationServiceImpl(get(), get(), get(), get(), get(), get(), get()) }
 
     factory { ProjectController(get()) }
     factory { InvitationController(get()) }

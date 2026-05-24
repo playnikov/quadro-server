@@ -1,6 +1,6 @@
 package com.quadro.project.infrastructure.database.repositories
 
-import com.quadro.project.domain.models.InvitationStatus
+import com.quadro.project.domain.models.InviteStatus
 import com.quadro.project.domain.models.InviteType
 import com.quadro.project.domain.models.ProjectInvitation
 import com.quadro.project.domain.repositories.ProjectInvitationRepository
@@ -29,36 +29,30 @@ class ProjectInvitationRepositoryImpl : ProjectInvitationRepository {
             ?.let { ProjectInvitationMapper.toDomain(it) }
     }
 
-    override suspend fun findByProject(
-        projectId: UUID,
-        status: InvitationStatus?
-    ): List<ProjectInvitation> = newSuspendedTransaction {
-        val query = ProjectInvitationEntity.find { ProjectInvitationsTable.projectId eq projectId }
-        val filtered = if (status != null) {
-            query.filter { it.status == status.name }
-        } else query
-        filtered.map { ProjectInvitationMapper.toDomain(it) }
+    override suspend fun findByProject(projectId: UUID): List<ProjectInvitation> = newSuspendedTransaction {
+        ProjectInvitationEntity.find { ProjectInvitationsTable.projectId eq projectId }
+            .map { ProjectInvitationMapper.toDomain(it) }
     }
 
     override suspend fun findByEmail(email: String): List<ProjectInvitation> = newSuspendedTransaction {
         ProjectInvitationEntity.find {
-            (ProjectInvitationsTable.inviteType eq InviteType.EMAIL.name) and
+            (ProjectInvitationsTable.type eq InviteType.EMAIL) and
                     (ProjectInvitationsTable.identifier eq email)
         }.map(ProjectInvitationMapper::toDomain)
     }
 
     override suspend fun updateStatus(
         id: UUID,
-        status: InvitationStatus
+        status: InviteStatus
     ): Boolean = newSuspendedTransaction {
         ProjectInvitationEntity.findById(id)?.apply {
-            this.status = status.name
+            this.status = status
         } != null
     }
 
     override suspend fun acceptInvitation(id: UUID, userId: UUID): Boolean = newSuspendedTransaction {
         ProjectInvitationEntity.findById(id)?.apply {
-            this.status = InvitationStatus.ACCEPTED.name
+            this.status = InviteStatus.ACCEPTED
             this.acceptedAt = Clock.System.now().toOffsetDateTime()
             this.acceptedBy = userId
         } != null
@@ -72,17 +66,17 @@ class ProjectInvitationRepositoryImpl : ProjectInvitationRepository {
         val now = Clock.System.now().toOffsetDateTime()
         val expired = ProjectInvitationEntity.find {
             (ProjectInvitationsTable.expiresAt lessEq now) and
-                    (ProjectInvitationsTable.status eq InvitationStatus.PENDING.name)
+                    (ProjectInvitationsTable.status eq InviteStatus.PENDING)
         }.toList()
 
-        expired.forEach { it.status = InvitationStatus.EXPIRED.name }
+        expired.forEach { it.status = InviteStatus.EXPIRED }
         expired.size
     }
 
     override suspend fun countPendingByProject(projectId: UUID): Long = newSuspendedTransaction {
         ProjectInvitationEntity.find {
             (ProjectInvitationsTable.projectId eq projectId) and
-                    (ProjectInvitationsTable.status eq InvitationStatus.PENDING.name)
+                    (ProjectInvitationsTable.status eq InviteStatus.PENDING)
         }.count()
     }
 }

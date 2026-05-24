@@ -32,7 +32,6 @@ class TaskController(
             priority = request.priority,
             type = request.type,
             assigneeId = request.assigneeId?.let { UUID.fromString(request.assigneeId) },
-            assignedTeamId = request.assignedTeamId?.let{ UUID.fromString(request.assignedTeamId) },
             sprintId = request.sprintId?.let { UUID.fromString(request.sprintId) },
             parentTaskId = request.parentTaskId?.let { UUID.fromString(request.parentTaskId) },
             storyPoints = request.storyPoints,
@@ -55,7 +54,6 @@ class TaskController(
             status = request.status?.let { TaskStatus.valueOf(it) },
             priority = request.priority?.let { com.quadro.task.domain.models.task.TaskPriority.valueOf(it) },
             assigneeId = request.assigneeId?.let { UUID.fromString(it) },
-            assignedTeamId = request.assignedTeamId?.let { UUID.fromString(it) },
             sprintId = request.sprintId?.let { UUID.fromString(it) },
             storyPoints = request.storyPoints,
             estimatedHours = request.estimatedHours,
@@ -112,17 +110,6 @@ class TaskController(
             ?: throw DomainException.ValidationError("User ID is invalid")
 
         val tasks = taskService.getTasksByAssignee(userId)
-            .map(TaskResponse::from)
-        call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
-    }
-
-    suspend fun findByTeam(call: ApplicationCall) {
-        val teamId = call.parameters["teamId"]?.let { UUID.fromString(it) }
-            ?: throw DomainException.ValidationError("Team ID is invalid")
-        val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
-            ?: throw DomainException.ValidationError("Project ID is invalid")
-
-        val tasks = taskService.getTasksByTeam(teamId, projectId)
             .map(TaskResponse::from)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }

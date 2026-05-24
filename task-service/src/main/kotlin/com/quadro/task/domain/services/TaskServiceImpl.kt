@@ -7,11 +7,7 @@ import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.models.task.TaskUpdate
 import com.quadro.task.domain.repositories.project.ProjectMemberRepository
 import com.quadro.task.domain.repositories.project.ProjectRepository
-import com.quadro.task.domain.repositories.task.SprintRepository
 import com.quadro.task.domain.repositories.task.TaskRepository
-import com.quadro.task.domain.repositories.team.TeamProjectRepository
-import com.quadro.task.domain.repositories.team.TeamRepository
-import com.quadro.task.domain.repositories.UserRepository
 import java.util.UUID
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -19,8 +15,7 @@ import kotlin.time.Instant
 class TaskServiceImpl(
     private val taskRepository: TaskRepository,
     private val projectRepository: ProjectRepository,
-    private val projectMemberRepository: ProjectMemberRepository,
-    private val teamProjectRepository: TeamProjectRepository
+    private val projectMemberRepository: ProjectMemberRepository
 ) : TaskService {
 
     override suspend fun createTask(taskCreate: TaskCreate, reporterId: UUID): Task {
@@ -32,12 +27,6 @@ class TaskServiceImpl(
         if (taskCreate.assigneeId != null) {
             if (!validateUserAssignment(taskCreate.projectId, taskCreate.assigneeId)) {
                 throw DomainException.BusinessRule("User is not a member of the project team")
-            }
-        }
-
-        if (taskCreate.assignedTeamId != null) {
-            if (!validateTeamAssignment(taskCreate.assignedTeamId, taskCreate.projectId)) {
-                throw DomainException.BusinessRule("Team is not assigned to the project")
             }
         }
 
@@ -56,7 +45,6 @@ class TaskServiceImpl(
             priority = taskCreate.priority,
             type = taskCreate.type,
             assigneeId = taskCreate.assigneeId,
-            assignedTeamId = taskCreate.assignedTeamId,
             reporterId = reporterId,
             storyPoints = taskCreate.storyPoints,
             estimatedHours = taskCreate.estimatedHours,
@@ -82,7 +70,6 @@ class TaskServiceImpl(
             status = taskUpdate.status ?: existingTask.status,
             priority = taskUpdate.priority ?: existingTask.priority,
             assigneeId = taskUpdate.assigneeId ?: existingTask.assigneeId,
-            assignedTeamId = taskUpdate.assignedTeamId ?: existingTask.assignedTeamId,
             sprintId = taskUpdate.sprintId ?: existingTask.sprintId,
             storyPoints = taskUpdate.storyPoints ?: existingTask.storyPoints,
             estimatedHours = taskUpdate.estimatedHours ?: existingTask.estimatedHours,
@@ -122,10 +109,6 @@ class TaskServiceImpl(
         return taskRepository.findByAssignee(userId)
     }
 
-    override suspend fun getTasksByTeam(teamId: UUID, projectId: UUID): List<Task> {
-        return taskRepository.findByTeam(teamId, projectId)
-    }
-
     override suspend fun getTasksByParent(parentTaskId: UUID): List<Task> {
         return taskRepository.findByParent(parentTaskId)
     }
@@ -161,7 +144,4 @@ class TaskServiceImpl(
 
     private suspend fun validateUserAssignment(projectId: UUID, userId: UUID): Boolean =
         projectMemberRepository.findByProjectAndUser(projectId, userId) != null
-
-    private suspend fun validateTeamAssignment(teamId: UUID, projectId: UUID): Boolean =
-        teamProjectRepository.findByTeamAndProject(teamId, projectId) != null
 }

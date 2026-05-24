@@ -1,3 +1,5 @@
+CREATE TYPE user_roles AS ENUM ('SUPER_ADMIN', 'ADMIN', 'USER');
+
 CREATE TABLE users (
     id UUID PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
@@ -7,14 +9,13 @@ CREATE TABLE users (
     last_name VARCHAR(100) NOT NULL,
     middle_name VARCHAR(100),
     avatar VARCHAR(500),
-    role VARCHAR(50) NOT NULL,
+    role user_roles NOT NULL DEFAULT 'USER',
     is_active BOOLEAN NOT NULL DEFAULT true,
     is_email_verified BOOLEAN NOT NULL DEFAULT false,
     is_need_change_password BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL,
-    last_login_at TIMESTAMPTZ,
-    last_login_ip VARCHAR(45)
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_login_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX idx_users_email ON users(email);

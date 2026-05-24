@@ -7,12 +7,14 @@ import com.quadro.shared.security.JwtValidator
 import com.quadro.shared.security.configureSecurity
 import com.quadro.notification.di.kafkaModule
 import com.quadro.notification.di.notificationModule
+import com.quadro.notification.infrastructure.messaging.listener.TaskEventListener
 import com.quadro.notification.plugins.configureDatabase
 import com.quadro.notification.plugins.configureKafka
 import com.quadro.notification.plugins.configureRouting
 import com.quadro.notification.plugins.configureSerialization
 import com.quadro.notification.plugins.configureWebSocket
 import io.ktor.server.application.*
+import kotlinx.coroutines.launch
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
@@ -35,15 +37,15 @@ fun Application.module() {
         slf4jLogger()
         modules(
             sharedModule(this@module, "notification-service"),
-            kafkaModule,
-            notificationModule
+            notificationModule,
+            kafkaModule
         )
     }
     configureSecurity(getKoin().get<JwtValidator>())
     configureSerialization()
     configureMonitoring()
     configureStatusPages()
-    configureDatabase()
+//    configureDatabase()
     configureKafka()
     configureWebSocket()
     configureRouting()

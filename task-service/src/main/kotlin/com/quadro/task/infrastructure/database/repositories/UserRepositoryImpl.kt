@@ -29,4 +29,8 @@ class UserRepositoryImpl : UserRepository {
     override suspend fun delete(id: UUID): Boolean = newSuspendedTransaction {
         UserEntity.findById(id)?.delete() != null
     }
+
+    override suspend fun findAll(): List<User> = newSuspendedTransaction {
+        UserEntity.all().map(UserMapper::toDomain)
+    }
 }

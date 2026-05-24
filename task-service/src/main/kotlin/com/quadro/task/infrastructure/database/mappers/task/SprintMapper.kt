@@ -12,7 +12,7 @@ object SprintMapper  {
         projectId = entity.projectId,
         name = entity.name,
         goal = entity.goal,
-        status = SprintStatus.valueOf(entity.status),
+        status = entity.status,
         startDate = entity.startDate.toKotlinInstant(),
         endDate = entity.endDate.toKotlinInstant(),
         createdBy = entity.createdBy,
@@ -33,7 +33,7 @@ object SprintMapper  {
         entity.projectId = domain.projectId
         entity.name = domain.name
         entity.goal = domain.goal
-        entity.status = domain.status.name
+        entity.status = domain.status
         entity.startDate = domain.startDate.toOffsetDateTime()
         entity.endDate = domain.endDate.toOffsetDateTime()
         entity.createdBy = domain.createdBy

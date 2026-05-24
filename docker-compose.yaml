@@ -133,14 +133,29 @@ services:
     networks:
       - quadro-net
 
-  team-service:
-    image: ${CR_URI}/${REPOSITORY}:team-service.${VERSION:-latest}
-    container_name: team-service
+#  team-service:
+#    image: ${CR_URI}/${REPOSITORY}:team-service.${VERSION:-latest}
+#    container_name: team-service
+#    restart: unless-stopped
+#    environment:
+#      <<: *common-env
+#      APP_DATABASE: team_schema
+#      PORT: 8083
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#    networks:
+#      - quadro-net
+
+  notification-service:
+    image: ${CR_URI}/${REPOSITORY}:notification-service.${VERSION:-latest}
+    container_name: notification-service
     restart: unless-stopped
     environment:
       <<: *common-env
-      APP_DATABASE: team_schema
-      PORT: 8083
+      PORT: 8085
     depends_on:
       postgres:
         condition: service_healthy
@@ -180,9 +195,10 @@ services:
       - "${API_GATEWAY_PORT:-80}:8080"
     depends_on:
       - auth-service
-      - team-service
+#      - team-service
       - project-service
       - task-service
+      - notification-service
     networks:
       - quadro-net
 

@@ -41,16 +41,6 @@ class TaskRepositoryImpl : TaskRepository {
             .map(TaskMapper::toDomain)
     }
 
-    override suspend fun findByTeam(
-        teamId: UUID,
-        projectId: UUID
-    ): List<Task> = newSuspendedTransaction {
-        TaskEntity.find {
-            (TasksTable.assignedTeamId eq teamId) and
-                    (TasksTable.projectId eq projectId)
-        }.map(TaskMapper::toDomain)
-    }
-
     override suspend fun findByParent(parentTaskId: UUID): List<Task> = newSuspendedTransaction {
         TaskEntity.find { TasksTable.parentTaskId eq parentTaskId }
             .map(TaskMapper::toDomain)
@@ -70,12 +60,6 @@ class TaskRepositoryImpl : TaskRepository {
 
     override suspend fun delete(id: UUID): Unit = newSuspendedTransaction {
         TaskEntity.findById(id)?.delete()
-    }
-
-    override suspend fun clearAssignedTeam(teamId: UUID): Unit = newSuspendedTransaction {
-        TaskEntity.find { TasksTable.assigneeId eq teamId }.forEach {
-            it.assignedTeamId = null
-        }
     }
 
     override suspend fun clearAssignee(userId: UUID): Unit = newSuspendedTransaction {
@@ -99,7 +83,7 @@ class TaskRepositoryImpl : TaskRepository {
     ): Long = newSuspendedTransaction {
         TaskEntity.find {
             (TasksTable.projectId eq projectId) and
-                    (TasksTable.status eq status.name)
+                    (TasksTable.status eq status)
         }.count()
     }
 
@@ -115,7 +99,7 @@ class TaskRepositoryImpl : TaskRepository {
         }
         TaskEntity.find {
             (TasksTable.projectId eq projectId) and
-                    (TasksTable.status eq status.name) and
+                    (TasksTable.status eq status) and
                     (column greaterEq from.toOffsetDateTime()) and
                     (column lessEq to.toOffsetDateTime())
         }.count()
@@ -128,14 +112,14 @@ class TaskRepositoryImpl : TaskRepository {
         TaskEntity.find {
             (TasksTable.projectId eq projectId) and
                     (TasksTable.dueDate less now.toOffsetDateTime()) and
-                    (TasksTable.status neq TaskStatus.DONE.name)
+                    (TasksTable.status neq TaskStatus.DONE)
         }.map(TaskMapper::toDomain)
     }
 
     override suspend fun avgCompletionDays(projectId: UUID): Double = newSuspendedTransaction {
         val completionDurations = TaskEntity.find {
             (TasksTable.projectId eq projectId) and
-                    (TasksTable.status eq TaskStatus.DONE.name) and
+                    (TasksTable.status eq TaskStatus.DONE) and
                     TasksTable.completedAt.isNotNull()
         }.map { entity ->
             val createdAt = entity.createdAt
@@ -166,7 +150,7 @@ class TaskRepositoryImpl : TaskRepository {
     ): Long = newSuspendedTransaction {
         TaskEntity.find {
             (TasksTable.projectId eq projectId) and
-                    (TasksTable.status eq TaskStatus.DONE.name) and
+                    (TasksTable.status eq TaskStatus.DONE) and
                     (TasksTable.completedAt greaterEq from.toOffsetDateTime()) and
                     (TasksTable.completedAt lessEq to.toOffsetDateTime())
         }.count()
@@ -193,7 +177,7 @@ class TaskRepositoryImpl : TaskRepository {
     ): Map<Instant, Long> = newSuspendedTransaction {
         TaskEntity.find {
             (TasksTable.projectId eq projectId) and
-                    (TasksTable.status eq TaskStatus.DONE.name) and
+                    (TasksTable.status eq TaskStatus.DONE) and
                     (TasksTable.completedAt greaterEq from.toOffsetDateTime()) and
                     (TasksTable.completedAt lessEq to.toOffsetDateTime())
         }.groupBy { entity ->

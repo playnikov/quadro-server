@@ -18,38 +18,33 @@ class InvitationTokenServiceImpl(
     override fun generateToken(
         invitationId: UUID,
         projectId: UUID,
-        expiresInDays: Int?
     ): String = JWT.create()
         .withIssuer(config.issuer)
         .withSubject(invitationId.toString())
-        .withClaim("invitationId", invitationId.toString())
         .withClaim("projectId", projectId.toString())
-        .withClaim("type", "invitation")
         .withIssuedAt(Date())
-        .withExpiresAt(
-            Date(
-                Clock.System.now().toEpochMilliseconds() +
-                        (expiresInDays?.times(24L * 60 * 60 * 1000)
-                            ?: config.invitationExpiration)
-            )
-        )
         .sign(algorithm)
 
     override fun validateToken(token: String): InvitationValidationResult = try {
         val verifier = JWT.require(algorithm)
             .withIssuer(config.issuer)
-            .withClaim("type", "invitation")
             .build()
-        val decodedJWT = verifier.verify(token)
+        val decoded = verifier.verify(token)
 
-        val invitationId = decodedJWT.getClaim("invitationId").asString()
-        val projectId = decodedJWT.getClaim("projectId").asString()
+        val invitationId = decoded.subject
+        val projectId = decoded.getClaim("projectId").asString()
+
+        if (invitationId == null || projectId == null) {
+            return InvitationValidationResult(
+                isValid = false,
+                error = "Invalid token claims"
+            )
+        }
 
         InvitationValidationResult(
             isValid = true,
             invitationId = UUID.fromString(invitationId),
-            projectId = UUID.fromString(projectId),
-            expiresAt = decodedJWT.expiresAt?.time
+            projectId = UUID.fromString(projectId)
         )
     } catch (e: TokenExpiredException) {
         InvitationValidationResult(

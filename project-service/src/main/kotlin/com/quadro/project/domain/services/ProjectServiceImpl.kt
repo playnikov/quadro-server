@@ -4,7 +4,7 @@ import com.quadro.project.domain.models.Project
 import com.quadro.project.domain.models.ProjectCreate
 import com.quadro.project.domain.models.ProjectMember
 import com.quadro.project.domain.models.ProjectMemberResponse
-import com.quadro.project.domain.models.ProjectRole
+import com.quadro.project.domain.models.MemberRole
 import com.quadro.project.domain.models.ProjectStatus
 import com.quadro.project.domain.models.ProjectUpdate
 import com.quadro.project.domain.models.User
@@ -34,23 +34,24 @@ class ProjectServiceImpl(
 ) : ProjectService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private suspend fun existsUser(userId: UUID): User =
-        userRepository.findById(userId)
-            ?: throw DomainException.NotFound("User", "ID: $userId")
+    private suspend fun getUserOrThrow(userId: UUID): User =
+        userRepository.findById(userId) ?: throw DomainException.NotFound("User", userId.toString())
 
-    private suspend fun checkProjectAccess(projectId: UUID, userId: UUID, requiredRole: ProjectRole): ProjectMember {
-        val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+    private suspend fun checkProjectAccess(
+        projectId: UUID,
+        user: User,
+        requiredRole: MemberRole
+    ): ProjectMember {
+        val member = projectMemberRepository.findByProjectAndUser(projectId, user.id)
             ?: throw DomainException.AccessDenied("User is not a member of the project")
 
-        if (member.role !in listOf(ProjectRole.OWNER) &&
-            userRepository.findById(userId)?.role == UserRole.SUPER_ADMIN) {
-            return member.copy(role = ProjectRole.OWNER)
+        if (user.role == UserRole.SUPER_ADMIN) {
+            return member.copy(role = MemberRole.OWNER)
         }
 
         if (member.role < requiredRole) {
             throw DomainException.AccessDenied("Insufficient permissions: ${member.role} < $requiredRole")
         }
-        
         return member
     }
 
@@ -58,7 +59,7 @@ class ProjectServiceImpl(
         userId: UUID,
         request: ProjectCreate
     ): Project {
-        val requester = existsUser(userId)
+        val requester = getUserOrThrow(userId)
         if (requester.role !in listOf(UserRole.ADMIN, UserRole.SUPER_ADMIN)) {
             throw DomainException.AccessDenied("Insufficient permissions")
         }
@@ -72,24 +73,21 @@ class ProjectServiceImpl(
         val now = Clock.System.now()
         val project = Project(
             id = UUID.randomUUID(),
-            type = request.type,
             name = request.name,
             key = request.key,
             description = request.description,
             status = ProjectStatus.ACTIVE,
-            priority = request.priority,
-            visibility = request.visibility,
             createdAt = now,
             updatedAt = now
         )
 
-        val createdProject = projectRepository.create(project)
+        val createdProject = projectRepository.upsert(project)
 
         val member = ProjectMember(
             id = UUID.randomUUID(),
             projectId = createdProject.id,
             userId = userId,
-            role = ProjectRole.OWNER,
+            role = MemberRole.OWNER,
             joinedAt = now,
             invitedBy = userId,
             invitedAt = now
@@ -127,12 +125,11 @@ class ProjectServiceImpl(
         projectId: UUID,
         request: ProjectUpdate
     ): Project {
-        existsUser(userId)
-
+        val user = getUserOrThrow(userId)
         val project = projectRepository.findById(projectId)
             ?: throw DomainException.NotFound("Project", "Project Not Found")
 
-        checkProjectAccess(projectId, userId, ProjectRole.MANAGER)
+        checkProjectAccess(projectId, user, MemberRole.MANAGER)
 
         if (request.name != null && request.name != project.name && projectRepository.existsByName(request.name)) {
             logger.warn("User $userId attempted to rename project $projectId to existing name: ${request.name}")
@@ -140,23 +137,21 @@ class ProjectServiceImpl(
         }
 
         val now = Clock.System.now()
-        val updateProject = project.copy(
+        val updatedProject = project.copy(
             name = request.name ?: project.name,
             description = request.description ?: project.description,
             status = request.status ?: project.status,
-            priority = request.priority ?: project.priority,
-            visibility = request.visibility ?: project.visibility,
             updatedAt = now
         )
 
-        val saved = projectRepository.update(updateProject)
+        val saved = projectRepository.upsert(updatedProject)
 
         eventProducer.publish(
             topic = KafkaTopics.PROJECT_UPDATED,
             key = saved.id.toString(),
             event = ProjectUpdatedEvent(
                 projectId = saved.id.toString(),
-                ownerId = userId.toString(),
+                updateBy = userId.toString(),
                 name = saved.name,
                 status = saved.status.name,
                 key = saved.key
@@ -168,14 +163,12 @@ class ProjectServiceImpl(
     }
 
     override suspend fun deleteProject(userId: UUID, projectId: UUID) {
+        val user = getUserOrThrow(userId)
         val project = projectRepository.findById(projectId)
             ?: throw DomainException.NotFound("Project", "Project Not Found")
 
-        val user = userRepository.findById(userId)
-            ?: throw DomainException.NotFound("User", "User Not Found")
-        
         if (user.role !in listOf(UserRole.SUPER_ADMIN, UserRole.ADMIN)) {
-            checkProjectAccess(projectId, userId, ProjectRole.OWNER)
+            checkProjectAccess(projectId, user, MemberRole.OWNER)
         }
 
         projectRepository.delete(projectId)
@@ -193,21 +186,18 @@ class ProjectServiceImpl(
     }
 
     override suspend fun findById(projectId: UUID): Project {
-        val project = projectRepository.findById(projectId)
+        return projectRepository.findById(projectId)
             ?: throw DomainException.NotFound("Project", projectId.toString())
-        return project
     }
 
     override suspend fun findByName(name: String): Project {
-        val project = projectRepository.findByName(name)
+        return projectRepository.findByName(name)
             ?: throw DomainException.NotFound("Project", name)
-        return project
     }
 
     override suspend fun findByKey(key: String): Project {
-        val project = projectRepository.findByKey(key)
+        return projectRepository.findByKey(key)
             ?: throw DomainException.NotFound("Project", key)
-        return project
     }
 
     override suspend fun findByUser(
@@ -215,12 +205,13 @@ class ProjectServiceImpl(
         limit: Int,
         offset: Int
     ): List<Project> {
-        userRepository.findById(userId)
-            ?: throw DomainException.NotFound("User", "User Not Found")
+        require(limit > 0) { "Limit must be positive" }
+        require(offset >= 0) { "Offset must be non‑negative" }
+
+        getUserOrThrow(userId)
 
         val projects = projectRepository.findByUser(userId, limit, offset)
-
-        logger.info("User $userId requested list of projects, limit: ${limit}, offset: ${offset}, count: ${projects.size}")
+        logger.info("User $userId requested list of projects, limit: $limit, offset: $offset, count: ${projects.size}")
         return projects
     }
 
@@ -229,29 +220,27 @@ class ProjectServiceImpl(
         projectId: UUID,
         status: ProjectStatus
     ): Boolean {
+        val user = getUserOrThrow(userId)
         val project = projectRepository.findById(projectId)
             ?: throw DomainException.NotFound("Project", "Project Not Found")
 
-        checkProjectAccess(projectId, userId, ProjectRole.MANAGER)
+        checkProjectAccess(projectId, user, MemberRole.MANAGER)
 
         val result = projectRepository.updateStatus(projectId, status)
 
-        if (result && status == ProjectStatus.ARCHIVED) {
-            val project = projectRepository.findById(projectId)
-            if (project != null) {
-                eventProducer.publish(
-                    topic = KafkaTopics.PROJECT_ARCHIVED,
-                    key = project.id.toString(),
-                    event = ProjectArchivedEvent(
-                        projectId = project.id.toString(),
-                        archivedBy = userId.toString()
-                    )
-                )
-                logger.info("Project ${project.name} (ID: ${project.id}) archived by user: $userId")
-            }
-        } else if (result) {
-            logger.info("Project ${project.name} (ID: ${project.id}) status updated to $status by user: $userId")
-        }
+        eventProducer.publish(
+            topic = KafkaTopics.PROJECT_UPDATED,
+            key = project.id.toString(),
+            event = ProjectUpdatedEvent(
+                projectId = project.id.toString(),
+                updateBy = userId.toString(),
+                name = project.name,
+                status = project.status.name,
+                key = project.key
+            )
+        )
+
+        logger.info("Project ${project.name} (ID: ${project.id}) status updated to $status by user: $userId")
 
         return result
     }
@@ -262,15 +251,31 @@ class ProjectServiceImpl(
         page: Int,
         size: Int
     ): List<ProjectMemberResponse> {
-        projectMemberRepository.findByProjectAndUser(projectId, userId)
+        require(page > 0) { "Page must be positive" }
+        require(size > 0) { "Size must be positive" }
+        val user = getUserOrThrow(userId)
+
+        projectMemberRepository.findByProjectAndUser(projectId, user.id)
             ?: throw DomainException.NotFound("Project", projectId.toString())
 
         val offset = (page - 1) * size
         val members = projectMemberRepository.findByProject(projectId, size, offset)
 
+        if (members.isEmpty()) return emptyList()
+
+        val userIds = members.map { it.userId }.distinct()
+        val users = userRepository.findByIds(userIds)
+        val userMap = users.associateBy { it.id }
+
         logger.info("User $userId requested members of project ${projectId}, page: $page")
-        return members.map { member ->
-            ProjectMemberResponse.from(member)
+        return members.mapNotNull { member ->
+            val user = userMap[member.userId]
+            if (user == null) {
+                logger.warn("User ${member.userId} not found for project member ${member.id}")
+                null
+            } else {
+                ProjectMemberResponse.from(member, user)
+            }
         }
     }
 
@@ -278,33 +283,33 @@ class ProjectServiceImpl(
         projectId: UUID,
         userId: UUID,
         targetUserId: UUID,
-        role: ProjectRole
+        role: MemberRole
     ) {
         if (userId == targetUserId) {
             logger.warn("User $userId attempted to change their own role in project $projectId")
             throw DomainException.Forbidden("Not allowed")
         }
-        
-        val requestingMember = checkProjectAccess(projectId, userId, ProjectRole.MANAGER)
-        
-        if (requestingMember.role == ProjectRole.MANAGER && role == ProjectRole.OWNER) {
-            throw DomainException.AccessDenied("Manager cannot grant ADMIN or OWNER roles")
+
+        val requester = getUserOrThrow(userId)
+        val requestingMember = checkProjectAccess(projectId, requester, MemberRole.MANAGER)
+
+        if (!requestingMember.role.isAtLeast(role)) {
+            throw DomainException.AccessDenied("Manager cannot grant OWNER roles")
         }
-        
+
         val targetMember = projectMemberRepository.findByProjectAndUser(projectId, targetUserId)
             ?: throw DomainException.NotFound("Target user is not a member of the project", targetUserId.toString())
-            
-        if (targetMember.role == ProjectRole.OWNER && role != ProjectRole.OWNER) {
-            if (requestingMember.role != ProjectRole.OWNER) {
+
+        if (targetMember.role == MemberRole.OWNER && role != MemberRole.OWNER) {
+            if (requestingMember.role != MemberRole.OWNER) {
                 throw DomainException.AccessDenied("Only OWNER can modify another OWNER's role")
             }
-
-            val ownerCount = projectMemberRepository.findByProjectAndRole(projectId, ProjectRole.OWNER).size
+            val ownerCount = projectMemberRepository.findByProjectAndRole(projectId, MemberRole.OWNER).size
             if (ownerCount <= 1) {
                 throw DomainException.BusinessRule("Project must have at least one OWNER")
             }
         }
-        
+
         projectMemberRepository.updateRole(targetMember.id, role)
 
         eventProducer.publish(
@@ -321,26 +326,26 @@ class ProjectServiceImpl(
     }
 
     override suspend fun removeMember(projectId: UUID, userId: UUID, targetUserId: UUID) {
-        val requestingMember = checkProjectAccess(projectId, userId, ProjectRole.MANAGER)
-        
-        if (requestingMember.role == ProjectRole.MANAGER && targetUserId == requestingMember.userId) {
+        val requester = getUserOrThrow(userId)
+        val requestingMember = checkProjectAccess(projectId, requester, MemberRole.MANAGER)
+
+        if (requestingMember.role == MemberRole.MANAGER && targetUserId == requester.id) {
             throw DomainException.Forbidden("Manager cannot remove themselves")
         }
-        
+
         val targetMember = projectMemberRepository.findByProjectAndUser(projectId, targetUserId)
             ?: throw DomainException.NotFound("Target user is not a member of the project", targetUserId.toString())
-            
-        if (targetMember.role == ProjectRole.OWNER) {
-            if (requestingMember.role != ProjectRole.OWNER) {
+
+        if (targetMember.role == MemberRole.OWNER) {
+            if (requestingMember.role != MemberRole.OWNER) {
                 throw DomainException.AccessDenied("Only OWNER can remove another OWNER")
             }
-            
-            val ownerCount = projectMemberRepository.findByProjectAndRole(projectId, ProjectRole.OWNER).size
+            val ownerCount = projectMemberRepository.findByProjectAndRole(projectId, MemberRole.OWNER).size
             if (ownerCount <= 1) {
                 throw DomainException.BusinessRule("Project must have at least one OWNER")
             }
         }
-        
+
         projectMemberRepository.remove(targetMember.id)
 
         eventProducer.publish(
@@ -351,21 +356,21 @@ class ProjectServiceImpl(
                 userId = targetMember.userId.toString()
             )
         )
-        
+
         logger.info("User $userId removed $targetUserId from project $projectId")
     }
 
     override suspend fun leaveProject(projectId: UUID, userId: UUID) {
         val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
             ?: throw DomainException.NotFound("User is not a member of the project", userId.toString())
-            
-        if (member.role == ProjectRole.OWNER) {
-            val ownerCount = projectMemberRepository.findByProjectAndRole(projectId, ProjectRole.OWNER).size
+
+        if (member.role == MemberRole.OWNER) {
+            val ownerCount = projectMemberRepository.findByProjectAndRole(projectId, MemberRole.OWNER).size
             if (ownerCount <= 1) {
                 throw DomainException.BusinessRule("Cannot leave project: you are the last OWNER. Please assign another OWNER first.")
             }
         }
-        
+
         projectMemberRepository.remove(member.id)
 
         eventProducer.publish(
@@ -376,7 +381,7 @@ class ProjectServiceImpl(
                 userId = member.userId.toString()
             )
         )
-        
+
         logger.info("User $userId left project $projectId")
     }
 }

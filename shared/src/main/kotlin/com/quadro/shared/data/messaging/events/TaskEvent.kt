@@ -11,10 +11,10 @@ data class TaskCreatedEvent(
     val taskId: String,
     val projectId: String,
     val title: String,
-    val type: String,
-    val priority: String,
+    val description: String?,
     val status: String,
-    val createdBy: String,
+    val priority: String,
+    val type: String,
     val assigneeId: String?,
 ) : DomainEvent
 
@@ -25,9 +25,12 @@ data class TaskUpdatedEvent(
     override val version: Int = 1,
     val taskId: String,
     val projectId: String,
-    val companyId: String,
-    val updatedBy: String,
-    val changes: Map<String, String>,
+    val title: String,
+    val description: String?,
+    val status: String,
+    val priority: String,
+    val assigneeId: String?,
+    val updatedAt: Long
 ) : DomainEvent
 
 @Serializable
@@ -37,42 +40,17 @@ data class TaskAssignedEvent(
     override val version: Int = 1,
     val taskId: String,
     val projectId: String,
-    val companyId: String,
     val assigneeId: String,
-    val assignedBy: String,
 ) : DomainEvent
 
 @Serializable
-data class TaskStatusChangedEvent(
+data class TaskCommentedEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val taskId: String,
     val projectId: String,
-    val companyId: String,
-    val oldStatus: String,
-    val newStatus: String,
-    val changedBy: String,
-) : DomainEvent
-
-@Serializable
-data class TaskCompletedEvent(
-    override val eventId: String = UUID.randomUUID().toString(),
-    override val occurredAt: Long = System.currentTimeMillis(),
-    override val version: Int = 1,
-    val taskId: String,
-    val projectId: String,
-    val companyId: String,
-    val completedBy: String,
-    val completedAt: Long,
-) : DomainEvent
-
-@Serializable
-data class TaskDeletedEvent(
-    override val eventId: String = UUID.randomUUID().toString(),
-    override val occurredAt: Long = System.currentTimeMillis(),
-    override val version: Int = 1,
-    val taskId: String,
-    val projectId: String,
-    val companyId: String,
+    val authorId: String,
+    val content: String,
+    val commentId: String,
 ) : DomainEvent

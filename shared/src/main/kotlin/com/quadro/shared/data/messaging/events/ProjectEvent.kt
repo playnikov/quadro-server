@@ -22,7 +22,7 @@ data class ProjectUpdatedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val projectId: String,
-    val ownerId: String,
+    val updateBy: String,
     val key: String,
     val name: String,
     val status: String,

@@ -5,18 +5,18 @@ import java.util.UUID
 import kotlin.time.Instant
 
 @Serializable
-enum class ProjectRole {
+enum class MemberRole {
     GUEST, MEMBER, MANAGER, OWNER;
 
-    fun isAtLeast(other: ProjectRole) = ordinal >= other.ordinal
-    fun isHigherThan(other: ProjectRole) = ordinal > other.ordinal
+    fun isAtLeast(other: MemberRole) = ordinal >= other.ordinal
+    fun isHigherThan(other: MemberRole) = ordinal > other.ordinal
 }
 
 data class ProjectMember(
     val id: UUID,
     val projectId: UUID,
     val userId: UUID,
-    val role: ProjectRole,
+    val role: MemberRole,
     val joinedAt: Instant,
     val invitedBy: UUID,
     val invitedAt: Instant
@@ -27,20 +27,28 @@ data class ProjectMemberResponse(
     val id: String,
     val projectId: String,
     val userId: String,
-    val role: ProjectRole,
+    val role: MemberRole,
     val joinedAt: Instant,
     val invitedBy: String,
-    val invitedAt: Instant
+    val invitedAt: Instant,
+    val firstName: String,
+    val lastName: String,
+    val middleName: String?,
+    val email: String,
 ) {
     companion object {
-        fun from(member: ProjectMember): ProjectMemberResponse = ProjectMemberResponse(
+        fun from(member: ProjectMember, user: User): ProjectMemberResponse = ProjectMemberResponse(
             id = member.id.toString(),
             projectId = member.projectId.toString(),
             userId = member.userId.toString(),
             role = member.role,
             joinedAt = member.joinedAt,
             invitedBy = member.invitedBy.toString(),
-            invitedAt = member.invitedAt
+            invitedAt = member.invitedAt,
+            firstName = user.firstName,
+            lastName = user.lastName,
+            middleName = user.middleName,
+            email = user.email
         )
     }
 }

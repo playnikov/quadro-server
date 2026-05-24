@@ -11,14 +11,15 @@ import java.util.UUID
 
 class UserEventProcessor(
     private val userRepository: UserRepository,
-    private val taskRepository: TaskRepository,
-    private val projectMemberRepository: ProjectMemberRepository
+    private val taskRepository: TaskRepository
 ) {
     suspend fun processCreated(event: UserCreatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
+            email = event.email,
             lastName = event.lastName,
             firstName = event.firstName,
+            middleName = event.middleName,
             role = UserRole.valueOf(event.role),
             isActive = event.isActive
         )
@@ -29,8 +30,10 @@ class UserEventProcessor(
     suspend fun processUpdated(event: UserUpdatedEvent) {
         val user = User(
             id = UUID.fromString(event.userId),
+            email = event.email,
             lastName = event.lastName,
             firstName = event.firstName,
+            middleName = event.middleName,
             role = UserRole.valueOf(event.role),
             isActive = event.isActive
         )
@@ -39,7 +42,6 @@ class UserEventProcessor(
 
         if (!event.isActive) {
             taskRepository.clearAssignee(user.id)
-            projectMemberRepository.deleteByUserId(user.id)
         }
     }
 }

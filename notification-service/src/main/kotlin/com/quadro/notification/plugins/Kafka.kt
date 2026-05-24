@@ -2,6 +2,7 @@ package com.quadro.notification.plugins
 
 import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.notification.infrastructure.messaging.listener.ProjectEventListener
+import com.quadro.notification.infrastructure.messaging.listener.TaskEventListener
 import com.quadro.notification.infrastructure.messaging.listener.TeamEventListener
 import com.quadro.notification.infrastructure.messaging.listener.UserEventListener
 import io.ktor.server.application.Application
@@ -14,23 +15,15 @@ import org.koin.ktor.ext.getKoin
 fun Application.configureKafka() {
     val userListener: UserEventListener = getKoin().get()
     val projectListener: ProjectEventListener = getKoin().get()
-    val teamListener: TeamEventListener = getKoin().get()
+    val taskListener: TaskEventListener = getKoin().get()
     val producer: EventProducer = getKoin().get()
 
-    userListener.start()
-    log.info("User event listener started")
-
-    projectListener.start()
-    log.info("Project event listener started")
-
-    teamListener.start()
-    log.info("Team event listener started")
+    taskListener.start()
+    log.info("Task event listener started")
 
     Runtime.getRuntime().addShutdownHook(Thread {
         runBlocking {
-            userListener.stop()
-            projectListener.stop()
-            teamListener.stop()
+            taskListener.stop()
             producer.close()
         }
         log.info("Kafka producer and listener closed")
@@ -38,10 +31,8 @@ fun Application.configureKafka() {
 
     monitor.subscribe(ApplicationStopping) {
         launch {
+            taskListener.stop()
             producer.close()
-            userListener.stop()
-            teamListener.stop()
-            projectListener.stop()
             log.info("Kafka producer and listener stopped gracefully")
         }
     }

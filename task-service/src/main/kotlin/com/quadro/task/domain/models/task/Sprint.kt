@@ -7,7 +7,6 @@ import kotlin.time.Instant
 @Serializable
 enum class SprintStatus { PLANNING, ACTIVE, COMPLETED, CANCELLED }
 
-
 data class Sprint(
     val id: UUID,
     val projectId: UUID,
@@ -26,12 +25,12 @@ data class SprintCreate(
     val name: String,
     val goal: String?,
     val status: SprintStatus,
-    val startDate: Instant,
-    val endDate: Instant,
+    val startDate: Instant? = null,
+    val endDate: Instant? = null,
     val createdBy: UUID
 ) {
     fun validate() {
-        require(endDate > startDate) { "endDate must be greater than startDate" }
+        require(endDate?.let { it > startDate!! } ?: true) { "If both dates are provided, endDate must be > startDate" }
     }
 }
 

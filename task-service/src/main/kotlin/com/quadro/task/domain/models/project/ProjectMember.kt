@@ -4,15 +4,15 @@ import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @Serializable
-enum class ProjectRole {
+enum class MemberRole {
     GUEST, MEMBER, MANAGER, ADMIN, OWNER;
 
-    fun isAtLeast(other: ProjectRole) = ordinal >= other.ordinal
-    fun isHigherThan(other: ProjectRole) = ordinal > other.ordinal
+    fun isAtLeast(other: MemberRole) = ordinal >= other.ordinal
+    fun isHigherThan(other: MemberRole) = ordinal > other.ordinal
 }
 
 data class ProjectMember(
     val projectId: UUID,
     val userId: UUID,
-    val role: ProjectRole
+    val role: MemberRole
 )

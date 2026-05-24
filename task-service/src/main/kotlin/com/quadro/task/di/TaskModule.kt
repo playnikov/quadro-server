@@ -9,9 +9,6 @@ import com.quadro.task.domain.repositories.task.TaskAttachmentRepository
 import com.quadro.task.domain.repositories.task.TaskCommentRepository
 import com.quadro.task.domain.repositories.task.TaskHistoryRepository
 import com.quadro.task.domain.repositories.task.TaskRepository
-import com.quadro.task.domain.repositories.team.TeamMemberRepository
-import com.quadro.task.domain.repositories.team.TeamProjectRepository
-import com.quadro.task.domain.repositories.team.TeamRepository
 import com.quadro.task.domain.services.SprintService
 import com.quadro.task.domain.services.SprintServiceImpl
 import com.quadro.task.domain.services.TaskAssignmentService
@@ -30,9 +27,6 @@ import com.quadro.task.infrastructure.database.repositories.task.TaskAttachmentR
 import com.quadro.task.infrastructure.database.repositories.task.TaskCommentRepositoryImpl
 import com.quadro.task.infrastructure.database.repositories.task.TaskHistoryRepositoryImpl
 import com.quadro.task.infrastructure.database.repositories.task.TaskRepositoryImpl
-import com.quadro.task.infrastructure.database.repositories.team.TeamMemberRepositoryImpl
-import com.quadro.task.infrastructure.database.repositories.team.TeamProjectRepositoryImpl
-import com.quadro.task.infrastructure.database.repositories.team.TeamRepositoryImpl
 import com.quadro.task.presentation.controllers.SprintController
 import com.quadro.task.presentation.controllers.TaskAssignmentController
 import com.quadro.task.presentation.controllers.TaskController
@@ -52,9 +46,6 @@ val taskModule = module {
     single<UserRepository> { UserRepositoryImpl() }
     single<ProjectRepository> { ProjectRepositoryImpl() }
     single<ProjectMemberRepository> { ProjectMemberRepositoryImpl() }
-    single<TeamRepository> { TeamRepositoryImpl() }
-    single<TeamProjectRepository> { TeamProjectRepositoryImpl() }
-    single<TeamMemberRepository> { TeamMemberRepositoryImpl() }
 
     single<TaskRepository> { TaskRepositoryImpl() }
     single<TaskHistoryRepository> { TaskHistoryRepositoryImpl() }
@@ -63,10 +54,10 @@ val taskModule = module {
     single<SprintRepository> { SprintRepositoryImpl() }
 
     // Services
-    single<TaskService> { TaskServiceImpl(get(), get(), get(), get()) }
+    single<TaskService> { TaskServiceImpl(get(), get(), get()) }
     single<TaskStatusService> { TaskStatusServiceImpl(get()) }
-    single<TaskReportingService> { TaskReportingServiceImpl(get()) }
-    single<TaskAssignmentService> { TaskAssignmentServiceImpl(get(), get(), get(), get(), get(), get()) }
+    single<TaskReportingService> { TaskReportingServiceImpl(get(), get(), get(), get()) }
+    single<TaskAssignmentService> { TaskAssignmentServiceImpl(get(), get(), get(), get(), get()) }
     single<SprintService> { SprintServiceImpl(get()) }
 
     // Controllers

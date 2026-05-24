@@ -1,10 +1,15 @@
 package com.quadro.task.infrastructure.database.entities.task
 
+import com.quadro.task.domain.models.task.SprintStatus
+import com.quadro.task.domain.models.task.TaskPriority
+import com.quadro.task.domain.models.task.TaskStatus
+import com.quadro.task.domain.models.task.TaskType
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
+import org.postgresql.util.PGobject
 import java.util.UUID
 
 object TasksTable : UUIDTable("tasks") {
@@ -14,11 +19,40 @@ object TasksTable : UUIDTable("tasks") {
     val number = integer("number")
     val title = varchar("title", 200)
     val description = text("description").nullable()
-    val status = varchar("status", 50)
-    val priority = varchar("priority", 50)
-    val type = varchar("type", 50)
+    val status = customEnumeration(
+        name = "status",
+        sql = "task_status",
+        fromDb = { value -> TaskStatus.valueOf(value as String) },
+        toDb = { status ->
+            PGobject().apply {
+                type = "task_status"
+                value = status.name
+            }
+        }
+    )
+    val priority = customEnumeration(
+        name = "priority",
+        sql = "task_priority",
+        fromDb = { value -> TaskPriority.valueOf(value as String) },
+        toDb = { priority ->
+            PGobject().apply {
+                type = "task_priority"
+                value = priority.name
+            }
+        }
+    )
+    val type = customEnumeration(
+        name = "type",
+        sql = "task_type",
+        fromDb = { value -> TaskType.valueOf(value as String) },
+        toDb = { typeTask ->
+            PGobject().apply {
+                type = "task_type"
+                value = typeTask.name
+            }
+        }
+    )
     val assigneeId = uuid("assignee_id").nullable()
-    val assignedTeamId = uuid("assigned_team_id").nullable()
     val reporterId = uuid("reporter_id")
     val storyPoints = integer("story_points").nullable()
     val estimatedHours = double("estimated_hours").nullable()
@@ -44,7 +78,6 @@ class TaskEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var priority by TasksTable.priority
     var type by TasksTable.type
     var assigneeId by TasksTable.assigneeId
-    var assignedTeamId by TasksTable.assignedTeamId
     var reporterId by TasksTable.reporterId
     var storyPoints by TasksTable.storyPoints
     var estimatedHours by TasksTable.estimatedHours

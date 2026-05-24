@@ -12,6 +12,7 @@ object KafkaTopics {
     const val PROJECT_ARCHIVED = "quadro.project.archived"
     const val PROJECT_DELETED = "quadro.project.deleted"
     const val PROJECT_MEMBER_ADDED = "quadro.project.member.added"
+    const val PROJECT_MEMBER_INVITED = "quadro.project.member.invited"
     const val PROJECT_MEMBER_REMOVED = "quadro.project.member.removed"
     const val PROJECT_MEMBER_ROLE_UPDATED = "quadro.project.member.role.updated"
 
@@ -30,6 +31,7 @@ object KafkaTopics {
     const val TASK_CREATED = "quadro.task.created"
     const val TASK_UPDATED = "quadro.task.updated"
     const val TASK_ASSIGNED = "quadro.task.assigned"
+    const val TASK_COMMENT = "quadro.task.comment"
     const val TASK_STATUS_CHANGED = "quadro.task.status.changed"
     const val TASK_COMPLETED = "quadro.task.completed"
     const val TASK_DELETED = "quadro.task.deleted"

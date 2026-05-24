@@ -39,6 +39,11 @@ class UserRepositoryImpl : UserRepository {
         UserEntity.findById(id)?.let(UserMapper::toDomain)
     }
 
+    override suspend fun findByIds(ids: List<UUID>): List<User> = newSuspendedTransaction {
+        UserEntity.find { UsersTable.id inList ids }
+            .map { UserMapper.toDomain(it) }
+    }
+
     override suspend fun delete(id: UUID): Boolean = newSuspendedTransaction {
         UserEntity.findById(id)?.delete() != null
     }

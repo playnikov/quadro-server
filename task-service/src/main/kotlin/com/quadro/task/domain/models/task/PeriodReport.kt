@@ -10,5 +10,5 @@ data class PeriodReport(
     val dailyCreation: Map<String, Long>,       // дата (yyyy-MM-dd) -> количество созданных задач
     val dailyCompletion: Map<String, Long>,     // дата (yyyy-MM-dd) -> количество завершённых задач
     val averageCompletionDays: Double,          // среднее время выполнения задач (в днях) за всё время проекта
-    val overdueCount: Long                      // количество просроченных задач на конец периода
+    val overdueCount: Long,                     // количество просроченных задач на конец периода
 )

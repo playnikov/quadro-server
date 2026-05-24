@@ -11,7 +11,7 @@ object TaskHistoryMapper {
         id = entity.id.value,
         taskId = entity.taskId,
         userId = entity.userId,
-        action = HistoryAction.valueOf(entity.action),
+        action = entity.action,
         oldValue = entity.oldValue,
         newValue = entity.newValue,
         createdAt = entity.createdAt.toKotlinInstant()
@@ -29,7 +29,7 @@ object TaskHistoryMapper {
     private fun applyDomainToEntity(entity: TaskHistoryEntity, domain: TaskHistory) {
         entity.taskId = domain.taskId
         entity.userId = domain.userId
-        entity.action = domain.action.name
+        entity.action = domain.action
         entity.oldValue = domain.oldValue
         entity.newValue = domain.newValue
         entity.createdAt = domain.createdAt.toOffsetDateTime()

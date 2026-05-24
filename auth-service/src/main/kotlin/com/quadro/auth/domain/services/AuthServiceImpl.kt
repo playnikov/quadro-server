@@ -113,8 +113,7 @@ class AuthServiceImpl(
         logger.info("Successful login for user: ${user.email}, IP: $ipAddress, User-Agent: $userAgent")
 
         userRepository.upsert(user.copy(
-            lastLoginAt = Clock.System.now(),
-            lastLoginIp = ipAddress,
+            lastLoginAt = Clock.System.now()
         ))
         return AuthResult(
             token = accessToken,

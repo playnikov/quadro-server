@@ -1,8 +1,10 @@
 package com.quadro.gateway.routes
 
 import com.quadro.gateway.config.ServiceUrls
-import com.quadro.gateway.plugins.proxyWebSocket
+import com.quadro.gateway.plugins.proxyTo
+import com.quadro.shared.security.getUserId
 import io.ktor.client.HttpClient
+import io.ktor.server.request.path
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.route
@@ -15,10 +17,10 @@ class WebSocket(
     private val baseNotificationUrl = serviceBaseUrl.notification
 
     fun init(routing: Route) {
-        routing.route("/ws/notifications") {
-            webSocket {
-                proxyWebSocket(client, baseNotificationUrl)
-            }
+        routing.webSocket("/ws/notifications") {
+            val userId = call.getUserId() ?: return@webSocket
+            val path = call.request.path()
+            proxyTo(client, baseNotificationUrl, userId.toString(), path)
         }
     }
 }

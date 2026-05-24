@@ -10,14 +10,12 @@ interface TaskRepository {
     suspend fun findByProject(projectId: UUID, limit: Int, offset: Int): List<Task>
     suspend fun findBySprint(sprintId: UUID): List<Task>
     suspend fun findByAssignee(userId: UUID): List<Task>
-    suspend fun findByTeam(teamId: UUID, projectId: UUID): List<Task>
     suspend fun findByParent(parentTaskId: UUID): List<Task>
     suspend fun create(task: Task): Task
     suspend fun update(task: Task): Task
     suspend fun delete(id: UUID)
     suspend fun nextNumber(projectId: UUID): Int
     suspend fun countByProject(projectId: UUID): Long
-    suspend fun clearAssignedTeam(teamId: UUID)
     suspend fun clearAssignee(userId: UUID)
     suspend fun countByStatus(projectId: UUID, status: TaskStatus): Long
     suspend fun countByStatusAndPeriod(

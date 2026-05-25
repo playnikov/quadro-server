@@ -20,7 +20,16 @@ class WebSocket(
         routing.webSocket("/ws/notifications") {
             val userId = call.getUserId() ?: return@webSocket
             val path = call.request.path()
-            proxyTo(client, baseNotificationUrl, userId.toString(), path)
+            val projectIds = call.request.queryParameters["projectIds"] ?: ""
+            proxyTo(
+                client = client,
+                baseUrl = baseNotificationUrl,
+                userId = userId.toString(),
+                path = path,
+                queryParams = mapOf(
+                    "projectIds" to projectIds
+                )
+            )
         }
     }
 }

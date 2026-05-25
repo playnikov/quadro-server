@@ -1,7 +1,7 @@
 CREATE TYPE notification_type AS ENUM ('TASK_CREATED', 'TASK_UPDATED', 'TASK_ASSIGNED', 'TASK_COMMENTED', 'PROJECT_UPDATED', 'TEAM_UPDATED');
 
 CREATE TABLE notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY,
     user_id UUID NOT NULL,
     type notification_type NOT NULL,
     title VARCHAR(255) NOT NULL,

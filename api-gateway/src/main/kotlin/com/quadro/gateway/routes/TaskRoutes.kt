@@ -77,8 +77,26 @@ class TaskRoutes(
             }
         }
 
-        routing.route("/api/tasks/reporting") {
+        routing.route("/api/tasks/comments") {
             proxyTo(client, taskServiceBaseUrl)
+
+            route("/task") {
+                proxyTo(client, taskServiceBaseUrl)
+
+                route("/count") {
+                    proxyTo(client, taskServiceBaseUrl)
+                }
+            }
+
+            route("/replies") {
+                proxyTo(client, taskServiceBaseUrl)
+            }
+        }
+
+        routing.route("/api/tasks/reporting") {
+            route("/period") {
+                proxyTo(client, taskServiceBaseUrl)
+            }
 
             route("/backlog") {
                 proxyTo(client, taskServiceBaseUrl)

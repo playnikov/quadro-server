@@ -3,6 +3,7 @@ package com.quadro.task.presentation.controllers
 import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.task.domain.models.task.TaskStatus
+import com.quadro.task.domain.models.task.VelocityMetric
 import com.quadro.task.domain.services.TaskReportingService
 import com.quadro.task.presentation.models.TaskResponse
 import io.ktor.http.HttpStatusCode
@@ -77,8 +78,10 @@ class TaskReportingController(
         val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Project ID is invalid")
         val now = Clock.System.now()
+        val page = call.parameters["page"]?.toIntOrNull() ?: 1
+        val size = call.parameters["size"]?.toIntOrNull() ?: 50
 
-        val tasks = taskReportingService.getOverdueTasks(projectId, now)
+        val tasks = taskReportingService.getOverdueTasks(projectId, now, page, size)
         tasks.forEach {
             TaskResponse.from(it)
         }
@@ -104,8 +107,10 @@ class TaskReportingController(
     suspend fun getVelocity(call: ApplicationCall) {
         val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Project ID is invalid")
-
-        val velocity = taskReportingService.getVelocity(projectId)
+        val metric = call.request.queryParameters["metric"]?.let { VelocityMetric.valueOf(it.uppercase()) }
+            ?: VelocityMetric.STORY_POINTS
+        val daysBack = call.request.queryParameters["daysBack"]?.toLongOrNull() ?: 7
+        val velocity = taskReportingService.getVelocity(projectId, metric, daysBack)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("velocity" to velocity)))
     }
 

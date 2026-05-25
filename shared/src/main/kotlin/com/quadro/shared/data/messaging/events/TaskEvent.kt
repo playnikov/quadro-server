@@ -30,7 +30,17 @@ data class TaskUpdatedEvent(
     val status: String,
     val priority: String,
     val assigneeId: String?,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val updatedBy: String
+) : DomainEvent
+
+@Serializable
+data class TaskDeletedEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val taskId: String,
+    val projectId: String,
 ) : DomainEvent
 
 @Serializable

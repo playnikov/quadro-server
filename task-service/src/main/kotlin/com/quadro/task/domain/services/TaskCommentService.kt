@@ -6,9 +6,11 @@ import com.quadro.task.domain.models.task.TaskCommentUpdate
 import java.util.UUID
 
 interface TaskCommentService {
-    suspend fun addComment(taskId: UUID, authorId: UUID, create: TaskCommentCreate): TaskComment
+    suspend fun createComment(commentCreate: TaskCommentCreate): TaskComment
     suspend fun updateComment(commentId: UUID, userId: UUID, update: TaskCommentUpdate): TaskComment
-    suspend fun deleteComment(commentId: UUID, userId: UUID, isAdmin: Boolean)
-    suspend fun getCommentsForTask(taskId: UUID): List<TaskComment>
-    suspend fun getReplies(commentId: UUID): List<TaskComment>
+    suspend fun deleteComment(commentId: UUID, userId: UUID)
+    suspend fun getComment(commentId: UUID): TaskComment?
+    suspend fun getCommentsByTask(taskId: UUID): List<TaskComment>
+    suspend fun getReplies(parentId: UUID): List<TaskComment>
+    suspend fun countByTask(taskId: UUID): Long
 }

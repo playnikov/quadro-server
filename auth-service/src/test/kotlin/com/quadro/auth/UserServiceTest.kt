@@ -1,39 +1,48 @@
 package com.quadro.auth
 
 import com.quadro.auth.domain.models.User
+import com.quadro.auth.domain.models.UserCreate
 import com.quadro.auth.domain.models.UserRole
 import com.quadro.auth.domain.repositories.UserRepository
 import com.quadro.auth.domain.services.UserService
 import com.quadro.auth.domain.services.UserServiceImpl
+import com.quadro.auth.infrastructure.security.PasswordEncoder
+import com.quadro.auth.presentation.models.UpdateAdminUserRequest
+import com.quadro.shared.data.messaging.EventProducer
+import com.quadro.shared.data.messaging.KafkaTopics
+import com.quadro.shared.data.messaging.events.UserCreatedEvent
+import com.quadro.shared.data.messaging.events.UserUpdatedEvent
 import com.quadro.shared.dto.DomainException
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import java.util.UUID
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
+import kotlin.test.*
 import kotlin.time.Clock
 
 class UserServiceTest {
     private lateinit var userRepository: UserRepository
+    private lateinit var passwordEncoder: PasswordEncoder
+    private lateinit var eventProducer: EventProducer
     private lateinit var userService: UserService
 
     private val testUserId = UUID.randomUUID()
+    private val testAdminId = UUID.randomUUID()
+    private val testSuperAdminId = UUID.randomUUID()
     private val testEmail = "test@example.com"
     private val testUsername = "testuser"
-    private val testPasswordHash = "hashed"
+    private val testPassword = "Password123"
+    private val testPasswordHash = "hashed_password"
     private val testFirstName = "Test"
     private val testLastName = "User"
     private val testMiddleName = "Testovich"
 
     @Before
     fun setUp() {
-        userRepository = mockk()
-        userService = UserServiceImpl(userRepository)
+        userRepository = mockk(relaxed = true)
+        passwordEncoder = mockk(relaxed = true)
+        eventProducer = mockk(relaxed = true)
+        userService = UserServiceImpl(userRepository, passwordEncoder, eventProducer)
     }
 
     private fun createTestUser(
@@ -41,12 +50,13 @@ class UserServiceTest {
         email: String = testEmail,
         username: String = testUsername,
         isActive: Boolean = true,
-        role: UserRole = UserRole.USER
+        role: UserRole = UserRole.USER,
+        passwordHash: String = testPasswordHash
     ): User = User(
         id = id,
         username = username,
         email = email,
-        passwordHash = testPasswordHash,
+        passwordHash = passwordHash,
         firstName = testFirstName,
         lastName = testLastName,
         middleName = testMiddleName,
@@ -56,169 +66,303 @@ class UserServiceTest {
         isEmailVerified = true,
         createdAt = Clock.System.now(),
         updatedAt = Clock.System.now(),
-        lastLoginAt = Clock.System.now(),
-        lastLoginIp = "127.0.0.1"
+        lastLoginAt = Clock.System.now()
     )
 
+    // ================================ GET USER BY ID =================================
+
     @Test
-    fun `getUserById - should return user when exists`() = runBlocking {
-        // Arrange
+    fun `getUserById - success`() = runBlocking {
         val expectedUser = createTestUser()
         coEvery { userRepository.findById(testUserId) } returns expectedUser
 
-        // Act
         val result = userService.getUserById(testUserId)
 
-        // Assert
         assertEquals(expectedUser, result)
         coVerify { userRepository.findById(testUserId) }
     }
 
     @Test
-    fun `getUserById - should throw NotFound when user does not exist`() = runBlocking {
-        // Arrange
+    fun `getUserById - throws NotFound when user missing`() = runBlocking {
         coEvery { userRepository.findById(testUserId) } returns null
 
-        // Act & Assert
         val exception = assertFailsWith<DomainException.NotFound> {
             userService.getUserById(testUserId)
         }
-        assertEquals("User with id '$testUserId' not found", exception.message)
-        coVerify { userRepository.findById(testUserId) }
+        assertEquals("User with '$testUserId' not found", exception.message)
     }
 
+    // ================================ GET ALL USERS (admin only) =================================
+
     @Test
-    fun `getAllUsers - should return list of users`() = runBlocking {
-        // Arrange
+    fun `getAllUsers - success for admin`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
         val users = listOf(
-            createTestUser(id = UUID.randomUUID(), email = "user1@example.com"),
-            createTestUser(id = UUID.randomUUID(), email = "user2@example.com")
+            createTestUser(id = UUID.randomUUID()),
+            createTestUser(id = UUID.randomUUID())
         )
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
         coEvery { userRepository.getAll() } returns users
 
-        // Act
-        val result = userService.getAllUsers()
+        val result = userService.getAllUsers(testAdminId)
 
-        // Assert
         assertEquals(users, result)
-        assertEquals(2, result.size)
         coVerify { userRepository.getAll() }
     }
 
     @Test
-    fun `getAllUsers - should return empty list when no users`() = runBlocking {
-        // Arrange
-        coEvery { userRepository.getAll() } returns emptyList()
+    fun `getAllUsers - throws AccessDenied for non-admin`() = runBlocking {
+        val regularUser = createTestUser(id = testUserId, role = UserRole.USER)
+        coEvery { userRepository.findById(testUserId) } returns regularUser
 
-        // Act
-        val result = userService.getAllUsers()
-
-        // Assert
-        assertNotNull(result)
-        assertEquals(0, result.size)
-        coVerify { userRepository.getAll() }
+        val exception = assertFailsWith<DomainException.AccessDenied> {
+            userService.getAllUsers(testUserId)
+        }
+        coVerify(exactly = 0) { userRepository.getAll() }
     }
 
     @Test
-    fun `getUserByUsername - should return user when exists`() = runBlocking {
-        // Arrange
-        val expectedUser = createTestUser()
-        coEvery { userRepository.findByUsername(testUsername) } returns expectedUser
+    fun `getAllUsers - throws NotFound when requester missing`() = runBlocking {
+        coEvery { userRepository.findById(testAdminId) } returns null
 
-        // Act
+        val exception = assertFailsWith<DomainException.NotFound> {
+            userService.getAllUsers(testAdminId)
+        }
+        assertEquals("User with '$testAdminId' not found", exception.message)
+    }
+
+    // ================================ GET USER BY USERNAME =================================
+
+    @Test
+    fun `getUserByUsername - success`() = runBlocking {
+        val user = createTestUser()
+        coEvery { userRepository.findByUsername(testUsername) } returns user
+
         val result = userService.getUserByUsername(testUsername)
 
-        // Assert
-        assertEquals(expectedUser, result)
+        assertEquals(user, result)
         coVerify { userRepository.findByUsername(testUsername) }
     }
 
     @Test
-    fun `getUserByUsername - should throw NotFound when user does not exist`() = runBlocking {
-        // Arrange
+    fun `getUserByUsername - throws NotFound`() = runBlocking {
         coEvery { userRepository.findByUsername(testUsername) } returns null
 
-        // Act & Assert
         val exception = assertFailsWith<DomainException.NotFound> {
             userService.getUserByUsername(testUsername)
         }
-        assertEquals("User with id '$testUsername' not found", exception.message)
-        coVerify { userRepository.findByUsername(testUsername) }
+        assertEquals("User with '$testUsername' not found", exception.message)
     }
 
-    @Test
-    fun `getUserByEmail - should return user when exists`() = runBlocking {
-        // Arrange
-        val expectedUser = createTestUser()
-        coEvery { userRepository.findByEmail(testEmail) } returns expectedUser
+    // ================================ GET USER BY EMAIL =================================
 
-        // Act
+    @Test
+    fun `getUserByEmail - success`() = runBlocking {
+        val user = createTestUser()
+        coEvery { userRepository.findByEmail(testEmail) } returns user
+
         val result = userService.getUserByEmail(testEmail)
 
-        // Assert
-        assertEquals(expectedUser, result)
+        assertEquals(user, result)
         coVerify { userRepository.findByEmail(testEmail) }
     }
 
     @Test
-    fun `getUserByEmail - should throw NotFound when user does not exist`() = runBlocking {
-        // Arrange
+    fun `getUserByEmail - throws NotFound`() = runBlocking {
         coEvery { userRepository.findByEmail(testEmail) } returns null
 
-        // Act & Assert
         val exception = assertFailsWith<DomainException.NotFound> {
             userService.getUserByEmail(testEmail)
         }
-        assertEquals("User with id '$testEmail' not found", exception.message)
-        coVerify { userRepository.findByEmail(testEmail) }
+        assertEquals("User with '$testEmail' not found", exception.message)
+    }
+
+    // ================================ GET USERS BY IDS =================================
+
+    @Test
+    fun `getUsersByIds - success`() = runBlocking {
+        val ids = listOf(UUID.randomUUID(), UUID.randomUUID())
+        val users = ids.map { createTestUser(id = it) }
+        coEvery { userRepository.getByIds(ids) } returns users
+
+        val result = userService.getUsersByIds(ids)
+
+        assertEquals(users, result)
+        coVerify { userRepository.getByIds(ids) }
     }
 
     @Test
-    fun `getUsersByIds - should return users for existing ids`() = runBlocking {
-        // Arrange
-        val userId1 = UUID.randomUUID()
-        val userId2 = UUID.randomUUID()
-        val userIds = listOf(userId1, userId2)
-        val expectedUsers = listOf(
-            createTestUser(id = userId1, email = "user1@example.com"),
-            createTestUser(id = userId2, email = "user2@example.com")
+    fun `getUsersByIds - returns empty list when none found`() = runBlocking {
+        val ids = listOf(UUID.randomUUID())
+        coEvery { userRepository.getByIds(ids) } returns emptyList()
+
+        val result = userService.getUsersByIds(ids)
+
+        assertTrue(result.isEmpty())
+    }
+
+    // ================================ UPDATE USER BY ADMIN =================================
+
+    @Test
+    fun `updateUserByAdmin - admin updates another user successfully`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
+        val targetUser = createTestUser(id = testUserId, role = UserRole.USER)
+        val updateRequest = UpdateAdminUserRequest(
+            firstName = "Updated",
+            lastName = "Name",
+            isActive = false
         )
-        coEvery { userRepository.getByIds(userIds) } returns expectedUsers
 
-        // Act
-        val result = userService.getUsersByIds(userIds)
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
+        coEvery { userRepository.findById(testUserId) } returns targetUser
+        coEvery { userRepository.upsert(any()) } answers { firstArg() }
 
-        // Assert
-        assertEquals(expectedUsers, result)
-        coVerify { userRepository.getByIds(userIds) }
+        val result = userService.updateUserByAdmin(testAdminId, testUserId, updateRequest)
+
+        assertEquals("Updated", result.firstName)
+        assertEquals("Name", result.lastName)
+        assertFalse(result.isActive)
     }
 
     @Test
-    fun `getUsersByIds - should return empty list when no users found`() = runBlocking {
-        // Arrange
-        val userIds = listOf(UUID.randomUUID(), UUID.randomUUID())
-        coEvery { userRepository.getByIds(userIds) } returns emptyList()
+    fun `updateUserByAdmin - admin cannot change role to ADMIN without superadmin rights`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
+        val targetUser = createTestUser(id = testUserId, role = UserRole.USER)
+        val updateRequest = UpdateAdminUserRequest(role = UserRole.ADMIN)
 
-        // Act
-        val result = userService.getUsersByIds(userIds)
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
+        coEvery { userRepository.findById(testUserId) } returns targetUser
 
-        // Assert
-        assertNotNull(result)
-        assertEquals(0, result.size)
-        coVerify { userRepository.getByIds(userIds) }
+        val exception = assertFailsWith<DomainException.AccessDenied> {
+            userService.updateUserByAdmin(testAdminId, testUserId, updateRequest)
+        }
+        coVerify(exactly = 0) { userRepository.upsert(any()) }
     }
 
     @Test
-    fun `getUsersByIds - should return empty list for empty input list`() = runBlocking {
-        // Arrange
-        val userIds = emptyList<UUID>()
-        coEvery { userRepository.getByIds(userIds) } returns emptyList()
+    fun `updateUserByAdmin - superadmin can change role`() = runBlocking {
+        val superAdmin = createTestUser(id = testSuperAdminId, role = UserRole.SUPER_ADMIN)
+        val targetUser = createTestUser(id = testUserId, role = UserRole.USER)
+        val updateRequest = UpdateAdminUserRequest(role = UserRole.ADMIN)
 
-        // Act
-        val result = userService.getUsersByIds(userIds)
+        coEvery { userRepository.findById(testSuperAdminId) } returns superAdmin
+        coEvery { userRepository.findById(testUserId) } returns targetUser
+        coEvery { userRepository.upsert(any()) } answers { firstArg() }
 
-        // Assert
-        assertEquals(emptyList<User>(), result)
-        coVerify { userRepository.getByIds(userIds) }
+        val result = userService.updateUserByAdmin(testSuperAdminId, testUserId, updateRequest)
+
+        assertEquals(UserRole.ADMIN, result.role)
+    }
+
+    @Test
+    fun `updateUserByAdmin - admin cannot update themselves`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
+
+        val exception = assertFailsWith<DomainException.AccessDenied> {
+            userService.updateUserByAdmin(testAdminId, testAdminId, UpdateAdminUserRequest(firstName = "New"))
+        }
+        coVerify(exactly = 0) { userRepository.upsert(any()) }
+    }
+
+    @Test
+    fun `updateUserByAdmin - requester not found throws NotFound`() = runBlocking {
+        coEvery { userRepository.findById(testAdminId) } returns null
+
+        val exception = assertFailsWith<DomainException.NotFound> {
+            userService.updateUserByAdmin(testAdminId, testUserId, UpdateAdminUserRequest())
+        }
+        assertEquals("User with '$testAdminId' not found", exception.message)
+    }
+
+    @Test
+    fun `updateUserByAdmin - target user not found throws NotFound`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
+        coEvery { userRepository.findById(testUserId) } returns null
+
+        val exception = assertFailsWith<DomainException.NotFound> {
+            userService.updateUserByAdmin(testAdminId, testUserId, UpdateAdminUserRequest())
+        }
+        assertEquals("User with '$testUserId' not found", exception.message)
+    }
+
+    @Test
+    fun `updateUserByAdmin - invalid email format throws ValidationError`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
+        val targetUser = createTestUser(id = testUserId)
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
+        coEvery { userRepository.findById(testUserId) } returns targetUser
+
+        val exception = assertFailsWith<DomainException.ValidationError> {
+            userService.updateUserByAdmin(testAdminId, testUserId, UpdateAdminUserRequest(email = "invalid-email"))
+        }
+        assertEquals("Invalid email format", exception.message)
+    }
+
+    @Test
+    fun `updateUserByAdmin - password update triggers isNeedChangePassword = true`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
+        val targetUser = createTestUser(id = testUserId)
+        val newPassword = "NewPass123"
+        val newHash = "new_hashed"
+
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
+        coEvery { userRepository.findById(testUserId) } returns targetUser
+        coEvery { passwordEncoder.encode(newPassword) } returns newHash
+        coEvery { userRepository.upsert(any()) } answers { firstArg() }
+
+        val result = userService.updateUserByAdmin(testAdminId, testUserId, UpdateAdminUserRequest(password = newPassword))
+
+        assertEquals(newHash, result.passwordHash)
+        assertTrue(result.isNeedChangePassword)
+        coVerify { passwordEncoder.encode(newPassword) }
+    }
+
+    // ================================ ADMIN CREATE USER =================================
+
+    @Test
+    fun `adminCreateUser - admin creates user successfully`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
+        val createRequest = UserCreate(
+            email = "new@example.com",
+            username = "newuser",
+            password = testPassword,
+            firstName = "New",
+            lastName = "User",
+            middleName = null
+        )
+
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
+        coEvery { passwordEncoder.encode(testPassword) } returns "new_hash"
+        coEvery { userRepository.upsert(any()) } answers { firstArg() }
+
+        val result = userService.adminCreateUser(testAdminId, createRequest)
+
+        assertEquals("new@example.com", result.email)
+        assertEquals("newuser", result.username)
+        assertEquals(UserRole.USER, result.role)
+        assertTrue(result.isNeedChangePassword)
+    }
+
+    @Test
+    fun `adminCreateUser - invalid registration data throws ValidationError`() = runBlocking {
+        val adminUser = createTestUser(id = testAdminId, role = UserRole.ADMIN)
+        coEvery { userRepository.findById(testAdminId) } returns adminUser
+
+        val invalidRequest = UserCreate(
+            email = "invalid",
+            username = "ab",
+            password = "short",
+            firstName = "New",
+            lastName = "User",
+            middleName = null
+        )
+
+        val exception = assertFailsWith<DomainException.ValidationError> {
+            userService.adminCreateUser(testAdminId, invalidRequest)
+        }
+        assertEquals("Invalid email format", exception.message)
+        coVerify(exactly = 0) { userRepository.upsert(any()) }
     }
 }

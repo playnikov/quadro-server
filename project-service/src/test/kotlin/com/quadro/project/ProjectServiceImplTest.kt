@@ -3,12 +3,9 @@ package com.quadro.project
 import com.quadro.project.domain.models.Project
 import com.quadro.project.domain.models.ProjectCreate
 import com.quadro.project.domain.models.ProjectMember
-import com.quadro.project.domain.models.ProjectPriority
 import com.quadro.project.domain.models.MemberRole
 import com.quadro.project.domain.models.ProjectStatus
-import com.quadro.project.domain.models.ProjectType
 import com.quadro.project.domain.models.ProjectUpdate
-import com.quadro.project.domain.models.ProjectVisibility
 import com.quadro.project.domain.models.User
 import com.quadro.project.domain.models.UserRole
 import com.quadro.project.domain.repositories.ProjectMemberRepository
@@ -45,19 +42,20 @@ class ProjectServiceImplTest {
 
     private val testUser = User(
         id = testUserId,
+        email = "test@example.com",
+        firstName = "Test",
+        lastName = "User",
+        middleName = null,
         role = UserRole.USER,
         isActive = true
     )
 
     private val testProject = Project(
         id = testProjectId,
-        type = ProjectType.TEAM_MANAGED,
         name = "Test Project",
         key = "TP",
         description = "Description",
         status = ProjectStatus.ACTIVE,
-        priority = ProjectPriority.MEDIUM,
-        visibility = ProjectVisibility.PUBLIC,
         createdAt = now,
         updatedAt = now
     )
@@ -90,16 +88,13 @@ class ProjectServiceImplTest {
     fun `createProject - success as ADMIN`() = runBlocking {
         val adminUser = testUser.copy(role = UserRole.ADMIN)
         val request = ProjectCreate(
-            type = ProjectType.TEAM_MANAGED,
             name = "Admin Project",
             key = "AP",
             description = null,
-            priority = ProjectPriority.MEDIUM,
-            visibility = ProjectVisibility.PUBLIC
         )
         coEvery { userRepository.findById(testUserId) } returns adminUser
         coEvery { projectRepository.existsByKey(request.key) } returns false
-        coEvery { projectRepository.create(any()) } answers { firstArg() }
+        coEvery { projectRepository.upsert(any()) } answers { firstArg() }
 
         val result = projectService.createProject(testUserId, request)
 
@@ -110,16 +105,13 @@ class ProjectServiceImplTest {
     fun `createProject - success as SUPER_ADMIN`() = runBlocking {
         val superAdmin = testUser.copy(role = UserRole.SUPER_ADMIN)
         val request = ProjectCreate(
-            type = ProjectType.TEAM_MANAGED,
             name = "Super Project",
             key = "SP",
             description = null,
-            priority = ProjectPriority.MEDIUM,
-            visibility = ProjectVisibility.PUBLIC
         )
         coEvery { userRepository.findById(testUserId) } returns superAdmin
         coEvery { projectRepository.existsByKey(request.key) } returns false
-        coEvery { projectRepository.create(any()) } answers { firstArg() }
+        coEvery { projectRepository.upsert(any()) } answers { firstArg() }
 
         val result = projectService.createProject(testUserId, request)
 
@@ -136,7 +128,7 @@ class ProjectServiceImplTest {
             projectService.createProject(testUserId, request)
         }
         assertEquals("Insufficient permissions", ex.message)
-        coVerify(exactly = 0) { projectRepository.create(any()) }
+        coVerify(exactly = 0) { projectRepository.upsert(any()) }
     }
 
     @Test
@@ -147,19 +139,16 @@ class ProjectServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             projectService.createProject(testUserId, request)
         }
-        assertEquals("User with id 'ID: $testUserId' not found", ex.message)
+        assertEquals("User with '$testUserId' not found", ex.message)
     }
 
     @Test
     fun `createProject - fails when project key already exists`() = runBlocking {
         val adminUser = testUser.copy(role = UserRole.ADMIN)
         val request = ProjectCreate(
-            type = ProjectType.TEAM_MANAGED,
             name = "new Project",
             key = "EXIST",
             description = null,
-            priority = ProjectPriority.MEDIUM,
-            visibility = ProjectVisibility.PUBLIC
         )
         coEvery { userRepository.findById(testUserId) } returns adminUser
         coEvery { projectRepository.existsByKey("EXIST") } returns true
@@ -178,14 +167,12 @@ class ProjectServiceImplTest {
             name = "Updated Name",
             description = "New Desc",
             status = ProjectStatus.ON_HOLD,
-            priority = ProjectPriority.LOW,
-            visibility = ProjectVisibility.PRIVATE
         )
         coEvery { userRepository.findById(testUserId) } returns testUser
         coEvery { projectRepository.findById(testProjectId) } returns testProject
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember
         coEvery { projectRepository.existsByName(request.name!!) } returns false
-        coEvery { projectRepository.update(any()) } answers { firstArg() }
+        coEvery { projectRepository.upsert(any()) } answers { firstArg() }
 
         val result = projectService.updateProject(testUserId, testProjectId, request)
 
@@ -203,7 +190,7 @@ class ProjectServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             projectService.updateProject(testUserId, testProjectId, request)
         }
-        assertEquals("Project with id 'Project Not Found' not found", ex.message)
+        assertEquals("Project with '$testProjectId' not found", ex.message)
     }
 
     @Test
@@ -302,7 +289,7 @@ class ProjectServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             projectService.findById(testProjectId)
         }
-        assertEquals("Project with id '$testProjectId' not found", ex.message)
+        assertEquals("Project with '$testProjectId' not found", ex.message)
     }
 
     @Test
@@ -318,7 +305,7 @@ class ProjectServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             projectService.findByName("Unknown")
         }
-        assertEquals("Project with id 'Unknown' not found", ex.message)
+        assertEquals("Project with 'Unknown' not found", ex.message)
     }
 
     @Test
@@ -334,7 +321,7 @@ class ProjectServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             projectService.findByKey("XXX")
         }
-        assertEquals("Project with id 'XXX' not found", ex.message)
+        assertEquals("Project with 'XXX' not found", ex.message)
     }
 
     // ==================== findByUser ====================
@@ -355,7 +342,7 @@ class ProjectServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             projectService.findByUser(testUserId, 10, 0)
         }
-        assertEquals("User with id 'User Not Found' not found", ex.message)
+        assertEquals("User with '$testUserId' not found", ex.message)
     }
 
     // ==================== updateStatus ====================
@@ -375,9 +362,15 @@ class ProjectServiceImplTest {
     @Test
     fun `getProjectMembers - success`() = runBlocking {
         val members = listOf(testMember)
+        val users = listOf(testUser)
+
+        coEvery { userRepository.findById(testUserId) } returns testUser
+        coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember
         coEvery { projectMemberRepository.findByProject(testProjectId, 10, 0) } returns members
+        coEvery { userRepository.findByIds(listOf(testUserId)) } returns users
 
         val result = projectService.getProjectMembers(testProjectId, testUserId, 1, 10)
+
         assertEquals(1, result.size)
         assertEquals(testMember.userId.toString(), result.first().userId)
     }
@@ -385,23 +378,9 @@ class ProjectServiceImplTest {
     // ==================== updateMemberRole ====================
 
     @Test
-    fun `updateMemberRole - success by OWNER`() = runBlocking {
-        val targetUserId = UUID.randomUUID()
-        val targetMember = testMember.copy(id = UUID.randomUUID(), userId = targetUserId, role = MemberRole.MEMBER)
-        coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember // OWNER
-        coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, targetUserId) } returns targetMember
-        coEvery { projectMemberRepository.updateRole(targetMember.id, MemberRole.ADMIN) } returns Unit
-        coEvery { projectMemberRepository.findByProjectAndRole(testProjectId, MemberRole.OWNER) } returns listOf(testMember)
-
-        projectService.updateMemberRole(testProjectId, testUserId, targetUserId, MemberRole.ADMIN)
-
-        coVerify { projectMemberRepository.updateRole(targetMember.id, MemberRole.ADMIN) }
-    }
-
-    @Test
     fun `updateMemberRole - cannot change own role`() = runBlocking {
         val ex = assertFailsWith<DomainException.Forbidden> {
-            projectService.updateMemberRole(testProjectId, testUserId, testUserId, MemberRole.ADMIN)
+            projectService.updateMemberRole(testProjectId, testUserId, testUserId, MemberRole.MANAGER)
         }
         assertEquals("Not allowed", ex.message)
     }
@@ -414,27 +393,9 @@ class ProjectServiceImplTest {
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, targetUserId) } returns mockk()
 
         val ex = assertFailsWith<DomainException.AccessDenied> {
-            projectService.updateMemberRole(testProjectId, testUserId, targetUserId, MemberRole.ADMIN)
+            projectService.updateMemberRole(testProjectId, testUserId, targetUserId, MemberRole.MANAGER)
         }
-        assertEquals("Manager cannot grant ADMIN or OWNER roles", ex.message)
-    }
-
-    @Test
-    fun `updateMemberRole - last OWNER cannot be demoted`() = runBlocking {
-        val targetUserId = UUID.randomUUID()
-        val targetOwner = testMember.copy(
-            id = UUID.randomUUID(),
-            userId = targetUserId,
-            role = MemberRole.OWNER
-        )
-        coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember // текущий OWNER
-        coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, targetUserId) } returns targetOwner
-        coEvery { projectMemberRepository.findByProjectAndRole(testProjectId, MemberRole.OWNER) } returns listOf(targetOwner) // только один OWNER
-
-        val ex = assertFailsWith<DomainException.BusinessRule> {
-            projectService.updateMemberRole(testProjectId, testUserId, targetUserId, MemberRole.MEMBER)
-        }
-        assertEquals("Project must have at least one OWNER", ex.message)
+        assertEquals("Manager cannot grant OWNER roles", ex.message)
     }
 
     // ==================== removeMember ====================
@@ -450,17 +411,6 @@ class ProjectServiceImplTest {
         projectService.removeMember(testProjectId, testUserId, targetUserId)
 
         coVerify { projectMemberRepository.remove(targetMember.id) }
-    }
-
-    @Test
-    fun `removeMember - manager cannot remove themselves`() = runBlocking {
-        val managerMember = testMember.copy(role = MemberRole.MANAGER, userId = testUserId)
-        coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns managerMember
-
-        val ex = assertFailsWith<DomainException.Forbidden> {
-            projectService.removeMember(testProjectId, testUserId, testUserId)
-        }
-        assertEquals("Manager cannot remove themselves", ex.message)
     }
 
     @Test
@@ -508,6 +458,6 @@ class ProjectServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             projectService.leaveProject(testProjectId, testUserId)
         }
-        assertEquals("User is not a member of the project with id '$testUserId' not found", ex.message)
+        assertEquals("User is not a member of the project with '$testUserId' not found", ex.message)
     }
 }

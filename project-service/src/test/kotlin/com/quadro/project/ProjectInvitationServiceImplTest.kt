@@ -7,14 +7,12 @@ import com.quadro.project.domain.models.InviteType
 import com.quadro.project.domain.models.Project
 import com.quadro.project.domain.models.ProjectInvitation
 import com.quadro.project.domain.models.ProjectMember
-import com.quadro.project.domain.models.ProjectPriority
 import com.quadro.project.domain.models.MemberRole
 import com.quadro.project.domain.models.ProjectStatus
-import com.quadro.project.domain.models.ProjectType
-import com.quadro.project.domain.models.ProjectVisibility
 import com.quadro.project.domain.repositories.ProjectInvitationRepository
 import com.quadro.project.domain.repositories.ProjectMemberRepository
 import com.quadro.project.domain.repositories.ProjectRepository
+import com.quadro.project.domain.repositories.UserRepository
 import com.quadro.project.domain.services.InvitationTokenService
 import com.quadro.project.domain.services.ProjectInvitationService
 import com.quadro.project.domain.services.ProjectInvitationServiceImpl
@@ -47,6 +45,7 @@ class ProjectInvitationServiceImplTest {
     private lateinit var eventProducer: EventProducer
     private lateinit var config: DomainConfig
     private lateinit var projectInvitationService: ProjectInvitationService
+    private lateinit var userRepository: UserRepository
 
     private val testProjectId = UUID.randomUUID()
     private val testUserId = UUID.randomUUID()
@@ -56,13 +55,10 @@ class ProjectInvitationServiceImplTest {
 
     private val testProject = Project(
         id = testProjectId,
-        type = ProjectType.TEAM_MANAGED,
         name = "Test Project",
         key = "TP",
         description = null,
         status = ProjectStatus.ACTIVE,
-        priority = ProjectPriority.MEDIUM,
-        visibility = ProjectVisibility.PUBLIC,
         createdAt = now,
         updatedAt = now
     )
@@ -99,6 +95,7 @@ class ProjectInvitationServiceImplTest {
         projectRepository = mockk(relaxed = true)
         projectMemberRepository = mockk(relaxed = true)
         invitationTokenService = mockk(relaxed = true)
+        userRepository = mockk(relaxed = true)
         eventProducer = mockk(relaxed = true)
         config = mockk {
             every { domain } returns "https://quadro.com"
@@ -109,14 +106,15 @@ class ProjectInvitationServiceImplTest {
             projectMemberRepository = projectMemberRepository,
             invitationTokenService = invitationTokenService,
             eventProducer = eventProducer,
-            config = config
+            config = config,
+            userRepository = userRepository
         )
     }
 
     @Test
     fun `createInvitation - success by OWNER`() = runTest {
         val request = InvitationCreate(
-            inviteType = InviteType.EMAIL,
+            type = InviteType.EMAIL,
             identifier = "new@example.com",
             role = MemberRole.MEMBER,
             expiresInDays = 5,
@@ -125,12 +123,12 @@ class ProjectInvitationServiceImplTest {
         coEvery { projectRepository.findById(testProjectId) } returns testProject
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember
         coEvery { projectInvitationRepository.countPendingByProject(testProjectId) } returns 0
-        coEvery { invitationTokenService.generateToken(any(), any(), any()) } returns testToken
+        coEvery { invitationTokenService.generateToken(any(), any()) } returns testToken
 
         val result = projectInvitationService.createInvitation(testProjectId, testUserId, request)
 
         assertNotNull(result)
-        assertEquals(testProject.name, result.project.name)
+        assertEquals(testProject.name, result.projectName)
         assertEquals(testToken, result.token)
         assertTrue(result.link?.contains(testToken) ?: true)
         coVerify { projectInvitationRepository.create(any()) }
@@ -180,7 +178,6 @@ class ProjectInvitationServiceImplTest {
             isValid = true,
             invitationId = testInvitationId,
             projectId = testProjectId,
-            expiresAt = now.plus(1.days).toEpochMilliseconds()
         )
         coEvery { invitationTokenService.validateToken(testToken) } returns validation
         coEvery { projectInvitationRepository.findById(testInvitationId) } returns testInvitation
@@ -233,10 +230,10 @@ class ProjectInvitationServiceImplTest {
 
     @Test
     fun `getInvitations - success as ADMIN`() = runTest {
-        val adminMember = testMember.copy(role = MemberRole.ADMIN)
+        val adminMember = testMember.copy(role = MemberRole.MANAGER)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns adminMember
         coEvery { projectRepository.findById(testProjectId) } returns testProject
-        coEvery { projectInvitationRepository.findByProject(testProjectId, null) } returns listOf(testInvitation)
+        coEvery { projectInvitationRepository.findByProject(testProjectId) } returns listOf(testInvitation)
 
         val result = projectInvitationService.getInvitations(testProjectId, testUserId)
 

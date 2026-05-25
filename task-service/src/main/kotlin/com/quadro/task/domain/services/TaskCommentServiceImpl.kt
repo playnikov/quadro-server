@@ -14,19 +14,15 @@ class TaskCommentServiceImpl(
     private val taskRepository: TaskRepository,
     private val taskHistoryService: TaskHistoryService
 ) : TaskCommentService {
-    override suspend fun addComment(
-        taskId: UUID,
-        authorId: UUID,
-        create: TaskCommentCreate
-    ): TaskComment {
-        create.validate()
-        val task = taskRepository.findById(taskId)
-            ?: throw DomainException.NotFound("Task", taskId.toString())
+    override suspend fun createComment(commentCreate: TaskCommentCreate): TaskComment {
+        commentCreate.validate()
+        val task = taskRepository.findById(commentCreate.taskId)
+            ?: throw DomainException.NotFound("Task", commentCreate.taskId.toString())
 
-        if (create.parentCommentId != null) {
-            val parent = commentRepository.findById(create.parentCommentId)
-                ?: throw DomainException.NotFound("Parent comment", create.parentCommentId.toString())
-            if (parent.taskId != taskId) {
+        if (commentCreate.parentId != null) {
+            val parent = commentRepository.findById(commentCreate.parentId)
+                ?: throw DomainException.NotFound("Parent comment", commentCreate.parentId.toString())
+            if (parent.taskId != task.id) {
                 throw DomainException.BusinessRule("Parent comment belongs to a different task")
             }
         }
@@ -34,19 +30,19 @@ class TaskCommentServiceImpl(
         val now = Clock.System.now()
         val comment = TaskComment(
             id = UUID.randomUUID(),
-            taskId = taskId,
-            authorId = authorId,
-            content = create.content,
-            parentId = create.parentCommentId,
+            taskId = commentCreate.taskId,
+            authorId = commentCreate.authorId,
+            content = commentCreate.content,
+            parentId = commentCreate.parentId,
             isEdited = false,
             isDeleted = false,
-            createdAt = now,
-            updatedAt = now,
-            mentions = create.mentionedUserIds
+            mentions = commentCreate.mentions,
+            createdAt = Clock.System.now(),
+            updatedAt = Clock.System.now()
         )
         val saved = commentRepository.create(comment)
 
-        taskHistoryService.recordCommentAdded(taskId, authorId, saved.id)
+        taskHistoryService.recordCommentAdded(commentCreate.taskId, commentCreate.authorId, saved.id)
         return saved
     }
 
@@ -73,20 +69,24 @@ class TaskCommentServiceImpl(
         return commentRepository.update(updated)
     }
 
-    override suspend fun deleteComment(commentId: UUID, userId: UUID, isAdmin: Boolean) {
+    override suspend fun deleteComment(commentId: UUID, userId: UUID) {
         val comment = commentRepository.findById(commentId)
             ?: throw DomainException.NotFound("Comment", commentId.toString())
-        if (comment.authorId != userId && !isAdmin) {
-            throw DomainException.Forbidden("Only author or admin can delete comment")
+        if (comment.authorId != userId) {
+            throw DomainException.Forbidden("You can only delete your own comments")
         }
         commentRepository.softDelete(commentId)
     }
 
-    override suspend fun getCommentsForTask(taskId: UUID): List<TaskComment> {
-        return commentRepository.findByTask(taskId)
-    }
+    override suspend fun getComment(commentId: UUID): TaskComment? =
+        commentRepository.findById(commentId)
 
-    override suspend fun getReplies(commentId: UUID): List<TaskComment> {
-        return commentRepository.findReplies(commentId)
-    }
+    override suspend fun getCommentsByTask(taskId: UUID): List<TaskComment> =
+        commentRepository.findByTask(taskId).filterNot { it.isDeleted }
+
+    override suspend fun getReplies(parentId: UUID): List<TaskComment> =
+        commentRepository.findReplies(parentId).filterNot { it.isDeleted }
+
+    override suspend fun countByTask(taskId: UUID): Long =
+        commentRepository.countByTask(taskId)
 }

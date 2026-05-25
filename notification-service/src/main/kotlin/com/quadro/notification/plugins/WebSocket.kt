@@ -14,8 +14,12 @@ import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
+import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.slf4j.LoggerFactory
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
@@ -31,16 +35,27 @@ fun Application.configureWebSocket() {
 
     routing {
         webSocket("/ws/notifications") {
-            val userId = call.request.headers["X-User-Id"] ?: return@webSocket
+            val userId = call.request.headers["X-User-Id"]
+                ?: call.request.queryParameters["userId"]
+                ?: return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Missing userId"))
+
+            val initialProjectIds = call.request.queryParameters["projectIds"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
 
             val sessionId = UUID.randomUUID().toString()
 
             try {
-                WebSocketManager.register(sessionId, this, userId)
-                logger.info("WS connected: userId=$userId, sessionId=$sessionId")
+                WebSocketManager.register(sessionId, this, userId, initialProjectIds)
+                logger.info("WS connected: userId=$userId, sessionId=$sessionId, projects=$initialProjectIds")
 
-                incoming.consumeEach { frame ->
-                    if (frame is Frame.Close) return@consumeEach
+                for (frame in incoming) {
+                    when (frame) {
+                        is Frame.Text -> {
+                            val text = frame.readText()
+                            handleIncomingCommand(sessionId, userId, text)
+                        }
+                        is Frame.Close -> break
+                        else -> {}
+                    }
                 }
             } catch (e: ClosedReceiveChannelException) {
                 logger.info("WS closed by client: userId=$userId, sessionId=$sessionId")
@@ -52,5 +67,27 @@ fun Application.configureWebSocket() {
                 logger.info("WS session cleaned up: userId=$userId, sessionId=$sessionId")
             }
         }
+    }
+}
+
+private fun handleIncomingCommand(sessionId: String, userId: String, command: String) {
+    val json = Json { ignoreUnknownKeys = true }
+    try {
+        val obj = json.parseToJsonElement(command).jsonObject
+        val action = obj["action"]?.jsonPrimitive?.content
+        val projectId = obj["projectId"]?.jsonPrimitive?.content
+
+        if (action == null || projectId == null) {
+            logger.warn("Invalid command format: $command")
+            return
+        }
+
+        when (action) {
+            "subscribe" -> WebSocketManager.subscribeToProject(sessionId, projectId)
+            "unsubscribe" -> WebSocketManager.unsubscribeFromProject(sessionId, projectId)
+            else -> logger.warn("Unknown action: $action")
+        }
+    } catch (e: Exception) {
+        logger.error("Failed to parse command: $command", e)
     }
 }

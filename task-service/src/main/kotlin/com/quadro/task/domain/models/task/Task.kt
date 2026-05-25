@@ -101,13 +101,15 @@ data class TaskComment(
 )
 
 data class TaskCommentCreate(
+    val taskId: UUID,
+    val authorId: UUID,
     val content: String,
-    val parentCommentId: UUID? = null,
-    val mentionedUserIds: List<UUID> = emptyList(),
+    val parentId: UUID? = null,
+    val mentions: List<UUID> = emptyList()
 ) {
     fun validate() {
         require(content.isNotBlank()) { "Comment cannot be blank" }
-        require(content.length <= 10_000) { "Comment must be at most 10000 chars" }
+        require(content.length <= 512) { "Comment must be at most 512 chars" }
     }
 }
 
@@ -116,7 +118,7 @@ data class TaskCommentUpdate(
 ) {
     fun validate() {
         require(content.isNotBlank()) { "Comment cannot be blank" }
-        require(content.length <= 10_000) { "Comment must be at most 10000 chars" }
+        require(content.length <= 512) { "Comment must be at most 512 chars" }
     }
 }
 

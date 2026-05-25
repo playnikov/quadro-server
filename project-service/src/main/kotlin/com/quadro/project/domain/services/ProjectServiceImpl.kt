@@ -127,7 +127,7 @@ class ProjectServiceImpl(
     ): Project {
         val user = getUserOrThrow(userId)
         val project = projectRepository.findById(projectId)
-            ?: throw DomainException.NotFound("Project", "Project Not Found")
+            ?: throw DomainException.NotFound("Project", projectId.toString())
 
         checkProjectAccess(projectId, user, MemberRole.MANAGER)
 

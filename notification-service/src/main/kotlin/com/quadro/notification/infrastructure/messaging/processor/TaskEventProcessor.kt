@@ -10,12 +10,15 @@ import org.koin.core.component.KoinComponent
 class TaskEventProcessor : KoinComponent {
     private val webSocketManager = WebSocketManager
 
+
     suspend fun processCreated(event: TaskCreatedEvent) {
-        val title = "Создана задача: ${event.title}"
         val message = "Создана новая задача \"${event.title}\" в проекте ${event.projectId}"
+
     }
 
     suspend fun processUpdated(event: TaskUpdatedEvent) {
+        val message = "Задача \"${event.title}\" в проекте ${event.projectId} была обновлена пользователем ${event.updatedBy}"
+
     }
 
     suspend fun processAssigned(event: TaskAssignedEvent) {
@@ -26,6 +29,7 @@ class TaskEventProcessor : KoinComponent {
     }
 
     suspend fun processCommented(event: TaskCommentedEvent) {
+        val message = "Оставлен комментарий к задаче в проекте ${event.projectId} пользователем ${event.authorId}"
 
     }
 }

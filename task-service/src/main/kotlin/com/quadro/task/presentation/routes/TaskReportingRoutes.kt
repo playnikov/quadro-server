@@ -24,7 +24,7 @@ class TaskReportingRoutes(
             get("/avg-completion") { controller.getAverageCompletionDays(call) }
             get("/completion-rate") { controller.getCompletionRate(call) }
             get("/velocity") { controller.getVelocity(call) }
-            get { controller.getReporting(call) }
+            get("/period") { controller.getReporting(call) }
         }
     }
 }

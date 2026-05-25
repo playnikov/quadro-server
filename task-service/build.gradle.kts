@@ -43,6 +43,8 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.host.common)
 
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+
     // HTTP Client
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)

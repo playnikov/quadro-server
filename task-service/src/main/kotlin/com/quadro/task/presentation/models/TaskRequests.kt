@@ -41,9 +41,10 @@ data class TaskUpdateRequest(
 
 @Serializable
 data class TaskCommentCreateRequest(
+    val taskId: String,
     val content: String,
-    val parentCommentId: String? = null,
-    val mentionedUserIds: List<String> = emptyList(),
+    val parentId: String? = null,
+    val mentions: List<String>? = null
 )
 
 @Serializable

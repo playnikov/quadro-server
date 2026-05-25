@@ -82,11 +82,19 @@ fun Route.proxyTo(client: HttpClient, targetBaseUrl: String) {
     }
 }
 
-suspend fun DefaultWebSocketSession.proxyTo(client: HttpClient, baseUrl: String, userId: String, path: String) {
-    val wsUrl = baseUrl
+suspend fun DefaultWebSocketSession.proxyTo(client: HttpClient, baseUrl: String, userId: String, path: String, queryParams: Map<String, String> = emptyMap()) {
+    val wsBase = baseUrl
         .replace("http://", "ws://")
         .replace("https://", "wss://")
-        .removeSuffix("/") + path
+        .removeSuffix("/")
+
+    val wsUrl = URLBuilder().apply {
+        takeFrom(wsBase + path)
+        queryParams.forEach { (key, value) ->
+            parameters.append(key, value)
+        }
+    }.build().toString()
+
     val upstream = client.webSocketSession(wsUrl) {
         header("X-User-Id", userId)
     }

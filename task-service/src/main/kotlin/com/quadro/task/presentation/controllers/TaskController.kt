@@ -45,6 +45,7 @@ class TaskController(
     }
 
     suspend fun updateTask(call: ApplicationCall) {
+        val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val taskId = call.parameters["taskId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Task ID is invalid")
         val request = call.receive<TaskUpdateRequest>()
@@ -62,7 +63,7 @@ class TaskController(
             labels = request.labels
         )
 
-        val result = taskService.updateTask(taskId, taskUpdate)
+        val result = taskService.updateTask(userId, taskId, taskUpdate)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(TaskResponse.from(result)))
     }
 

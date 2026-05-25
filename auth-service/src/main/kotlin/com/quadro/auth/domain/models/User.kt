@@ -35,7 +35,7 @@ data class UserCreate(
     val lastName: String,
     val firstName: String,
     val middleName: String?,
-    val isNeedChangePassword: Boolean,
+    val isNeedChangePassword: Boolean ? = false,
     val password: String
 )
 

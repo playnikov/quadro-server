@@ -1,5 +1,6 @@
 package com.quadro.task.plugins
 
+import com.quadro.task.presentation.routes.TaskCommentRoutes
 import com.quadro.task.presentation.routes.SprintRoutes
 import com.quadro.task.presentation.routes.TaskAssignmentRoutes
 import com.quadro.task.presentation.routes.TaskReportingRoutes
@@ -17,6 +18,7 @@ fun Application.configureRouting() {
     val taskRoutes by inject<TaskRoutes>()
     val taskStatusRoutes by inject<TaskStatusRoutes>()
     val taskReportingRoutes by inject<TaskReportingRoutes>()
+    val taskCommentRoutes by inject<TaskCommentRoutes>()
     val taskAssignmentRoutes by inject<TaskAssignmentRoutes>()
     val sprintRoutes by inject<SprintRoutes>()
 
@@ -43,6 +45,7 @@ fun Application.configureRouting() {
             taskReportingRoutes.init(this)
             taskAssignmentRoutes.init(this)
             sprintRoutes.init(this)
+            taskCommentRoutes.init(this)
         }
     }
 

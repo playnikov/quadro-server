@@ -7,7 +7,6 @@ import com.quadro.task.domain.models.task.TaskPriority
 import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.models.task.TaskType
 import kotlinx.serialization.Serializable
-import java.util.UUID
 import kotlin.time.Instant
 
 @Serializable
@@ -72,26 +71,28 @@ data class TaskCommentResponse(
     val taskId: String,
     val authorId: String,
     val content: String,
-    val parentCommentId: String?,
+    val parentId: String?,
+    val isEdited: Boolean,
     val isDeleted: Boolean,
+    val mentions: List<String>,
     val createdAt: Instant,
-    val updatedAt: Instant?,
-    val edited: Boolean,
-    val mentionedUserIds: List<String>,
+    val updatedAt: Instant
 ) {
     companion object {
-        fun from(comment: TaskComment) = TaskCommentResponse(
-            id = comment.id.toString(),
-            taskId = comment.taskId.toString(),
-            authorId = comment.authorId.toString(),
-            content = if (comment.isDeleted) "[deleted]" else comment.content,
-            parentCommentId = comment.parentId?.toString(),
-            isDeleted = comment.isDeleted,
-            createdAt = comment.createdAt,
-            updatedAt = comment.updatedAt,
-            edited = comment.isEdited,
-            mentionedUserIds = comment.mentions.map { it.toString() },
-        )
+        fun from(comment: TaskComment): TaskCommentResponse = with(comment) {
+            TaskCommentResponse(
+                id = id.toString(),
+                taskId = taskId.toString(),
+                authorId = authorId.toString(),
+                content = content,
+                parentId = parentId.toString(),
+                isEdited = isEdited,
+                isDeleted = isDeleted,
+                mentions = mentions.map { it.toString() },
+                createdAt = createdAt,
+                updatedAt = updatedAt
+            )
+        }
     }
 }
 

@@ -34,7 +34,7 @@ class InvitationTokenServiceImplTest {
         val projectId = UUID.randomUUID()
         val expiresInDays = 3
 
-        val token = tokenService.generateToken(invitationId, projectId, expiresInDays)
+        val token = tokenService.generateToken(invitationId, projectId)
 
         assertNotNull(token)
         assertTrue(token.split(".").size == 3)
@@ -43,29 +43,13 @@ class InvitationTokenServiceImplTest {
         assertTrue(validation.isValid)
         assertEquals(invitationId, validation.invitationId)
         assertEquals(projectId, validation.projectId)
-        assertNotNull(validation.expiresAt)
-    }
-
-    @Test
-    fun `generateToken - uses default expiration when expiresInDays is null`() {
-        val invitationId = UUID.randomUUID()
-        val projectId = UUID.randomUUID()
-
-        val token = tokenService.generateToken(invitationId, projectId, null)
-
-        val validation = tokenService.validateToken(token)
-        assertTrue(validation.isValid)
-        val expiresAt = validation.expiresAt!!
-        val expectedExpiry = System.currentTimeMillis() + jwtConfig.invitationExpiration
-        // Allow 5 seconds difference
-        assertTrue(expiresAt in (expectedExpiry - 5000)..(expectedExpiry + 5000))
     }
 
     @Test
     fun `validateToken - returns valid result for correct token`() {
         val invitationId = UUID.randomUUID()
         val projectId = UUID.randomUUID()
-        val token = tokenService.generateToken(invitationId, projectId, 1)
+        val token = tokenService.generateToken(invitationId, projectId)
 
         val result = tokenService.validateToken(token)
 
@@ -73,20 +57,6 @@ class InvitationTokenServiceImplTest {
         assertEquals(invitationId, result.invitationId)
         assertEquals(projectId, result.projectId)
         assertNull(result.error)
-    }
-
-    @Test
-    fun `validateToken - returns invalid for expired token`() {
-        // Generate token with 0 days expiration (already expired)
-        val invitationId = UUID.randomUUID()
-        val projectId = UUID.randomUUID()
-        val token = tokenService.generateToken(invitationId, projectId, -1)
-
-        val result = tokenService.validateToken(token)
-
-        assertFalse(result.isValid)
-        assertEquals("Invitation expired", result.error)
-        assertNull(result.invitationId)
     }
 
     @Test

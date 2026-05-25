@@ -13,6 +13,10 @@ import com.quadro.task.domain.services.SprintService
 import com.quadro.task.domain.services.SprintServiceImpl
 import com.quadro.task.domain.services.TaskAssignmentService
 import com.quadro.task.domain.services.TaskAssignmentServiceImpl
+import com.quadro.task.domain.services.TaskCommentService
+import com.quadro.task.domain.services.TaskCommentServiceImpl
+import com.quadro.task.domain.services.TaskHistoryService
+import com.quadro.task.domain.services.TaskHistoryServiceImpl
 import com.quadro.task.domain.services.TaskReportingService
 import com.quadro.task.domain.services.TaskReportingServiceImpl
 import com.quadro.task.domain.services.TaskService
@@ -29,9 +33,11 @@ import com.quadro.task.infrastructure.database.repositories.task.TaskHistoryRepo
 import com.quadro.task.infrastructure.database.repositories.task.TaskRepositoryImpl
 import com.quadro.task.presentation.controllers.SprintController
 import com.quadro.task.presentation.controllers.TaskAssignmentController
+import com.quadro.task.presentation.controllers.TaskCommentController
 import com.quadro.task.presentation.controllers.TaskController
 import com.quadro.task.presentation.controllers.TaskReportingController
 import com.quadro.task.presentation.controllers.TaskStatusController
+import com.quadro.task.presentation.routes.TaskCommentRoutes
 import com.quadro.task.presentation.routes.SprintRoutes
 import com.quadro.task.presentation.routes.TaskAssignmentRoutes
 import com.quadro.task.presentation.routes.TaskReportingRoutes
@@ -54,8 +60,10 @@ val taskModule = module {
     single<SprintRepository> { SprintRepositoryImpl() }
 
     // Services
-    single<TaskService> { TaskServiceImpl(get(), get(), get()) }
+    single<TaskService> { TaskServiceImpl(get(), get(), get(), get(), get()) }
+    single<TaskHistoryService> { TaskHistoryServiceImpl(get()) }
     single<TaskStatusService> { TaskStatusServiceImpl(get()) }
+    single<TaskCommentService> { TaskCommentServiceImpl(get(), get(), get()) }
     single<TaskReportingService> { TaskReportingServiceImpl(get(), get(), get(), get()) }
     single<TaskAssignmentService> { TaskAssignmentServiceImpl(get(), get(), get(), get(), get()) }
     single<SprintService> { SprintServiceImpl(get()) }
@@ -66,6 +74,7 @@ val taskModule = module {
     factory { TaskReportingController(get()) }
     factory { TaskAssignmentController(get()) }
     factory { SprintController(get()) }
+    factory { TaskCommentController(get()) }
 
     // Routes
     factory { TaskRoutes(get()) }
@@ -73,4 +82,5 @@ val taskModule = module {
     factory { TaskReportingRoutes(get()) }
     factory { TaskAssignmentRoutes(get()) }
     factory { SprintRoutes(get()) }
+    factory { TaskCommentRoutes(get()) }
 }

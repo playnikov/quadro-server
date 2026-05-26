@@ -19,7 +19,7 @@ class InvitationRoutes(
                     post { invitationController.createInvitation(call) }
                     get { invitationController.getInvitations(call) }
                     delete { invitationController.cancelInvitation(call) }
-                    get("/my") { invitationController.getMyInvitations(call) }
+                    get("/email") { invitationController.getMyInvitations(call) }
                 }
 
                 route("/invite") {

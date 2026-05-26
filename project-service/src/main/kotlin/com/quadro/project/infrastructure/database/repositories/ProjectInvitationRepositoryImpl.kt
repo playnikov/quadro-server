@@ -10,6 +10,7 @@ import com.quadro.project.infrastructure.database.mappers.ProjectInvitationMappe
 import com.quadro.shared.utils.toOffsetDateTime
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.update
 import java.util.UUID
 import kotlin.time.Clock
 
@@ -24,21 +25,36 @@ class ProjectInvitationRepositoryImpl : ProjectInvitationRepository {
     }
 
     override suspend fun findByToken(token: String): ProjectInvitation? = newSuspendedTransaction {
-        ProjectInvitationEntity.find { ProjectInvitationsTable.token eq token }
+        val invitation = ProjectInvitationEntity.find { ProjectInvitationsTable.token eq token }
             .firstOrNull()
             ?.let { ProjectInvitationMapper.toDomain(it) }
+
+        if (invitation != null &&
+            invitation.status == InviteStatus.PENDING &&
+            invitation.expiresAt < Clock.System.now()
+        ) {
+            ProjectInvitationsTable.update({ ProjectInvitationsTable.token eq token }) {
+                it[ProjectInvitationsTable.status] = InviteStatus.EXPIRED
+            }
+            return@newSuspendedTransaction null
+        }
+        invitation
     }
 
     override suspend fun findByProject(projectId: UUID): List<ProjectInvitation> = newSuspendedTransaction {
-        ProjectInvitationEntity.find { ProjectInvitationsTable.projectId eq projectId }
+        val invitations = ProjectInvitationEntity.find { ProjectInvitationsTable.projectId eq projectId }
             .map { ProjectInvitationMapper.toDomain(it) }
+
+        invitations.map { expireIfNeeded(it) }
     }
 
     override suspend fun findByEmail(email: String): List<ProjectInvitation> = newSuspendedTransaction {
-        ProjectInvitationEntity.find {
+        val invitations = ProjectInvitationEntity.find {
             (ProjectInvitationsTable.type eq InviteType.EMAIL) and
                     (ProjectInvitationsTable.identifier eq email)
         }.map(ProjectInvitationMapper::toDomain)
+
+        invitations.map { expireIfNeeded(it) }
     }
 
     override suspend fun updateStatus(
@@ -78,5 +94,18 @@ class ProjectInvitationRepositoryImpl : ProjectInvitationRepository {
             (ProjectInvitationsTable.projectId eq projectId) and
                     (ProjectInvitationsTable.status eq InviteStatus.PENDING)
         }.count()
+    }
+
+    private suspend fun expireIfNeeded(invitation: ProjectInvitation): ProjectInvitation {
+        return if (invitation.status == InviteStatus.PENDING && invitation.expiresAt < Clock.System.now()) {
+            newSuspendedTransaction {
+                ProjectInvitationsTable.update({ ProjectInvitationsTable.id eq invitation.id }) {
+                    it[status] = InviteStatus.EXPIRED
+                }
+            }
+            invitation.copy(status = InviteStatus.EXPIRED)
+        } else {
+            invitation
+        }
     }
 }

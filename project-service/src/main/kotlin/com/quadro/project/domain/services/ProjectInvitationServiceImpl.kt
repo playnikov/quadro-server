@@ -191,9 +191,8 @@ class ProjectInvitationServiceImpl(
         }
     }
 
-    override suspend fun getInvitations(userId: UUID): List<InvitationResponse> {
-        val user = userRepository.findById(userId) ?: throw DomainException.NotFound("User", userId.toString())
-        val invitations = projectInvitationRepository.findByEmail(user.email)
+    override suspend fun getInvitations(email: String): List<InvitationResponse> {
+        val invitations = projectInvitationRepository.findByEmail(email)
             .filter { it.status == InviteStatus.PENDING && it.expiresAt > Clock.System.now() }
         return invitations.map { invitation ->
             val project = projectRepository.findById(invitation.projectId)

@@ -147,7 +147,8 @@ class TaskServiceImpl(
             key = id.toString(),
             event = TaskDeletedEvent(
                 taskId = task.id.toString(),
-                projectId = task.projectId.toString()
+                projectId = task.projectId.toString(),
+                title = task.title,
             )
         )
     }

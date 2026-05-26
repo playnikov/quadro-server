@@ -40,6 +40,7 @@ data class TaskDeletedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val taskId: String,
+    val title: String,
     val projectId: String,
 ) : DomainEvent
 
@@ -49,6 +50,7 @@ data class TaskAssignedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val taskId: String,
+    val title: String,
     val projectId: String,
     val assigneeId: String,
 ) : DomainEvent
@@ -59,8 +61,6 @@ data class TaskCommentedEvent(
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val taskId: String,
+    val title: String,
     val projectId: String,
-    val authorId: String,
-    val content: String,
-    val commentId: String,
 ) : DomainEvent

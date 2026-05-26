@@ -5,6 +5,9 @@ import com.quadro.shared.data.messaging.events.TaskCreatedEvent
 import com.quadro.shared.data.messaging.events.TaskUpdatedEvent
 import com.quadro.shared.data.messaging.events.TaskAssignedEvent
 import com.quadro.shared.data.messaging.events.TaskCommentedEvent
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 import org.koin.core.component.KoinComponent
 
 class TaskEventProcessor : KoinComponent {
@@ -12,24 +15,52 @@ class TaskEventProcessor : KoinComponent {
 
 
     suspend fun processCreated(event: TaskCreatedEvent) {
-        val message = "Создана новая задача \"${event.title}\" в проекте ${event.projectId}"
-
+        val notification = buildJsonObject {
+            put("type", "TASK_CREATED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("taskId", event.taskId)
+                put("title", event.title)
+            }
+        }.toString()
+        webSocketManager.sendProjectNotification(event.projectId, notification)
     }
 
     suspend fun processUpdated(event: TaskUpdatedEvent) {
-        val message = "Задача \"${event.title}\" в проекте ${event.projectId} была обновлена пользователем ${event.updatedBy}"
-
+        val notification = buildJsonObject {
+            put("type", "TASK_UPDATED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("taskId", event.taskId)
+                put("title", event.title)
+                put("updatedBy", event.updatedBy)
+            }
+        }.toString()
+        webSocketManager.sendProjectNotification(event.projectId, notification)
     }
 
     suspend fun processAssigned(event: TaskAssignedEvent) {
-        val title = "Назначение на задачу"
-        val message = "Вас назначили на задачу в проекте ${event.projectId}"
-        
-        webSocketManager.sendNotification(event.assigneeId, message)
+        val notification = buildJsonObject {
+            put("type", "TASK_ASSIGNED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("taskId", event.taskId)
+                put("title", event.title)
+                put("assigneeId", event.assigneeId)
+            }
+        }.toString()
+        webSocketManager.sendNotification(event.assigneeId, notification)
     }
 
     suspend fun processCommented(event: TaskCommentedEvent) {
-        val message = "Оставлен комментарий к задаче в проекте ${event.projectId} пользователем ${event.authorId}"
-
+        val notification = buildJsonObject {
+            put("type", "TASK_COMMENTED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("taskId", event.taskId)
+                put("title", event.title)
+            }
+        }.toString()
+        webSocketManager.sendProjectNotification(event.projectId, notification)
     }
 }

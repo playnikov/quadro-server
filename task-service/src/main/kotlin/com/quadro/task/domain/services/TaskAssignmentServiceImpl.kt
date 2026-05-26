@@ -44,6 +44,7 @@ class TaskAssignmentServiceImpl(
             event = TaskAssignedEvent(
                 taskId = updatedTask.id.toString(),
                 projectId = updatedTask.projectId.toString(),
+                title = updatedTask.title,
                 assigneeId = updatedTask.assigneeId.toString()
             )
         )

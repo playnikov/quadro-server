@@ -51,7 +51,7 @@ fun Application.configureWebSocket() {
                     when (frame) {
                         is Frame.Text -> {
                             val text = frame.readText()
-                            handleIncomingCommand(sessionId, userId, text)
+                            handleIncomingCommand(sessionId, text)
                         }
                         is Frame.Close -> break
                         else -> {}
@@ -70,13 +70,12 @@ fun Application.configureWebSocket() {
     }
 }
 
-private fun handleIncomingCommand(sessionId: String, userId: String, command: String) {
+private fun handleIncomingCommand(sessionId: String, command: String) {
     val json = Json { ignoreUnknownKeys = true }
     try {
         val obj = json.parseToJsonElement(command).jsonObject
         val action = obj["action"]?.jsonPrimitive?.content
         val projectId = obj["projectId"]?.jsonPrimitive?.content
-
         if (action == null || projectId == null) {
             logger.warn("Invalid command format: $command")
             return

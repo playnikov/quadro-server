@@ -51,6 +51,7 @@ fun Application.configureRouting() {
         }
 
         authRoutes.publicRoutes(this)
+        webSocket.init(this)
 
         authenticate("auth-jwt") {
             authRoutes.protectedRoutes(this)
@@ -59,7 +60,6 @@ fun Application.configureRouting() {
             teamRoutes.protectedRoutes(this)
             taskRoutes.protectedRoutes(this)
 
-            webSocket.init(this)
         }
     }
 }

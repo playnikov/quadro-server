@@ -23,12 +23,12 @@ class TaskCommentServiceImpl(
     private val eventProducer: EventProducer
 ) : TaskCommentService {
 
-    private suspend fun checkProjectManagePermission(projectId: UUID, userId: UUID): ProjectMember {
+    private suspend fun checkProjectManagePermission(projectId: UUID, userId: UUID): Boolean {
         val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
         if (member == null || !member.role.isAtLeast(MemberRole.MANAGER)) {
             throw DomainException.AccessDenied("Insufficient permissions: need OWNER or MANAGER")
         }
-        return member
+        return true
     }
 
     override suspend fun createComment(commentCreate: TaskCommentCreate): TaskComment {
@@ -110,8 +110,7 @@ class TaskCommentServiceImpl(
         val task = taskRepository.findById(comment.taskId)
             ?: throw DomainException.NotFound("Task", comment.taskId.toString())
 
-        if (comment.authorId != userId) {
-            checkProjectManagePermission(task.projectId, userId)
+        if (comment.authorId != userId && checkProjectManagePermission(task.projectId, userId)) {
             throw DomainException.Forbidden("You can only delete your own comments")
         }
 

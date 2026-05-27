@@ -74,11 +74,16 @@ fun Route.proxyTo(client: HttpClient, targetBaseUrl: String) {
                 setBody(call.receiveChannel())
             }
         }
-        call.respondText(
-            text = response.bodyAsText(),
-            contentType = ContentType.Application.Json,
-            status = response.status
-        )
+        call.response.status(response.status)
+        response.headers[HttpHeaders.ContentType]?.let {
+            call.response.header(HttpHeaders.ContentType, it)
+        }
+
+        response.headers[HttpHeaders.ContentDisposition]?.let {
+            call.response.header(HttpHeaders.ContentDisposition, it)
+        }
+
+        call.respondBytes(response.bodyAsBytes())
     }
 }
 

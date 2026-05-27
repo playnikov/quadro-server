@@ -9,19 +9,56 @@ import com.lowagie.text.Paragraph
 import com.lowagie.text.pdf.PdfPCell
 import com.lowagie.text.pdf.PdfPTable
 import com.lowagie.text.pdf.PdfWriter
+import com.quadro.shared.utils.toOffsetDateTime
 import com.quadro.task.domain.models.task.PeriodReport
 import java.awt.Color
 import java.io.ByteArrayOutputStream
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 
 class ReportExportServiceImpl : ReportExportService {
+    private val locale = Locale.forLanguageTag("ru")
+    private val dateFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy").withLocale(locale)
+
+    private fun formatInstant(instant: Instant): String {
+        return dateFormatter.format(instant.toJavaInstant().atZone(ZoneId.systemDefault()))
+    }
+
+    private fun parseIsoStringToLocalDate(isoString: String): LocalDate? {
+        return try {
+            val instant = Instant.parse(isoString)
+            instant.toJavaInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun groupByDate(map: Map<String, Long>): Map<LocalDate, Long> {
+        return map.entries
+            .mapNotNull { entry ->
+                parseIsoStringToLocalDate(entry.key)?.let { it to entry.value }
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { it.value.sum() }
+    }
+
+
     override fun exportToCsv(report: PeriodReport): String {
         val sb = StringBuilder()
         sb.appendLine("Дата,Создано,Завершено,WIP (среднее)")
-        val allDates = (report.dailyCreation.keys + report.dailyCompletion.keys).sorted()
+        val groupedCreation = groupByDate(report.dailyCreation)
+        val groupedCompletion = groupByDate(report.dailyCompletion)
+        val allDates = (groupedCreation.keys + groupedCompletion.keys).sorted()
+
         for (date in allDates) {
-            val created = report.dailyCreation[date] ?: 0
-            val completed = report.dailyCompletion[date] ?: 0
-            sb.appendLine("${date},${created},${completed},${"%.2f".format(report.wipAverage)}")
+            val created = groupedCreation[date] ?: 0
+            val completed = groupedCompletion[date] ?: 0
+            val dateStr = dateFormatter.format(date)
+            sb.appendLine("$dateStr,$created,$completed,${"%.2f".format(report.wipAverage)}")
         }
 
         sb.appendLine()
@@ -35,31 +72,37 @@ class ReportExportServiceImpl : ReportExportService {
     }
 
     override fun exportToPdf(report: PeriodReport): ByteArray {
+        val groupedCreation = groupByDate(report.dailyCreation)
+        val groupedProgress = groupByDate(report.dailyProgress)
+        val groupedCompletion = groupByDate(report.dailyCompletion)
+        val allDates = (groupedCreation.keys + groupedCompletion.keys).sorted()
+
         val outputStream = ByteArrayOutputStream()
         val document = Document(PageSize.A4)
         PdfWriter.getInstance(document, outputStream)
         document.open()
 
         document.add(Paragraph("Отчёт по проекту", Font(Font.HELVETICA, 18f, Font.BOLD)))
-        document.add(Paragraph("Период: ${report.from} – ${report.to}", Font(Font.HELVETICA, 12f)))
+        document.add(Paragraph("Период: ${formatInstant(report.from)} – ${formatInstant(report.to)}", Font(Font.HELVETICA, 12f)))
         document.add(Chunk.NEWLINE)
 
         val table = PdfPTable(4).apply {
             widthPercentage = 100f
             addCell(createHeaderCell("Дата"))
             addCell(createHeaderCell("Создано"))
+            addCell(createHeaderCell("В работе"))
             addCell(createHeaderCell("Завершено"))
-            addCell(createHeaderCell("WIP (сред.)"))
         }
 
-        val allDates = (report.dailyCreation.keys + report.dailyCompletion.keys).sortedBy { it }
-        for (dateKey in allDates) {
-            val created = report.dailyCreation[dateKey] ?: 0
-            val completed = report.dailyCompletion[dateKey] ?: 0
-            table.addCell(createBodyCell(dateKey))
+        for (date in allDates) {
+            val created = groupedCreation[date] ?: 0
+            val progress = groupedProgress[date] ?: 0
+            val completed = groupedCompletion[date] ?: 0
+            val dateStr = dateFormatter.format(date)
+            table.addCell(createBodyCell(dateStr))
             table.addCell(createBodyCell(created.toString()))
+            table.addCell(createBodyCell(progress.toString()))
             table.addCell(createBodyCell(completed.toString()))
-            table.addCell(createBodyCell("%.2f".format(report.wipAverage)))
         }
         document.add(table)
 

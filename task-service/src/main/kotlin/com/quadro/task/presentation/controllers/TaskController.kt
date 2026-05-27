@@ -137,4 +137,12 @@ class TaskController(
             .map(TaskResponse::from)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
+
+    suspend fun getUpcomingDeadlines(call: ApplicationCall) {
+        val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
+            ?: throw DomainException.ValidationError("Project ID is invalid")
+        val tasks = taskService.getUpcomingDeadlines(projectId, 7)
+            .map(TaskResponse::from)
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
+    }
 }

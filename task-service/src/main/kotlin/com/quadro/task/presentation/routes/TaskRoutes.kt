@@ -26,6 +26,8 @@ class TaskRoutes(
             get("/parent") { controller.findByParent(call) }
 
             get("/history") { controller.getHistory(call) }
+
+            get("/deadlines") { controller.getUpcomingDeadlines(call) }
         }
     }
 }

@@ -89,9 +89,7 @@ class TaskReportingController(
         val size = call.parameters["size"]?.toIntOrNull() ?: 50
 
         val tasks = taskReportingService.getOverdueTasks(projectId, now, page, size)
-        tasks.forEach {
-            TaskResponse.from(it)
-        }
+            .map(TaskResponse::from)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(tasks))
     }
 

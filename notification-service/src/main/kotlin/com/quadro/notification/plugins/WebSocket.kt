@@ -76,15 +76,28 @@ private fun handleIncomingCommand(sessionId: String, command: String) {
         val obj = json.parseToJsonElement(command).jsonObject
         val action = obj["action"]?.jsonPrimitive?.content
         val projectId = obj["projectId"]?.jsonPrimitive?.content
-        if (action == null || projectId == null) {
-            logger.warn("Invalid command format: $command")
-            return
-        }
+        val taskId = obj["taskId"]?.jsonPrimitive?.content
 
         when (action) {
-            "subscribe" -> WebSocketManager.subscribeToProject(sessionId, projectId)
-            "unsubscribe" -> WebSocketManager.unsubscribeFromProject(sessionId, projectId)
-            else -> logger.warn("Unknown action: $action")
+            null -> {
+                logger.warn("Missing action in command: $command")
+                return
+            }
+            "subscribe" if projectId != null -> {
+                WebSocketManager.subscribeToProject(sessionId, projectId)
+            }
+            "unsubscribe" if projectId != null -> {
+                WebSocketManager.unsubscribeFromProject(sessionId, projectId)
+            }
+            "subscribe_task" if taskId != null -> {
+                WebSocketManager.subscribeToTask(sessionId, taskId)
+            }
+            "unsubscribe_task" if taskId != null -> {
+                WebSocketManager.unsubscribeFromTask(sessionId, taskId)
+            }
+            else -> {
+                logger.warn("Unknown action or missing required id: action=$action, projectId=$projectId, taskId=$taskId")
+            }
         }
     } catch (e: Exception) {
         logger.error("Failed to parse command: $command", e)

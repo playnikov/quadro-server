@@ -17,7 +17,7 @@ class TaskEventProcessor : KoinComponent {
     suspend fun processCreated(event: TaskCreatedEvent) {
         val notification = buildJsonObject {
             put("type", "TASK_CREATED")
-            put("projectId", event.projectId)
+            put("id", event.projectId)
             putJsonObject("data") {
                 put("taskId", event.taskId)
                 put("title", event.title)
@@ -29,7 +29,7 @@ class TaskEventProcessor : KoinComponent {
     suspend fun processUpdated(event: TaskUpdatedEvent) {
         val notification = buildJsonObject {
             put("type", "TASK_UPDATED")
-            put("projectId", event.projectId)
+            put("id", event.projectId)
             putJsonObject("data") {
                 put("taskId", event.taskId)
                 put("title", event.title)
@@ -42,7 +42,7 @@ class TaskEventProcessor : KoinComponent {
     suspend fun processAssigned(event: TaskAssignedEvent) {
         val notification = buildJsonObject {
             put("type", "TASK_ASSIGNED")
-            put("projectId", event.projectId)
+            put("id", event.projectId)
             putJsonObject("data") {
                 put("taskId", event.taskId)
                 put("title", event.title)
@@ -55,9 +55,8 @@ class TaskEventProcessor : KoinComponent {
     suspend fun processCommented(event: TaskCommentEvent) {
         val notification = buildJsonObject {
             put("type", "TASK_COMMENTED")
-            put("taskId", event.taskId)
+            put("id", event.taskId)
             putJsonObject("data") {
-                put("taskId", event.taskId)
                 put("commentId", event.commentId)
             }
         }.toString()
@@ -67,9 +66,8 @@ class TaskEventProcessor : KoinComponent {
     suspend fun processCommentUpdate(event: TaskCommentEvent) {
         val notification = buildJsonObject {
             put("type", "TASK_COMMENT_UPDATED")
-            put("taskId", event.taskId)
+            put("id", event.taskId)
             putJsonObject("data") {
-                put("taskId", event.taskId)
                 put("commentId", event.commentId)
             }
         }.toString()
@@ -79,9 +77,8 @@ class TaskEventProcessor : KoinComponent {
     suspend fun processCommentRemoved(event: TaskCommentEvent) {
         val notification = buildJsonObject {
             put("type", "TASK_COMMENT_REMOVED")
-            put("taskId", event.taskId)
+            put("id", event.taskId)
             putJsonObject("data") {
-                put("taskId", event.taskId)
                 put("commentId", event.commentId)
             }
         }.toString()

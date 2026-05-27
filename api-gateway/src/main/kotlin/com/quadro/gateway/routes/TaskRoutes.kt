@@ -79,6 +79,10 @@ class TaskRoutes(
             route("/validate/team") {
                 proxyTo(client, taskServiceBaseUrl)
             }
+
+            route("/deadlines") {
+                proxyTo(client, taskServiceBaseUrl)
+            }
         }
 
         routing.route("/api/tasks/comments") {
@@ -147,10 +151,6 @@ class TaskRoutes(
             }
 
             route("/velocity") {
-                proxyTo(client, taskServiceBaseUrl)
-            }
-
-            route("/deadlines") {
                 proxyTo(client, taskServiceBaseUrl)
             }
         }

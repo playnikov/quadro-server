@@ -12,7 +12,7 @@ import java.util.UUID
 object UsersTable : UUIDTable("users") {
     val username = varchar("username", 100).uniqueIndex()
     val email = varchar("email", 255).uniqueIndex()
-    val passwordHash = varchar("password_hash", 255)
+    val passwordHash = text("password_hash")
     val firstName = varchar("first_name", 100)
     val lastName = varchar("last_name", 100)
     val middleName = varchar("middle_name", 100).nullable()

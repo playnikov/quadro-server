@@ -4,6 +4,8 @@ import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.shared.data.messaging.KafkaTopics
 import com.quadro.shared.data.messaging.events.TaskAssignedEvent
 import com.quadro.shared.dto.DomainException
+import com.quadro.task.domain.models.project.MemberRole
+import com.quadro.task.domain.models.project.ProjectMember
 import com.quadro.task.domain.models.task.Task
 import com.quadro.task.domain.repositories.project.ProjectMemberRepository
 import com.quadro.task.domain.repositories.project.ProjectRepository
@@ -14,21 +16,24 @@ import kotlin.time.Clock
 
 class TaskAssignmentServiceImpl(
     private val taskRepository: TaskRepository,
-    private val userRepository: UserRepository,
-    private val projectRepository: ProjectRepository,
+    private val taskHistoryService: TaskHistoryService,
     private val projectMemberRepository: ProjectMemberRepository,
     private val eventProducer: EventProducer
 ) : TaskAssignmentService {
+    private suspend fun checkProjectManagePermission(projectId: UUID, userId: UUID): ProjectMember {
+        val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+        if (member == null || !member.role.isAtLeast(MemberRole.MANAGER)) {
+            throw DomainException.AccessDenied("Insufficient permissions: need OWNER or MANAGER")
+        }
+        return member
+    }
 
-    override suspend fun assignTaskToUser(taskId: UUID, userId: UUID): Task {
+    override suspend fun assignTaskToUser(taskId: UUID, userId: UUID, requestId: UUID): Task {
         val task = taskRepository.findById(taskId)
             ?: throw DomainException.NotFound("Task", taskId.toString())
 
-        userRepository.findById(userId)
-            ?: throw DomainException.NotFound("User", userId.toString())
-
-        if (!validateUserAssignment(taskId, userId)) {
-            throw DomainException.BusinessRule("User is not a member of the project team")
+        if (task.assigneeId != null || userId != requestId) {
+            checkProjectManagePermission(task.projectId, requestId)
         }
 
         val updatedTask = task.copy(
@@ -49,30 +54,33 @@ class TaskAssignmentServiceImpl(
             )
         )
 
+
+        taskHistoryService.recordAssigneeChange(
+            taskId = task.id,
+            userId = requestId,
+            oldAssignee = task.assigneeId,
+            newAssignee = updatedTask.assigneeId
+        )
         return updatedTask
     }
 
-    override suspend fun unassignTask(taskId: UUID): Task {
+    override suspend fun unassignTask(taskId: UUID, requestId: UUID): Task {
         val task = taskRepository.findById(taskId)
             ?: throw IllegalArgumentException("Task not found with id: $taskId")
+
+        checkProjectManagePermission(task.projectId, requestId)
 
         val updatedTask = task.copy(
             assigneeId = null,
             updatedAt = Clock.System.now()
         )
 
+        taskHistoryService.recordAssigneeChange(
+            taskId = task.id,
+            userId = requestId,
+            oldAssignee = task.assigneeId,
+            newAssignee = updatedTask.assigneeId
+        )
         return taskRepository.update(updatedTask)
-    }
-
-    override suspend fun validateUserAssignment(taskId: UUID, userId: UUID): Boolean {
-        val task = taskRepository.findById(taskId)
-            ?: return false
-
-        val user = userRepository.findById(userId) ?: return false
-
-        val project = projectRepository.findById(task.projectId) ?: return false
-
-        val projectMember = projectMemberRepository.findByProjectAndUser(task.projectId, userId)
-        return projectMember != null
     }
 }

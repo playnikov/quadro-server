@@ -17,4 +17,5 @@ interface TaskService {
     suspend fun getTasksByAssignee(userId: UUID): List<Task>
     suspend fun getTasksByParent(parentTaskId: UUID): List<Task>
     suspend fun getNextTaskNumber(projectId: UUID): Int
+    suspend fun getUpcomingDeadlines(projectId: UUID, daysAhead: Int): List<Task>
 }

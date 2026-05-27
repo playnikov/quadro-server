@@ -4,7 +4,7 @@ import com.quadro.notification.infrastructure.websocket.WebSocketManager
 import com.quadro.shared.data.messaging.events.TaskCreatedEvent
 import com.quadro.shared.data.messaging.events.TaskUpdatedEvent
 import com.quadro.shared.data.messaging.events.TaskAssignedEvent
-import com.quadro.shared.data.messaging.events.TaskCommentedEvent
+import com.quadro.shared.data.messaging.events.TaskCommentEvent
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
@@ -52,15 +52,39 @@ class TaskEventProcessor : KoinComponent {
         webSocketManager.sendNotification(event.assigneeId, notification)
     }
 
-    suspend fun processCommented(event: TaskCommentedEvent) {
+    suspend fun processCommented(event: TaskCommentEvent) {
         val notification = buildJsonObject {
             put("type", "TASK_COMMENTED")
-            put("projectId", event.projectId)
+            put("taskId", event.taskId)
             putJsonObject("data") {
                 put("taskId", event.taskId)
-                put("title", event.title)
+                put("commentId", event.commentId)
             }
         }.toString()
-        webSocketManager.sendProjectNotification(event.projectId, notification)
+        webSocketManager.sendTaskNotification(event.taskId, notification)
+    }
+
+    suspend fun processCommentUpdate(event: TaskCommentEvent) {
+        val notification = buildJsonObject {
+            put("type", "TASK_COMMENT_UPDATED")
+            put("taskId", event.taskId)
+            putJsonObject("data") {
+                put("taskId", event.taskId)
+                put("commentId", event.commentId)
+            }
+        }.toString()
+        webSocketManager.sendTaskNotification(event.taskId, notification)
+    }
+
+    suspend fun processCommentRemoved(event: TaskCommentEvent) {
+        val notification = buildJsonObject {
+            put("type", "TASK_COMMENT_REMOVED")
+            put("taskId", event.taskId)
+            putJsonObject("data") {
+                put("taskId", event.taskId)
+                put("commentId", event.commentId)
+            }
+        }.toString()
+        webSocketManager.sendTaskNotification(event.taskId, notification)
     }
 }

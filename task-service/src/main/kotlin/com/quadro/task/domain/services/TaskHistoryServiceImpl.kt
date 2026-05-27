@@ -34,6 +34,10 @@ class TaskHistoryServiceImpl(
         createHistory(taskId, userId, HistoryAction.COMMENT_ADDED, null, commentId.toString())
     }
 
+    override suspend fun getHistory(taskId: UUID, limit: Int, offset: Int): List<TaskHistory> {
+        return historyRepository.findByTask(taskId, limit, offset)
+    }
+
     private suspend fun createHistory(taskId: UUID, userId: UUID, action: HistoryAction, oldValue: String?, newValue: String?) {
         val history = TaskHistory(
             id = UUID.randomUUID(),

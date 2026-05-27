@@ -15,6 +15,7 @@ object KafkaTopics {
     const val PROJECT_MEMBER_INVITED = "quadro.project.member.invited"
     const val PROJECT_MEMBER_REMOVED = "quadro.project.member.removed"
     const val PROJECT_MEMBER_ROLE_UPDATED = "quadro.project.member.role.updated"
+    const val PROJECT_INVITED = "quadro.project.member.invited"
 
     // Team events
     const val TEAM_CREATED = "quadro.team.created"
@@ -31,10 +32,14 @@ object KafkaTopics {
     const val TASK_CREATED = "quadro.task.created"
     const val TASK_UPDATED = "quadro.task.updated"
     const val TASK_ASSIGNED = "quadro.task.assigned"
-    const val TASK_COMMENT = "quadro.task.comment"
     const val TASK_STATUS_CHANGED = "quadro.task.status.changed"
     const val TASK_COMPLETED = "quadro.task.completed"
     const val TASK_DELETED = "quadro.task.deleted"
+
+    // Task comment events
+    const val TASK_COMMENT_ADD = "quadro.task.comment.add"
+    const val TASK_COMMENT_UPDATED = "quadro.task.comment.updated"
+    const val TASK_COMMENT_REMOVED = "quadro.task.comment.removed"
 
     // Stats
     const val STATS_SNAPSHOT_REQUESTED = "quadro.stats.snapshot.requested"

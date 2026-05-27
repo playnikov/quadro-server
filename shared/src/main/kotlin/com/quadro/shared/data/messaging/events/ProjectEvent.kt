@@ -75,3 +75,12 @@ data class ProjectMemberUpdatedRoleEvent(
     val userId: String,
     val role: String
 ) : DomainEvent
+
+@Serializable
+data class ProjectInviteCreateEvent(
+    override val eventId: String = UUID.randomUUID().toString(),
+    override val occurredAt: Long = System.currentTimeMillis(),
+    override val version: Int = 1,
+    val projectName: String,
+    val userId: String? = null
+) : DomainEvent

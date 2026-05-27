@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.ktor.server.host.common)
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    implementation("com.github.librepdf:openpdf:1.3.30")
 
     // HTTP Client
     implementation(libs.ktor.client.core)

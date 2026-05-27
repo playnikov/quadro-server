@@ -16,6 +16,7 @@ import com.quadro.project.presentation.models.ProjectResponse
 import com.quadro.shared.data.config.DomainConfig
 import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.shared.data.messaging.KafkaTopics
+import com.quadro.shared.data.messaging.events.ProjectInviteCreateEvent
 import com.quadro.shared.data.messaging.events.ProjectMemberAddedEvent
 import com.quadro.shared.dto.DomainException
 import org.slf4j.LoggerFactory
@@ -48,7 +49,7 @@ class ProjectInvitationServiceImpl(
 
     private suspend fun checkProjectOwnerPermission(projectId: UUID, userId: UUID): ProjectMember {
         val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
-        if (member == null || member.role != MemberRole.OWNER) {
+        if (member == null || !member.role.isHigherThan(MemberRole.OWNER)) {
             throw DomainException.AccessDenied("Insufficient permissions: need OWNER")
         }
         return member
@@ -109,6 +110,15 @@ class ProjectInvitationServiceImpl(
         val inviteLink = "${config.domain}/api/projects/invite?token=$token"
         val result = InvitationResponse.from(project.name, finalInvitation, inviteLink)
 
+        eventProducer.publish(
+            topic = KafkaTopics.PROJECT_INVITED,
+            key = invitation.id.toString(),
+            event = ProjectInviteCreateEvent(
+                projectName = project.name,
+                userId = if (invitation.type == InviteType.EMAIL) userRepository.findByEmail(invitation.identifier)?.id.toString() else null
+            )
+        )
+        
         logger.info("Invitation created: ${invitation.id} for project: $projectId by user: $userId")
         return result
     }
@@ -181,7 +191,7 @@ class ProjectInvitationServiceImpl(
         val project = projectRepository.findById(projectId)
             ?: throw DomainException.NotFound("Project", projectId.toString())
 
-        checkProjectOwnerPermission(projectId, userId)
+        checkProjectManagePermission(projectId, userId)
 
         val invitations = projectInvitationRepository.findByProject(projectId)
 

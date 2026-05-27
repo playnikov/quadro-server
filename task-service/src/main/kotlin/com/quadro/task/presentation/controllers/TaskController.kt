@@ -5,8 +5,11 @@ import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
 import com.quadro.task.domain.models.task.Task
 import com.quadro.task.domain.models.task.TaskCreate
+import com.quadro.task.domain.models.task.TaskHistory
+import com.quadro.task.domain.models.task.TaskHistoryResponse
 import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.models.task.TaskUpdate
+import com.quadro.task.domain.services.TaskHistoryService
 import com.quadro.task.domain.services.TaskService
 import com.quadro.task.presentation.models.TaskCreateRequest
 import com.quadro.task.presentation.models.TaskResponse
@@ -19,8 +22,19 @@ import java.util.UUID
 import kotlin.time.Clock
 
 class TaskController(
-    private val taskService: TaskService
+    private val taskService: TaskService,
+    private val taskHistoryService: TaskHistoryService
 ) {
+    suspend fun getHistory(call: ApplicationCall) {
+        val taskId = call.parameters["taskId"]?.let { UUID.fromString(it) }
+            ?: throw DomainException.ValidationError("Task ID is invalid")
+        val limit = call.parameters["limit"]?.toIntOrNull() ?: 10
+        val offset = call.parameters["offset"]?.toIntOrNull() ?: 0
+        val result = taskHistoryService.getHistory(taskId, limit, offset)
+            .map(TaskHistoryResponse::from)
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(result))
+    }
+
     suspend fun createTask(call: ApplicationCall) {
         val reporterId = call.getUserId()
             ?: throw DomainException.Forbidden("Not authorized")

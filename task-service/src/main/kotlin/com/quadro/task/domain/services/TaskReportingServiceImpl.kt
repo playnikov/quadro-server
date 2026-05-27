@@ -79,6 +79,7 @@ class TaskReportingServiceImpl(
         from: Instant,
         to: Instant
     ): PeriodReport {
+        val now = Clock.System.now()
         val daysInPeriod = ChronoUnit.DAYS.between(from.toOffsetDateTime(), to.toOffsetDateTime()) + 1
 
         val created = taskRepository.countCreatedByPeriod(projectId, from, to)
@@ -90,20 +91,25 @@ class TaskReportingServiceImpl(
 
         val dailyCreation = taskRepository.getTasksCreatedGroupedByDay(projectId, from, to)
             .mapKeys { it.key.toString() } // LocalDate -> "yyyy-MM-dd"
+        val dailyProgress = taskRepository.getTasksProgressGroupedByDay(projectId, from, to)
+            .mapKeys { it.key.toString() }
         val dailyCompletion = taskRepository.getTasksCompletedGroupedByDay(projectId, from, to)
             .mapKeys { it.key.toString() }
 
-        val overdueCount = taskRepository.countOverdue(projectId, to)
+        val overdueCount = taskRepository.countOverdue(projectId, now)
         val avgCompletionDays = taskRepository.avgCompletionDaysInPeriod(projectId, from, to)
         val throughput = if (daysInPeriod > 0) completed.toDouble() / daysInPeriod else 0.0
         val efficiency = if (created > 0) (completed.toDouble() / created) * 100 else 0.0
         val wipAverage = taskRepository.averageWipInPeriod(projectId, from, to)
 
         return PeriodReport(
+            from = from,
+            to = to,
             created = created,
             completed = completed,
             statusBreakdown = statusBreakdown,
             dailyCreation = dailyCreation,
+            dailyProgress = dailyProgress,
             dailyCompletion = dailyCompletion,
             averageCompletionDays = avgCompletionDays,
             overdueCount = overdueCount,

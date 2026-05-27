@@ -9,6 +9,7 @@ import com.quadro.shared.data.messaging.events.ProjectMemberRemovedEvent
 import com.quadro.shared.data.messaging.events.ProjectMemberUpdatedRoleEvent
 import com.quadro.shared.data.messaging.events.ProjectUpdatedEvent
 import com.quadro.notification.infrastructure.messaging.processor.ProjectEventProcessor
+import com.quadro.shared.data.messaging.events.ProjectInviteCreateEvent
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -49,6 +50,11 @@ class ProjectEventListener : KoinComponent {
                 KafkaTopics.PROJECT_MEMBER_REMOVED -> {
                     val event = json.decodeFromString<ProjectMemberRemovedEvent>(value)
                     projectEventProcessor.processMemberDeleted(event)
+                }
+
+                KafkaTopics.PROJECT_INVITED -> {
+                    val event = json.decodeFromString<ProjectInviteCreateEvent>(value)
+                    projectEventProcessor.processInvited(event)
                 }
             }
         }

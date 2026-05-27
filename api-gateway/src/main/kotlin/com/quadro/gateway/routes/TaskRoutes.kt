@@ -32,6 +32,10 @@ class TaskRoutes(
                 proxyTo(client, taskServiceBaseUrl)
             }
 
+            route("/history") {
+                proxyTo(client, taskServiceBaseUrl)
+            }
+
             route("/validate/status/status") {
                 proxyTo(client, taskServiceBaseUrl)
             }
@@ -94,6 +98,10 @@ class TaskRoutes(
         }
 
         routing.route("/api/tasks/reporting") {
+            route("/export") {
+                proxyTo(client, taskServiceBaseUrl)
+            }
+
             route("/period") {
                 proxyTo(client, taskServiceBaseUrl)
             }

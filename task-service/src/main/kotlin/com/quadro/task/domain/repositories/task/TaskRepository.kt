@@ -18,6 +18,7 @@ interface TaskRepository {
     suspend fun delete(id: UUID)
     suspend fun clearAssignee(userId: UUID)
     suspend fun nextNumber(projectId: UUID): Int
+    suspend fun findUpcomingDeadlines(projectId: UUID, from: Instant, to: Instant, limit: Int): List<Task>
 
     // Счётчики
     suspend fun countByProject(projectId: UUID): Long
@@ -44,6 +45,6 @@ interface TaskRepository {
 
     // Группировка по дням
     suspend fun getTasksCreatedGroupedByDay(projectId: UUID, from: Instant, to: Instant): Map<Instant, Long>
-
+    suspend fun getTasksProgressGroupedByDay(projectId: UUID, from: Instant, to: Instant): Map<Instant, Long>
     suspend fun getTasksCompletedGroupedByDay(projectId: UUID, from: Instant, to: Instant): Map<Instant, Long>
 }

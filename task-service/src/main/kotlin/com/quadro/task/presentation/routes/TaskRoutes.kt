@@ -24,6 +24,8 @@ class TaskRoutes(
             get("/sprint") { controller.findBySprint(call) }
             get("/assignee") { controller.findByAssignee(call) }
             get("/parent") { controller.findByParent(call) }
+
+            get("/history") { controller.getHistory(call) }
         }
     }
 }

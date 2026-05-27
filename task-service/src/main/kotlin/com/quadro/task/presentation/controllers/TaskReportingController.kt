@@ -4,19 +4,26 @@ import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.models.task.VelocityMetric
+import com.quadro.task.domain.services.ReportExportService
 import com.quadro.task.domain.services.TaskReportingService
 import com.quadro.task.presentation.models.TaskResponse
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.receive
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
+import io.ktor.server.response.respondText
 import java.util.UUID
 import kotlin.time.Clock
 import kotlin.time.Instant
 
 class TaskReportingController(
-    private val taskReportingService: TaskReportingService
+    private val taskReportingService: TaskReportingService,
+    private val exportService: ReportExportService
 ) {
     suspend fun getBacklogCount(call: ApplicationCall) {
         val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
@@ -121,5 +128,35 @@ class TaskReportingController(
         val to = Instant.parse(call.request.queryParameters["to"] ?: throw DomainException.ValidationError("Missing 'to'"))
         val report = taskReportingService.getPeriodReport(projectId, from, to)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(report))
+    }
+
+    suspend fun exportFile(call: ApplicationCall) {
+        val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
+            ?: throw DomainException.ValidationError("Project ID is invalid")
+        val from = Instant.parse(call.request.queryParameters["from"] ?: throw DomainException.ValidationError("Missing 'from'"))
+        val to = Instant.parse(call.request.queryParameters["to"] ?: throw DomainException.ValidationError("Missing 'to'"))
+        val format = call.request.queryParameters["format"] ?: "csv"
+
+        val report = taskReportingService.getPeriodReport(projectId, from, to)
+
+        when (format) {
+            "pdf" -> {
+                val pdfBytes = exportService.exportToPdf(report)
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    "attachment; filename=\"report_${projectId}.pdf\""
+                )
+                call.respondBytes(pdfBytes, contentType = ContentType.Application.Pdf)
+            }
+            "csv" -> {
+                val csvString = exportService.exportToCsv(report)
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    "attachment; filename=\"report_${projectId}.csv\""
+                )
+                call.respondText(csvString, contentType = ContentType.Text.CSV)
+            }
+            else -> throw DomainException.ValidationError("Format is invalid")
+        }
     }
 }

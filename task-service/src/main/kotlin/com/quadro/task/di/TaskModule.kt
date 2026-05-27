@@ -9,6 +9,8 @@ import com.quadro.task.domain.repositories.task.TaskAttachmentRepository
 import com.quadro.task.domain.repositories.task.TaskCommentRepository
 import com.quadro.task.domain.repositories.task.TaskHistoryRepository
 import com.quadro.task.domain.repositories.task.TaskRepository
+import com.quadro.task.domain.services.ReportExportService
+import com.quadro.task.domain.services.ReportExportServiceImpl
 import com.quadro.task.domain.services.SprintService
 import com.quadro.task.domain.services.SprintServiceImpl
 import com.quadro.task.domain.services.TaskAssignmentService
@@ -63,15 +65,16 @@ val taskModule = module {
     single<TaskService> { TaskServiceImpl(get(), get(), get(), get(), get()) }
     single<TaskHistoryService> { TaskHistoryServiceImpl(get()) }
     single<TaskStatusService> { TaskStatusServiceImpl(get()) }
-    single<TaskCommentService> { TaskCommentServiceImpl(get(), get(), get()) }
+    single<TaskCommentService> { TaskCommentServiceImpl(get(), get(), get(), get(), get()) }
     single<TaskReportingService> { TaskReportingServiceImpl(get(), get(), get(), get()) }
-    single<TaskAssignmentService> { TaskAssignmentServiceImpl(get(), get(), get(), get(), get()) }
+    single<TaskAssignmentService> { TaskAssignmentServiceImpl(get(), get(), get(), get()) }
     single<SprintService> { SprintServiceImpl(get()) }
+    single<ReportExportService> { ReportExportServiceImpl() }
 
     // Controllers
-    factory { TaskController(get()) }
+    factory { TaskController(get(), get()) }
     factory { TaskStatusController(get()) }
-    factory { TaskReportingController(get()) }
+    factory { TaskReportingController(get(), get()) }
     factory { TaskAssignmentController(get()) }
     factory { SprintController(get()) }
     factory { TaskCommentController(get()) }

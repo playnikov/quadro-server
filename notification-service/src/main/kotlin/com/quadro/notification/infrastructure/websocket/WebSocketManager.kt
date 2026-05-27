@@ -18,6 +18,18 @@ object WebSocketManager {
     private val projectSubscriptions = ConcurrentHashMap<String, MutableSet<String>>()
     private val sessionProjects = ConcurrentHashMap<String, MutableSet<String>>()
 
+    private val taskSubscriptions = ConcurrentHashMap<String, MutableSet<String>>()
+    private val sessionTasks = ConcurrentHashMap<String, MutableSet<String>>()
+
+    private fun checkSession(sessionId: String): DefaultWebSocketSession? {
+        val session = sessions[sessionId] ?: run {
+            logger.warn("Cannot subscribe: session $sessionId not found")
+            return null
+        }
+
+        return session
+    }
+
     fun register(
         sessionId: String,
         session: DefaultWebSocketSession,
@@ -41,10 +53,7 @@ object WebSocketManager {
     }
 
     fun subscribeToProject(sessionId: String, projectId: String) {
-        val session = sessions[sessionId] ?: run {
-            logger.warn("Cannot subscribe: session $sessionId not found")
-            return
-        }
+        checkSession(sessionId) ?: return
 
         val projSet = sessionProjects.getOrPut(sessionId) { ConcurrentHashMap.newKeySet() }
         if (projSet.add(projectId)) {
@@ -62,6 +71,25 @@ object WebSocketManager {
         logger.debug("Session $sessionId unsubscribed from project $projectId")
     }
 
+    fun subscribeToTask(sessionId: String, taskId: String) {
+        checkSession(sessionId) ?: return
+
+        val taskSet = sessionTasks.getOrPut(sessionId) { ConcurrentHashMap.newKeySet() }
+        if (taskSet.add(taskId)) {
+            taskSubscriptions.getOrPut(taskId) { ConcurrentHashMap.newKeySet() }.add(sessionId)
+            logger.debug("Session $sessionId subscribed to task $taskId")
+        }
+    }
+
+    fun unsubscribeFromTask(sessionId: String, taskId: String) {
+        sessionTasks[sessionId]?.remove(taskId)
+        taskSubscriptions[taskId]?.remove(sessionId)
+        if (taskSubscriptions[taskId].isNullOrEmpty()) {
+            taskSubscriptions.remove(taskId)
+        }
+        logger.debug("Session $sessionId unsubscribed from task $taskId")
+    }
+
     fun unregister(sessionId: String, userId: String) {
         sessions.remove(sessionId)
         sessionToUser.remove(sessionId)
@@ -74,6 +102,16 @@ object WebSocketManager {
                 projectSubscriptions[projectId]?.remove(sessionId)
                 if (projectSubscriptions[projectId].isNullOrEmpty()) {
                     projectSubscriptions.remove(projectId)
+                }
+            }
+        }
+
+        val tasks = sessionTasks.remove(sessionId)
+        if (tasks != null) {
+            for (taskId in tasks) {
+                taskSubscriptions[taskId]?.remove(sessionId)
+                if (taskSubscriptions[taskId].isNullOrEmpty()) {
+                    taskSubscriptions.remove(taskId)
                 }
             }
         }
@@ -99,6 +137,15 @@ object WebSocketManager {
         sendToSessions(sessionIds, message, "projectId=$projectId")
     }
 
+    suspend fun sendTaskNotification(taskId: String, message: String) {
+        val sessionIds = taskSubscriptions[taskId]
+        if (sessionIds.isNullOrEmpty()) {
+            logger.debug("No subscribers for task $taskId")
+            return
+        }
+        sendToSessions(sessionIds, message, "taskId=$taskId")
+    }
+
     private suspend fun sendToSessions(sessionIds: MutableSet<String>, message: String, context: String) {
         val deadSessions = mutableListOf<String>()
         for (sid in sessionIds) {
@@ -118,6 +165,7 @@ object WebSocketManager {
             } else {
                 sessions.remove(sid)
                 projectSubscriptions.values.forEach { it.remove(sid) }
+                taskSubscriptions.values.forEach { it.remove(sid) }
                 sessionProjects.remove(sid)
                 logger.warn("Forced removal of dead session $sid without userId")
             }

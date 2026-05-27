@@ -56,11 +56,10 @@ data class TaskAssignedEvent(
 ) : DomainEvent
 
 @Serializable
-data class TaskCommentedEvent(
+data class TaskCommentEvent(
     override val eventId: String = UUID.randomUUID().toString(),
     override val occurredAt: Long = System.currentTimeMillis(),
     override val version: Int = 1,
     val taskId: String,
-    val title: String,
-    val projectId: String,
+    val commentId: String,
 ) : DomainEvent

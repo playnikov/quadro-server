@@ -10,6 +10,7 @@ import com.quadro.task.infrastructure.database.entities.task.TaskEntity
 import com.quadro.task.infrastructure.database.entities.task.TasksTable
 import com.quadro.task.infrastructure.database.mappers.task.TaskMapper
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greaterEq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
@@ -84,6 +85,23 @@ class TaskRepositoryImpl : TaskRepository {
     override suspend fun nextNumber(projectId: UUID): Int = newSuspendedTransaction {
         TaskEntity.find { TasksTable.projectId eq projectId }
             .maxOfOrNull { it.number }?.plus(1) ?: 1
+    }
+
+    override suspend fun findUpcomingDeadlines(
+        projectId: UUID,
+        from: Instant,
+        to: Instant,
+        limit: Int
+    ): List<Task> = newSuspendedTransaction {
+        TaskEntity.find {
+            (TasksTable.projectId eq projectId) and
+                    (TasksTable.dueDate greaterEq from.toOffsetDateTime()) and
+                    (TasksTable.dueDate lessEq to.toOffsetDateTime()) and
+                    (TasksTable.status neq TaskStatus.DONE) and
+                    (TasksTable.status neq TaskStatus.CANCELLED)
+        }.orderBy(TasksTable.dueDate to SortOrder.ASC)
+            .limit(limit)
+            .map(TaskMapper::toDomain)
     }
 
     override suspend fun countByProject(projectId: UUID): Long = newSuspendedTransaction {
@@ -269,6 +287,20 @@ class TaskRepositoryImpl : TaskRepository {
                     (TasksTable.createdAt lessEq to.toOffsetDateTime())
         }.groupBy { entity ->
             entity.createdAt.toKotlinInstant()
+        }.mapValues { it.value.size.toLong() }
+    }
+
+    override suspend fun getTasksProgressGroupedByDay(
+        projectId: UUID,
+        from: Instant,
+        to: Instant
+    ): Map<Instant, Long> = newSuspendedTransaction {
+        TaskEntity.find {
+            (TasksTable.projectId eq projectId) and
+                    (TasksTable.startedAt greaterEq from.toOffsetDateTime()) and
+                    (TasksTable.startedAt lessEq to.toOffsetDateTime())
+        }.groupBy { entity ->
+            entity.startedAt!!.toKotlinInstant()
         }.mapValues { it.value.size.toLong() }
     }
 

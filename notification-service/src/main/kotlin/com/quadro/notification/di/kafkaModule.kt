@@ -71,7 +71,9 @@ val kafkaModule = module {
                 KafkaTopics.TASK_CREATED,
                 KafkaTopics.TASK_UPDATED,
                 KafkaTopics.TASK_ASSIGNED,
-                KafkaTopics.TASK_COMMENT
+                KafkaTopics.TASK_COMMENT_ADD,
+                KafkaTopics.TASK_COMMENT_UPDATED,
+                KafkaTopics.TASK_COMMENT_REMOVED
             )
         )
     }

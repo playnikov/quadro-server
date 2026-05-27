@@ -25,6 +25,11 @@ class TaskReportingRoutes(
             get("/completion-rate") { controller.getCompletionRate(call) }
             get("/velocity") { controller.getVelocity(call) }
             get("/period") { controller.getReporting(call) }
+
+
+            get("/export") {
+                controller.exportFile(call)
+            }
         }
     }
 }

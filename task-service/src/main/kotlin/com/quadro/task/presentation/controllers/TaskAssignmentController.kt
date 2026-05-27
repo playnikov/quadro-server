@@ -15,20 +15,24 @@ class TaskAssignmentController(
     private val taskAssignmentService: TaskAssignmentService
 ) {
     suspend fun assignToUser(call: ApplicationCall) {
+        val requesterId = call.getUserId()
+            ?: throw DomainException.Forbidden("Not authorized")
         val taskId = call.parameters["taskId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Task ID is invalid")
         val userId = call.parameters["userId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("User ID is invalid")
 
-        val result = taskAssignmentService.assignTaskToUser(taskId, userId)
+        val result = taskAssignmentService.assignTaskToUser(taskId, userId, requesterId)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(TaskResponse.from(result)))
     }
 
     suspend fun unassign(call: ApplicationCall) {
+        val requesterId = call.getUserId()
+            ?: throw DomainException.Forbidden("Not authorized")
         val taskId = call.parameters["taskId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Task ID is invalid")
 
-        val result = taskAssignmentService.unassignTask(taskId)
+        val result = taskAssignmentService.unassignTask(taskId, requesterId)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(TaskResponse.from(result)))
     }
 }

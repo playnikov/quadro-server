@@ -6,6 +6,8 @@ import com.quadro.shared.data.messaging.events.TaskCreatedEvent
 import com.quadro.shared.data.messaging.events.TaskDeletedEvent
 import com.quadro.shared.data.messaging.events.TaskUpdatedEvent
 import com.quadro.shared.dto.DomainException
+import com.quadro.task.domain.models.project.MemberRole
+import com.quadro.task.domain.models.project.ProjectMember
 import com.quadro.task.domain.models.task.Task
 import com.quadro.task.domain.models.task.TaskCreate
 import com.quadro.task.domain.models.task.TaskStatus
@@ -15,6 +17,7 @@ import com.quadro.task.domain.repositories.project.ProjectRepository
 import com.quadro.task.domain.repositories.task.TaskRepository
 import java.util.UUID
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 class TaskServiceImpl(
@@ -24,6 +27,14 @@ class TaskServiceImpl(
     private val projectMemberRepository: ProjectMemberRepository,
     private val eventProducer: EventProducer
 ) : TaskService {
+
+    private suspend fun checkProjectManagePermission(projectId: UUID, userId: UUID): ProjectMember {
+        val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+        if (member == null || !member.role.isAtLeast(MemberRole.MANAGER)) {
+            throw DomainException.AccessDenied("Insufficient permissions: need OWNER or MANAGER")
+        }
+        return member
+    }
 
     override suspend fun createTask(taskCreate: TaskCreate, reporterId: UUID): Task {
         taskCreate.validate()
@@ -97,17 +108,23 @@ class TaskServiceImpl(
                 taskHistoryService.recordStatusChange(id, requesterId, existingTask.status.name, it.name)
                 it
             } ?: existingTask.status,
-            priority = taskUpdate.priority ?: existingTask.priority,
-            assigneeId = taskUpdate.assigneeId?.let {
-                taskHistoryService.recordAssigneeChange(id, requesterId, existingTask.assigneeId, it)
+            priority = taskUpdate.priority?.let {
+                taskHistoryService.recordPriorityChange(id, requesterId, existingTask.priority.name, it.name)
                 it
-            } ?: existingTask.assigneeId,
+            } ?: existingTask.priority,
             sprintId = taskUpdate.sprintId ?: existingTask.sprintId,
             storyPoints = taskUpdate.storyPoints ?: existingTask.storyPoints,
             estimatedHours = taskUpdate.estimatedHours ?: existingTask.estimatedHours,
             loggedHours = taskUpdate.loggedHours ?: existingTask.loggedHours,
             dueDate = taskUpdate.dueDate ?: existingTask.dueDate,
             labels = taskUpdate.labels ?: existingTask.labels,
+            startedAt = taskUpdate.status?.let {
+                if (it == TaskStatus.IN_PROGRESS) {
+                    now
+                } else {
+                    null
+                }
+            },
             completedAt = taskUpdate.status?.let {
                 if (it == TaskStatus.DONE) {
                     now
@@ -175,6 +192,12 @@ class TaskServiceImpl(
 
     override suspend fun getNextTaskNumber(projectId: UUID): Int {
         return taskRepository.nextNumber(projectId)
+    }
+
+    override suspend fun getUpcomingDeadlines(projectId: UUID, daysAhead: Int): List<Task> {
+        val now = Clock.System.now()
+        val deadline = now + daysAhead.days
+        return taskRepository.findUpcomingDeadlines(projectId, now, deadline, limit = 10)
     }
 
     private suspend fun validateUserAssignment(projectId: UUID, userId: UUID): Boolean =

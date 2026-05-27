@@ -1,9 +1,15 @@
 package com.quadro.task.domain.services
 
+import com.quadro.shared.data.messaging.EventProducer
+import com.quadro.shared.data.messaging.KafkaTopics
+import com.quadro.shared.data.messaging.events.TaskCommentEvent
 import com.quadro.shared.dto.DomainException
+import com.quadro.task.domain.models.project.MemberRole
+import com.quadro.task.domain.models.project.ProjectMember
 import com.quadro.task.domain.models.task.TaskComment
 import com.quadro.task.domain.models.task.TaskCommentCreate
 import com.quadro.task.domain.models.task.TaskCommentUpdate
+import com.quadro.task.domain.repositories.project.ProjectMemberRepository
 import com.quadro.task.domain.repositories.task.TaskCommentRepository
 import com.quadro.task.domain.repositories.task.TaskRepository
 import java.util.UUID
@@ -12,8 +18,19 @@ import kotlin.time.Clock
 class TaskCommentServiceImpl(
     private val commentRepository: TaskCommentRepository,
     private val taskRepository: TaskRepository,
-    private val taskHistoryService: TaskHistoryService
+    private val projectMemberRepository: ProjectMemberRepository,
+    private val taskHistoryService: TaskHistoryService,
+    private val eventProducer: EventProducer
 ) : TaskCommentService {
+
+    private suspend fun checkProjectManagePermission(projectId: UUID, userId: UUID): ProjectMember {
+        val member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+        if (member == null || !member.role.isAtLeast(MemberRole.MANAGER)) {
+            throw DomainException.AccessDenied("Insufficient permissions: need OWNER or MANAGER")
+        }
+        return member
+    }
+
     override suspend fun createComment(commentCreate: TaskCommentCreate): TaskComment {
         commentCreate.validate()
         val task = taskRepository.findById(commentCreate.taskId)
@@ -37,10 +54,19 @@ class TaskCommentServiceImpl(
             isEdited = false,
             isDeleted = false,
             mentions = commentCreate.mentions,
-            createdAt = Clock.System.now(),
-            updatedAt = Clock.System.now()
+            createdAt = now,
+            updatedAt = now
         )
         val saved = commentRepository.create(comment)
+
+        eventProducer.publish(
+            topic = KafkaTopics.TASK_COMMENT_ADD,
+            key = comment.id.toString(),
+            event = TaskCommentEvent(
+                taskId = comment.taskId.toString(),
+                commentId = comment.id.toString()
+            ),
+        )
 
         taskHistoryService.recordCommentAdded(commentCreate.taskId, commentCreate.authorId, saved.id)
         return saved
@@ -66,15 +92,37 @@ class TaskCommentServiceImpl(
             isEdited = true,
             updatedAt = Clock.System.now()
         )
+
+        eventProducer.publish(
+            topic = KafkaTopics.TASK_COMMENT_UPDATED,
+            key = comment.id.toString(),
+            event = TaskCommentEvent(
+                taskId = comment.taskId.toString(),
+                commentId = comment.id.toString()
+            ),
+        )
         return commentRepository.update(updated)
     }
 
     override suspend fun deleteComment(commentId: UUID, userId: UUID) {
         val comment = commentRepository.findById(commentId)
             ?: throw DomainException.NotFound("Comment", commentId.toString())
+        val task = taskRepository.findById(comment.taskId)
+            ?: throw DomainException.NotFound("Task", comment.taskId.toString())
+
         if (comment.authorId != userId) {
+            checkProjectManagePermission(task.projectId, userId)
             throw DomainException.Forbidden("You can only delete your own comments")
         }
+
+        eventProducer.publish(
+            topic = KafkaTopics.TASK_COMMENT_REMOVED,
+            key = comment.id.toString(),
+            event = TaskCommentEvent(
+                taskId = comment.taskId.toString(),
+                commentId = comment.id.toString()
+            ),
+        )
         commentRepository.softDelete(commentId)
     }
 

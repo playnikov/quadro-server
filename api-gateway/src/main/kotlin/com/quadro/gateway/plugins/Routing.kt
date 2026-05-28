@@ -83,6 +83,10 @@ fun Route.proxyTo(client: HttpClient, targetBaseUrl: String) {
             call.response.header(HttpHeaders.ContentDisposition, it)
         }
 
+        response.headers[HttpHeaders.SetCookie]?.let {
+            call.response.header(HttpHeaders.SetCookie, it)
+        }
+
         call.respondBytes(response.bodyAsBytes())
     }
 }

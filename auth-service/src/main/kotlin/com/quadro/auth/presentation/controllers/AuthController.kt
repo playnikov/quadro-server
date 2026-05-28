@@ -10,6 +10,7 @@ import com.quadro.auth.presentation.models.RegisterRequest
 import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId
+import io.ktor.http.Cookie
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.origin
@@ -17,6 +18,8 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import org.slf4j.LoggerFactory
 import java.util.UUID
+import kotlin.collections.mapOf
+import kotlin.time.Duration.Companion.days
 
 class AuthController(private val authService: AuthService) {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -39,7 +42,17 @@ class AuthController(private val authService: AuthService) {
             ),
             clientIp
         )
-        call.respond(HttpStatusCode.Created, ApiResponse.ok(result))
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
+        call.response.cookies.append(
+            Cookie(
+                name = "refresh_token",
+                value = result.refreshToken,
+                httpOnly = true,
+                secure = true,
+                path = "/refresh",
+                maxAge = 30.days.inWholeSeconds.toInt()
+            )
+        )
     }
 
     suspend fun login(call: ApplicationCall) {
@@ -56,13 +69,33 @@ class AuthController(private val authService: AuthService) {
         )
 
         val result = authService.login(userLogin, clientIp, userAgent)
-        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
+        call.response.cookies.append(
+            Cookie(
+                name = "refresh_token",
+                value = result.refreshToken,
+                httpOnly = true,
+                secure = true,
+                path = "/refresh",
+                maxAge = 30.days.inWholeSeconds.toInt()
+            )
+        )
     }
 
     suspend fun refreshToken(call: ApplicationCall) {
         val request = call.receive<RefreshTokenRequest>()
         val result = authService.refreshToken(request.refreshToken)
-        call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
+        call.response.cookies.append(
+            Cookie(
+                name = "refresh_token",
+                value = result.refreshToken,
+                httpOnly = true,
+                secure = true,
+                path = "/refresh",
+                maxAge = 30.days.inWholeSeconds.toInt()
+            )
+        )
     }
 
     suspend fun changePassword(call: ApplicationCall) {

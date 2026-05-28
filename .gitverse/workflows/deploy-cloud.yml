@@ -157,7 +157,6 @@ jobs:
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
           ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
             "cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/ && tar --overwrite -xzf configs.tar.gz && rm configs.tar.gz"
-            rm -rf .env
 
       - name: Deploy to VM via SSH
         run: |

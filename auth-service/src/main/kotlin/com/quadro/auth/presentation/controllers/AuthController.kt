@@ -42,7 +42,6 @@ class AuthController(private val authService: AuthService) {
             ),
             clientIp
         )
-        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
         call.response.cookies.append(
             Cookie(
                 name = "refresh_token",
@@ -53,6 +52,7 @@ class AuthController(private val authService: AuthService) {
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
     }
 
     suspend fun login(call: ApplicationCall) {
@@ -69,7 +69,6 @@ class AuthController(private val authService: AuthService) {
         )
 
         val result = authService.login(userLogin, clientIp, userAgent)
-        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
         call.response.cookies.append(
             Cookie(
                 name = "refresh_token",
@@ -80,12 +79,13 @@ class AuthController(private val authService: AuthService) {
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("access_token" to result.token)))
     }
 
     suspend fun refreshToken(call: ApplicationCall) {
-        val request = call.receive<RefreshTokenRequest>()
-        val result = authService.refreshToken(request.refreshToken)
-        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
+        val refreshToken = call.request.cookies["refresh_token"]
+            ?: throw DomainException.ValidationError("Refresh token is invalid")
+        val result = authService.refreshToken(refreshToken)
         call.response.cookies.append(
             Cookie(
                 name = "refresh_token",
@@ -96,6 +96,7 @@ class AuthController(private val authService: AuthService) {
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
     }
 
     suspend fun changePassword(call: ApplicationCall) {

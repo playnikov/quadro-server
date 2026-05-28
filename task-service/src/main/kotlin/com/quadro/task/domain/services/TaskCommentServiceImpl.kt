@@ -110,8 +110,16 @@ class TaskCommentServiceImpl(
         val task = taskRepository.findById(comment.taskId)
             ?: throw DomainException.NotFound("Task", comment.taskId.toString())
 
-        if (comment.authorId != userId && checkProjectManagePermission(task.projectId, userId)) {
-            throw DomainException.Forbidden("You can only delete your own comments")
+        val isAuthor = comment.authorId == userId
+        val isManager = try {
+            checkProjectManagePermission(task.projectId, userId)
+            true
+        } catch (e: DomainException.AccessDenied) {
+            false
+        }
+
+        if (!isAuthor && !isManager) {
+            throw DomainException.Forbidden("You can only delete your own comments or have manager rights")
         }
 
         eventProducer.publish(

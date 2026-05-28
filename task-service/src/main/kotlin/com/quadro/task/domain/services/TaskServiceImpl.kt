@@ -118,18 +118,26 @@ class TaskServiceImpl(
             loggedHours = taskUpdate.loggedHours ?: existingTask.loggedHours,
             dueDate = taskUpdate.dueDate ?: existingTask.dueDate,
             labels = taskUpdate.labels ?: existingTask.labels,
-            startedAt = taskUpdate.status?.let {
-                if (it == TaskStatus.IN_PROGRESS) {
-                    now
-                } else {
-                    null
+            startedAt = when (taskUpdate.status) {
+                TaskStatus.IN_PROGRESS -> {
+                    existingTask.startedAt ?: now
+                }
+                TaskStatus.DONE, TaskStatus.CANCELLED -> {
+                    existingTask.startedAt
+                }
+                else -> {
+                    existingTask.startedAt
                 }
             },
-            completedAt = taskUpdate.status?.let {
-                if (it == TaskStatus.DONE) {
-                    now
-                } else {
+            completedAt = when (taskUpdate.status) {
+                TaskStatus.DONE -> {
+                    existingTask.completedAt ?: now
+                }
+                TaskStatus.IN_PROGRESS -> {
                     null
+                }
+                else -> {
+                    existingTask.completedAt
                 }
             },
             updatedAt = now

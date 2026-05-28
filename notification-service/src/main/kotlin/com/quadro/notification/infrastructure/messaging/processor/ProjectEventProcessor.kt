@@ -21,29 +21,79 @@ class ProjectEventProcessor(
     private val webSocketManager = WebSocketManager
 
     suspend fun processProjectCreated(event: ProjectCreatedEvent) {
-        val title = "Создан проект: ${event.name}"
-        val message = "Создан новый проект \"${event.name}\""
+        val notification = buildJsonObject {
+            put("type", "PROJECT_CREATED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("name", event.name)
+                put("key", event.key)
+                put("ownerId", event.ownerId)
+            }
+        }.toString()
+
+        webSocketManager.sendNotification(event.ownerId, notification)
     }
 
     suspend fun processProjectUpdated(event: ProjectUpdatedEvent) {
-        val title = "Обновлен проект: ${event.name}"
-        val message = "Проект \"${event.name}\" был обновлен"
+        val notification = buildJsonObject {
+            put("type", "PROJECT_UPDATED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("name", event.name)
+                put("key", event.key)
+                put("status", event.status)
+                put("updatedBy", event.updateBy)
+            }
+        }.toString()
+        webSocketManager.sendProjectNotification(event.projectId, notification)
     }
 
     suspend fun processProjectDeleted(event: ProjectDeletedEvent) {
-
+        val notification = buildJsonObject {
+            put("type", "PROJECT_DELETED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("deletedBy", event.deletedBy)
+            }
+        }.toString()
+        webSocketManager.sendProjectNotification(event.projectId, notification)
     }
 
     suspend fun processMemberCreated(event: ProjectMemberAddedEvent) {
-
+        val notification = buildJsonObject {
+            put("type", "PROJECT_MEMBER_ADDED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("userId", event.userId)
+                put("role", event.role)
+            }
+        }.toString()
+        webSocketManager.sendProjectNotification(event.projectId, notification)
+        webSocketManager.sendNotification(event.userId, notification)
     }
 
     suspend fun processMemberUpdated(event: ProjectMemberUpdatedRoleEvent) {
-
+        val notification = buildJsonObject {
+            put("type", "PROJECT_MEMBER_UPDATED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("userId", event.userId)
+                put("role", event.role)
+            }
+        }.toString()
+        webSocketManager.sendNotification(event.userId, notification)
+        webSocketManager.sendProjectNotification(event.projectId, notification)
     }
 
     suspend fun processMemberDeleted(event: ProjectMemberRemovedEvent) {
-
+        val notification = buildJsonObject {
+            put("type", "PROJECT_MEMBER_REMOVED")
+            put("projectId", event.projectId)
+            putJsonObject("data") {
+                put("userId", event.userId)
+            }
+        }.toString()
+        webSocketManager.sendProjectNotification(event.projectId, notification)
     }
 
     suspend fun processInvited(event: ProjectInviteCreateEvent) {

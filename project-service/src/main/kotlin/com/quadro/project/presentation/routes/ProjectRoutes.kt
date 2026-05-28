@@ -25,7 +25,6 @@ class ProjectRoutes(
 
                 get("/my") { controller.findByUser(call) }
 
-
                 patch("/status") { controller.updateStatus(call) }
 
                 route("/members") {

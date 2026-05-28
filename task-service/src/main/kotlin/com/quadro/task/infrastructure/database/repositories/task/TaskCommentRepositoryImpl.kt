@@ -1,5 +1,6 @@
 package com.quadro.task.infrastructure.database.repositories.task
 
+import com.quadro.shared.dto.DomainException
 import com.quadro.shared.utils.toOffsetDateTime
 import com.quadro.task.domain.models.task.TaskComment
 import com.quadro.task.domain.repositories.task.TaskCommentRepository
@@ -33,19 +34,18 @@ class TaskCommentRepositoryImpl : TaskCommentRepository {
     }
 
     override suspend fun update(comment: TaskComment): TaskComment = newSuspendedTransaction {
-        val entity = TaskCommentEntity.findById(comment.taskId)
-            ?: throw IllegalArgumentException("Comment not found with id: ${comment.id}")
-        TaskCommentMapper.updateEntity(entity, comment)
-        TaskCommentMapper.toDomain(entity)
+        TaskCommentEntity.findById(comment.id)?.apply {
+            this.content = comment.content
+            this.updatedAt = Clock.System.now().toOffsetDateTime()
+        }?.let(TaskCommentMapper::toDomain)
+            ?: throw DomainException.NotFound("Comment", comment.id.toString())
     }
 
-    override suspend fun softDelete(id: UUID) {
-        newSuspendedTransaction {
-            val entity = TaskCommentEntity.findById(id)
-                ?: throw IllegalArgumentException("Comment not found with id: $id")
-            entity.isDeleted = true
-            entity.updatedAt = Clock.System.now().toOffsetDateTime()
-        }
+    override suspend fun softDelete(id: UUID): Boolean = newSuspendedTransaction {
+        TaskCommentEntity.findById(id)?.apply {
+            this.isDeleted = true
+            this.updatedAt = Clock.System.now().toOffsetDateTime()
+        } != null
     }
 
     override suspend fun countByTask(taskId: UUID): Long = newSuspendedTransaction {

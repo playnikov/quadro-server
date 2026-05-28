@@ -9,6 +9,6 @@ interface TaskCommentRepository {
     suspend fun findReplies(parentId: UUID): List<TaskComment>
     suspend fun create(comment: TaskComment): TaskComment
     suspend fun update(comment: TaskComment): TaskComment
-    suspend fun softDelete(id: UUID)
+    suspend fun softDelete(id: UUID): Boolean
     suspend fun countByTask(taskId: UUID): Long
 }

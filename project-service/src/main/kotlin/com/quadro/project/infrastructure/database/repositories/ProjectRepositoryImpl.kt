@@ -76,7 +76,9 @@ class ProjectRepositoryImpl : ProjectRepository {
     override suspend fun updateStatus(
         id: UUID,
         status: ProjectStatus
-    ): Boolean {
-        TODO("Not yet implemented")
+    ): Boolean = newSuspendedTransaction {
+        ProjectEntity.findById(id)?.apply {
+            this.status = status
+        } != null
     }
 }

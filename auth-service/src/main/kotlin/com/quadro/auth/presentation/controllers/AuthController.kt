@@ -52,7 +52,7 @@ class AuthController(private val authService: AuthService) {
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
-        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("token" to result.token)))
     }
 
     suspend fun login(call: ApplicationCall) {
@@ -79,7 +79,7 @@ class AuthController(private val authService: AuthService) {
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
-        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("access_token" to result.token)))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("token" to result.token)))
     }
 
     suspend fun refreshToken(call: ApplicationCall) {

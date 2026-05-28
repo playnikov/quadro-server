@@ -7,6 +7,7 @@ import com.quadro.shared.data.messaging.events.TaskUpdatedEvent
 import com.quadro.shared.data.messaging.events.TaskAssignedEvent
 import com.quadro.notification.infrastructure.messaging.processor.TaskEventProcessor
 import com.quadro.shared.data.messaging.events.TaskCommentEvent
+import com.quadro.shared.data.messaging.events.TaskDeletedEvent
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -29,6 +30,11 @@ class TaskEventListener : KoinComponent {
                 KafkaTopics.TASK_UPDATED -> {
                     val event = json.decodeFromString<TaskUpdatedEvent>(value)
                     taskEventProcessor.processUpdated(event)
+                }
+
+                KafkaTopics.TASK_DELETED -> {
+                    val event = json.decodeFromString<TaskDeletedEvent>(value)
+                    taskEventProcessor.processDeleted(event)
                 }
                 
                 KafkaTopics.TASK_ASSIGNED -> {

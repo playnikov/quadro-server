@@ -5,6 +5,7 @@ import com.quadro.shared.data.messaging.events.TaskCreatedEvent
 import com.quadro.shared.data.messaging.events.TaskUpdatedEvent
 import com.quadro.shared.data.messaging.events.TaskAssignedEvent
 import com.quadro.shared.data.messaging.events.TaskCommentEvent
+import com.quadro.shared.data.messaging.events.TaskDeletedEvent
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
@@ -34,6 +35,18 @@ class TaskEventProcessor : KoinComponent {
                 put("taskId", event.taskId)
                 put("title", event.title)
                 put("updatedBy", event.updatedBy)
+            }
+        }.toString()
+        webSocketManager.sendProjectNotification(event.projectId, notification)
+    }
+
+    suspend fun processDeleted(event: TaskDeletedEvent) {
+        val notification = buildJsonObject {
+            put("type", "TASK_DELETED")
+            put("id", event.projectId)
+            putJsonObject("data") {
+                put("taskId", event.taskId)
+                put("title", event.title)
             }
         }.toString()
         webSocketManager.sendProjectNotification(event.projectId, notification)

@@ -70,6 +70,7 @@ val kafkaModule = module {
             listOf(
                 KafkaTopics.TASK_CREATED,
                 KafkaTopics.TASK_UPDATED,
+                KafkaTopics.TASK_DELETED,
                 KafkaTopics.TASK_ASSIGNED,
                 KafkaTopics.TASK_COMMENT_ADD,
                 KafkaTopics.TASK_COMMENT_UPDATED,

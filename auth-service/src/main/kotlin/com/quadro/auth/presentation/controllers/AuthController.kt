@@ -48,7 +48,7 @@ class AuthController(private val authService: AuthService) {
                 value = result.refreshToken,
                 httpOnly = true,
                 secure = true,
-                path = "/refresh",
+                path = "/api/auth/refresh",
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
@@ -75,7 +75,7 @@ class AuthController(private val authService: AuthService) {
                 value = result.refreshToken,
                 httpOnly = true,
                 secure = true,
-                path = "/refresh",
+                path = "/api/auth/refresh",
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
@@ -92,11 +92,11 @@ class AuthController(private val authService: AuthService) {
                 value = result.refreshToken,
                 httpOnly = true,
                 secure = true,
-                path = "/refresh",
+                path = "/api/auth/refresh",
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
-        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("access_token" to result.token)))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("token" to result.token)))
     }
 
     suspend fun changePassword(call: ApplicationCall) {

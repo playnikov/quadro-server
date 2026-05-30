@@ -54,20 +54,23 @@ class ReportExportServiceImpl : ReportExportService {
         val groupedCompletion = groupByDate(report.dailyCompletion)
         val allDates = (groupedCreation.keys + groupedCompletion.keys).sorted()
 
+        val russianLocale = Locale.forLanguageTag("ru-RU")
+
         for (date in allDates) {
             val created = groupedCreation[date] ?: 0
             val completed = groupedCompletion[date] ?: 0
             val dateStr = dateFormatter.format(date)
-            sb.appendLine("$dateStr,$created,$completed,${"%.2f".format(report.wipAverage)}")
+            val wipStr = String.format(russianLocale, "%.2f", report.wipAverage)
+            sb.appendLine("$dateStr,$created,$completed,$wipStr")
         }
 
         sb.appendLine()
         sb.appendLine("Итого создано,${report.created},,")
         sb.appendLine("Итого завершено,${report.completed},,")
-        sb.appendLine("Среднее время выполнения (дней),${"%.1f".format(report.averageCompletionDays)},,")
+        sb.appendLine("Среднее время выполнения (дней),${String.format(russianLocale, "%.1f", report.averageCompletionDays)},,")
         sb.appendLine("Просрочено на текущую дату,${report.overdueCount},,")
-        sb.appendLine("Пропускная способность (задач/день),${"%.2f".format(report.throughput)},,")
-        sb.appendLine("Эффективность (завершённые/созданные),${"%.1f%%".format(report.efficiency)},,")
+        sb.appendLine("Пропускная способность (задач/день),${String.format(russianLocale, "%.2f", report.throughput)},,")
+        sb.appendLine("Эффективность (завершённые/созданные),${String.format(russianLocale, "%.1f%%", report.efficiency)},,")
         return sb.toString()
     }
 

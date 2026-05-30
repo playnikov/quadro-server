@@ -102,7 +102,7 @@ class SprintServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             sprintService.updateSprint(testSprintId, update)
         }
-        assertEquals("Sprint with id '$testSprintId' not found", ex.message)
+        assertEquals("Sprint with '$testSprintId' not found", ex.message)
     }
 
     // ==================== deleteSprint ====================
@@ -121,7 +121,7 @@ class SprintServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             sprintService.deleteSprint(testSprintId)
         }
-        assertEquals("Sprint with id '$testSprintId' not found", ex.message)
+        assertEquals("Sprint with '$testSprintId' not found", ex.message)
     }
 
     // ==================== getSprint ====================

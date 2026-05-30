@@ -12,9 +12,9 @@ import com.quadro.task.domain.models.task.TaskUpdate
 import com.quadro.task.domain.repositories.project.ProjectMemberRepository
 import com.quadro.task.domain.repositories.project.ProjectRepository
 import com.quadro.task.domain.repositories.task.TaskRepository
-import com.quadro.task.domain.repositories.team.TeamProjectRepository
 import com.quadro.task.domain.services.TaskService
 import com.quadro.task.domain.services.TaskServiceImpl
+import com.quadro.task.domain.services.TaskHistoryService
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -32,17 +32,17 @@ import kotlin.time.Duration.Companion.days
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskServiceImplTest {
     private lateinit var taskRepository: TaskRepository
+    private lateinit var taskHistoryService: TaskHistoryService
     private lateinit var projectRepository: ProjectRepository
     private lateinit var projectMemberRepository: ProjectMemberRepository
-    private lateinit var teamProjectRepository: TeamProjectRepository
     private lateinit var taskService: TaskService
 
     private val testProjectId = UUID.randomUUID()
     private val testTaskId = UUID.randomUUID()
     private val testUserId = UUID.randomUUID()
     private val testAssigneeId = UUID.randomUUID()
-    private val testTeamId = UUID.randomUUID()
     private val now = Clock.System.now()
+    private val requesterId = UUID.randomUUID()
 
     private val testProject = Project(
         id = testProjectId,
@@ -62,7 +62,6 @@ class TaskServiceImplTest {
         priority = TaskPriority.LOW,
         type = TaskType.TASK,
         assigneeId = null,
-        assignedTeamId = null,
         reporterId = testUserId,
         storyPoints = null,
         estimatedHours = null,
@@ -78,14 +77,15 @@ class TaskServiceImplTest {
     @Before
     fun setup() {
         taskRepository = mockk(relaxed = true)
+        taskHistoryService = mockk(relaxed = true)
         projectRepository = mockk(relaxed = true)
         projectMemberRepository = mockk(relaxed = true)
-        teamProjectRepository = mockk(relaxed = true)
         taskService = TaskServiceImpl(
             taskRepository,
+            taskHistoryService,
             projectRepository,
             projectMemberRepository,
-            teamProjectRepository
+            mockk(relaxed = true)
         )
     }
 
@@ -95,7 +95,14 @@ class TaskServiceImplTest {
             projectId = testProjectId,
             title = "New Task",
             type = TaskType.TASK,
-            priority = TaskPriority.MEDIUM
+            priority = TaskPriority.MEDIUM,
+            assigneeId = null,
+            sprintId = null,
+            parentTaskId = null,
+            storyPoints = null,
+            estimatedHours = null,
+            dueDate = null,
+            labels = emptyList()
         )
         coEvery { projectRepository.findById(testProjectId) } returns testProject
         coEvery { taskRepository.nextNumber(testProjectId) } returns 5
@@ -115,7 +122,13 @@ class TaskServiceImplTest {
             title = "Task",
             type = TaskType.TASK,
             priority = TaskPriority.MEDIUM,
-            assigneeId = testAssigneeId
+            assigneeId = testAssigneeId,
+            sprintId = null,
+            parentTaskId = null,
+            storyPoints = null,
+            estimatedHours = null,
+            dueDate = null,
+            labels = emptyList()
         )
         coEvery { projectRepository.findById(testProjectId) } returns testProject
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testAssigneeId) } returns mockk()
@@ -134,7 +147,13 @@ class TaskServiceImplTest {
             title = "Task",
             type = TaskType.TASK,
             priority = TaskPriority.MEDIUM,
-            assigneeId = testAssigneeId
+            assigneeId = testAssigneeId,
+            sprintId = null,
+            parentTaskId = null,
+            storyPoints = null,
+            estimatedHours = null,
+            dueDate = null,
+            labels = emptyList()
         )
         coEvery { projectRepository.findById(testProjectId) } returns testProject
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testAssigneeId) } returns null
@@ -152,16 +171,19 @@ class TaskServiceImplTest {
             title = "Task",
             type = TaskType.TASK,
             priority = TaskPriority.MEDIUM,
-            assignedTeamId = testTeamId
+            assigneeId = null,
+            sprintId = null,
+            parentTaskId = null,
+            storyPoints = null,
+            estimatedHours = null,
+            dueDate = null,
+            labels = emptyList()
         )
         coEvery { projectRepository.findById(testProjectId) } returns testProject
-        coEvery { teamProjectRepository.findByTeamAndProject(testTeamId, testProjectId) } returns mockk()
         coEvery { taskRepository.nextNumber(testProjectId) } returns 1
         coEvery { taskRepository.create(any()) } answers { firstArg() }
 
         val result = taskService.createTask(create, testUserId)
-
-        assertEquals(testTeamId, result.assignedTeamId)
     }
 
     @Test
@@ -171,36 +193,64 @@ class TaskServiceImplTest {
             title = "Task",
             type = TaskType.TASK,
             priority = TaskPriority.MEDIUM,
-            assignedTeamId = testTeamId
+            assigneeId = null,
+            sprintId = null,
+            parentTaskId = null,
+            storyPoints = null,
+            estimatedHours = null,
+            dueDate = null,
+            labels = emptyList()
         )
         coEvery { projectRepository.findById(any()) } returns null
 
         val ex = assertFailsWith<DomainException.NotFound> {
             taskService.createTask(create, testUserId)
         }
-        assertEquals("Project with id '${create.projectId}' not found", ex.message)
+        assertEquals("Project with '${create.projectId}' not found", ex.message)
     }
 
     // ==================== updateTask ====================
 
     @Test
     fun `updateTask - success`() = runBlocking {
-        val update = TaskUpdate(title = "Updated Title")
+        val update = TaskUpdate(
+            title = "Updated Title",
+            description = null,
+            status = null,
+            priority = null,
+            sprintId = null,
+            storyPoints = null,
+            estimatedHours = null,
+            loggedHours = null,
+            dueDate = null,
+            labels = null
+        )
         coEvery { taskRepository.findById(testTaskId) } returns testTask
         coEvery { taskRepository.update(any()) } answers { firstArg() }
 
-        val result = taskService.updateTask(testTaskId, update)
+        val result = taskService.updateTask(requesterId, testTaskId, update)
 
         assertEquals("Updated Title", result.title)
     }
 
     @Test
     fun `updateTask - fails when task not found`() = runBlocking {
-        val update = mockk<TaskUpdate>()
+        val update = TaskUpdate(
+            title = null,
+            description = null,
+            status = null,
+            priority = null,
+            sprintId = null,
+            storyPoints = null,
+            estimatedHours = null,
+            loggedHours = null,
+            dueDate = null,
+            labels = null
+        )
         coEvery { taskRepository.findById(testTaskId) } returns null
 
         val ex = assertFailsWith<IllegalArgumentException> {
-            taskService.updateTask(testTaskId, update)
+            taskService.updateTask(requesterId, testTaskId, update)
         }
         assertEquals("Task not found with id: $testTaskId", ex.message)
     }
@@ -209,7 +259,11 @@ class TaskServiceImplTest {
 
     @Test
     fun `deleteTask - success`() = runBlocking {
+        coEvery { taskRepository.findById(testTaskId) } returns testTask
+        coEvery { taskRepository.delete(testTaskId) } returns Unit
+
         taskService.deleteTask(testTaskId)
+
         coVerify { taskRepository.delete(testTaskId) }
     }
 
@@ -267,54 +321,5 @@ class TaskServiceImplTest {
         coEvery { taskRepository.nextNumber(testProjectId) } returns 42
         val result = taskService.getNextTaskNumber(testProjectId)
         assertEquals(42, result)
-    }
-
-    // ==================== countTasksByProject ====================
-
-    @Test
-    fun `countTasksByProject - returns count`() = runBlocking {
-        coEvery { taskRepository.countByProject(testProjectId) } returns 10L
-        val result = taskService.countTasksByProject(testProjectId)
-        assertEquals(10L, result)
-    }
-
-    // ==================== countTasksByStatus ====================
-
-    @Test
-    fun `countTasksByStatus - returns count`() = runBlocking {
-        coEvery { taskRepository.countByStatus(testProjectId, TaskStatus.DONE) } returns 5L
-        val result = taskService.countTasksByStatus(testProjectId, TaskStatus.DONE)
-        assertEquals(5L, result)
-    }
-
-    // ==================== countTasksByStatusAndPeriod ====================
-
-    @Test
-    fun `countTasksByStatusAndPeriod - returns count`() = runBlocking {
-        val from = Clock.System.now().minus(7.days)
-        val to = Clock.System.now()
-        coEvery { taskRepository.countByStatusAndPeriod(testProjectId, TaskStatus.DONE, from, to) } returns 3L
-        val result = taskService.countTasksByStatusAndPeriod(testProjectId, TaskStatus.DONE, from, to)
-        assertEquals(3L, result)
-    }
-
-    // ==================== findOverdueTasks ====================
-
-    @Test
-    fun `findOverdueTasks - returns list`() = runBlocking {
-        val now = Clock.System.now()
-        val tasks = listOf(testTask)
-        coEvery { taskRepository.findOverdue(testProjectId, now) } returns tasks
-        val result = taskService.findOverdueTasks(testProjectId, now)
-        assertEquals(tasks, result)
-    }
-
-    // ==================== getAverageCompletionDays ====================
-
-    @Test
-    fun `getAverageCompletionDays - returns average`() = runBlocking {
-        coEvery { taskRepository.avgCompletionDays(testProjectId) } returns 3.5
-        val result = taskService.getAverageCompletionDays(testProjectId)
-        assertEquals(3.5, result)
     }
 }

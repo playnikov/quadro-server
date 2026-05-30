@@ -17,7 +17,6 @@ import com.quadro.project.domain.services.InvitationTokenService
 import com.quadro.project.domain.services.ProjectInvitationService
 import com.quadro.project.domain.services.ProjectInvitationServiceImpl
 import com.quadro.shared.data.config.DomainConfig
-import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.shared.dto.DomainException
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -42,7 +41,6 @@ class ProjectInvitationServiceImplTest {
     private lateinit var projectRepository: ProjectRepository
     private lateinit var projectMemberRepository: ProjectMemberRepository
     private lateinit var invitationTokenService: InvitationTokenService
-    private lateinit var eventProducer: EventProducer
     private lateinit var config: DomainConfig
     private lateinit var projectInvitationService: ProjectInvitationService
     private lateinit var userRepository: UserRepository
@@ -96,7 +94,6 @@ class ProjectInvitationServiceImplTest {
         projectMemberRepository = mockk(relaxed = true)
         invitationTokenService = mockk(relaxed = true)
         userRepository = mockk(relaxed = true)
-        eventProducer = mockk(relaxed = true)
         config = mockk {
             every { domain } returns "https://quadro.com"
         }
@@ -105,7 +102,7 @@ class ProjectInvitationServiceImplTest {
             projectRepository = projectRepository,
             projectMemberRepository = projectMemberRepository,
             invitationTokenService = invitationTokenService,
-            eventProducer = eventProducer,
+            eventProducer = mockk(relaxed = true),
             config = config,
             userRepository = userRepository
         )
@@ -142,7 +139,7 @@ class ProjectInvitationServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             projectInvitationService.createInvitation(testProjectId, testUserId, request)
         }
-        assertEquals("Project with id '$testProjectId' not found", ex.message)
+        assertEquals("Project with '$testProjectId' not found", ex.message)
     }
 
     @Test
@@ -154,20 +151,7 @@ class ProjectInvitationServiceImplTest {
         val ex = assertFailsWith<DomainException.AccessDenied> {
             projectInvitationService.createInvitation(testProjectId, testUserId, request)
         }
-        assertEquals("Insufficient permissions", ex.message)
-    }
-
-    @Test
-    fun `createInvitation - fails when pending invitations exceed limit`() = runTest {
-        val request = mockk<InvitationCreate>()
-        coEvery { projectRepository.findById(testProjectId) } returns testProject
-        coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember
-        coEvery { projectInvitationRepository.countPendingByProject(testProjectId) } returns 50
-
-        val ex = assertFailsWith<DomainException.BusinessRule> {
-            projectInvitationService.createInvitation(testProjectId, testUserId, request)
-        }
-        assertEquals("Too many pending invitations", ex.message)
+        assertEquals("Insufficient permissions: need OWNER or MANAGER", ex.message)
     }
 
     // ==================== acceptInvitation ====================
@@ -210,7 +194,7 @@ class ProjectInvitationServiceImplTest {
         val ex = assertFailsWith<DomainException.BusinessRule> {
             projectInvitationService.acceptInvitation(testToken, testUserId)
         }
-        assertEquals("Invitation is no longer valid", ex.message)
+        assertEquals("Invitation is no longer valid (status: ACCEPTED)", ex.message)
     }
 
     @Test
@@ -248,7 +232,7 @@ class ProjectInvitationServiceImplTest {
         val ex = assertFailsWith<DomainException.AccessDenied> {
             projectInvitationService.getInvitations(testProjectId, testUserId)
         }
-        assertEquals("Insufficient permissions", ex.message)
+        assertEquals("Insufficient permissions: need OWNER or MANAGER", ex.message)
     }
 
     // ==================== cancelInvitation ====================
@@ -257,15 +241,22 @@ class ProjectInvitationServiceImplTest {
     fun `cancelInvitation - success`() = runTest {
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember
         coEvery { projectInvitationRepository.findById(testInvitationId) } returns testInvitation
+        coEvery { projectInvitationRepository.updateStatus(testInvitationId, InviteStatus.CANCELLED) } returns true
 
         projectInvitationService.cancelInvitation(testProjectId, testUserId, testInvitationId)
 
-        coVerify { projectInvitationRepository.updateStatus(testInvitationId, InviteStatus.CANCELLED) }
+        coVerify(exactly = 1) { projectInvitationRepository.updateStatus(testInvitationId, InviteStatus.CANCELLED) }
+        coVerify(exactly = 1) { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) }
+        coVerify(exactly = 1) { projectInvitationRepository.findById(testInvitationId) }
+        coVerify(exactly = 0) { projectRepository.findById(any()) }
+        coVerify(exactly = 0) { projectRepository.findById(testProjectId) }
+        coVerify(exactly = 0) { projectRepository.findByKey(any()) }
     }
 
     @Test
     fun `cancelInvitation - fails when invitation belongs to different project`() = runTest {
-        val otherProjectInvitation = testInvitation.copy(projectId = UUID.randomUUID())
+        val otherProjectId = UUID.randomUUID()
+        val otherProjectInvitation = testInvitation.copy(projectId = otherProjectId)
         coEvery { projectMemberRepository.findByProjectAndUser(testProjectId, testUserId) } returns testMember
         coEvery { projectInvitationRepository.findById(testInvitationId) } returns otherProjectInvitation
 

@@ -263,7 +263,7 @@ class AuthServiceTest {
         coEvery { jwtProvider.generateRefreshToken(user) } returns testRefreshToken
         coEvery { userRepository.upsert(any()) } returns user
 
-        val result = authService.login(request, "127.0.0.1", "Mozilla/5.0")
+        val result = authService.login(request, "Auth Test")
 
         assertEquals(testAccessToken, result.token)
         assertEquals(testRefreshToken, result.refreshToken)
@@ -282,7 +282,7 @@ class AuthServiceTest {
         coEvery { jwtProvider.generateRefreshToken(user) } returns testRefreshToken
         coEvery { userRepository.upsert(any()) } returns user
 
-        val result = authService.login(request, "127.0.0.1", "Mozilla/5.0")
+        val result = authService.login(request, "Auth Test")
 
         assertEquals(testAccessToken, result.token)
         assertEquals(testRefreshToken, result.refreshToken)
@@ -295,7 +295,7 @@ class AuthServiceTest {
         coEvery { userRepository.findByEmail("nonexistent@example.com") } returns null
 
         val exception = assertFailsWith<DomainException.ValidationError> {
-            authService.login(request, "127.0.0.1", null)
+            authService.login(request, "Auth Test")
         }
         assertEquals("Invalid login or password", exception.message)
     }
@@ -309,7 +309,7 @@ class AuthServiceTest {
         coEvery { passwordEncoder.verify("wrong", testPasswordHash) } returns false
 
         val exception = assertFailsWith<DomainException.ValidationError> {
-            authService.login(request, "127.0.0.1", null)
+            authService.login(request, "Auth Test")
         }
         assertEquals("Invalid login or password", exception.message)
     }
@@ -323,7 +323,7 @@ class AuthServiceTest {
         coEvery { passwordEncoder.verify(testPassword, testPasswordHash) } returns true
 
         val exception = assertFailsWith<DomainException.BusinessRule> {
-            authService.login(request, "127.0.0.1", null)
+            authService.login(request, "Auth Test")
         }
         assertEquals("User is deactivated", exception.message)
     }

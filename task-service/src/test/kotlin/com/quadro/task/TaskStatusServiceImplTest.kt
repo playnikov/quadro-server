@@ -43,7 +43,6 @@ class TaskStatusServiceImplTest {
         priority = TaskPriority.LOW,
         type = TaskType.TASK,
         assigneeId = null,
-        assignedTeamId = null,
         reporterId = testUserId,
         storyPoints = null,
         estimatedHours = null,
@@ -92,7 +91,7 @@ class TaskStatusServiceImplTest {
         val ex = assertFailsWith<DomainException.NotFound> {
             statusService.transitionStatus(testTaskId, TaskStatus.IN_PROGRESS)
         }
-        assertEquals("Task with id '$testTaskId' not found", ex.message)
+        assertEquals("Task with '$testTaskId' not found", ex.message)
     }
 
     // ==================== validateStatusTransition ====================

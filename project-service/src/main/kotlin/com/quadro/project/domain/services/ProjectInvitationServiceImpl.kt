@@ -215,7 +215,7 @@ class ProjectInvitationServiceImpl(
         userId: UUID,
         invitationId: UUID
     ) {
-        checkProjectOwnerPermission(projectId, userId)
+        checkProjectManagePermission(projectId, userId)
 
         val invitation = projectInvitationRepository.findById(invitationId)
             ?: throw DomainException.NotFound("Invitation", invitationId.toString())

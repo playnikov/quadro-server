@@ -38,7 +38,11 @@ class TaskController(
     suspend fun createTask(call: ApplicationCall) {
         val reporterId = call.getUserId()
             ?: throw DomainException.Forbidden("Not authorized")
-        val request = call.receive<TaskCreateRequest>()
+        val request = try {
+            call.receive<TaskCreateRequest>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val taskCreate = TaskCreate(
             title = request.title,
             projectId = UUID.fromString(request.projectId),
@@ -62,7 +66,11 @@ class TaskController(
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val taskId = call.parameters["taskId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Task ID is invalid")
-        val request = call.receive<TaskUpdateRequest>()
+        val request = try {
+            call.receive<TaskUpdateRequest>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val taskUpdate = TaskUpdate(
             title = request.title,
             description = request.description,

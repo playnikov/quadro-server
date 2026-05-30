@@ -7,8 +7,8 @@ import com.quadro.auth.domain.models.UserResponse
 import java.util.UUID
 
 interface AuthService {
-    suspend fun register(request: UserCreate, ipAddress: String?): AuthResult
-    suspend fun login(request: UserLogin, ipAddress: String?, userAgent: String?): AuthResult
+    suspend fun register(request: UserCreate, userAgent: String?): AuthResult
+    suspend fun login(request: UserLogin, userAgent: String?): AuthResult
     suspend fun refreshToken(refreshToken: String): AuthResult
     suspend fun validateToken(token: String): UserResponse
     suspend fun changePassword(userId: UUID, currentPassword: String, newPassword: String)

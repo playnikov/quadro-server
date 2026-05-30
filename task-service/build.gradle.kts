@@ -19,7 +19,6 @@ kover {
                 }
 
                 excludes {
-                    classes("com.quadro.task.domain.services.TaskAssignmentServiceImpl")
                     packages("com.quadro.task.presentation.**")
                     packages("com.quadro.task.plugins.**")
                     packages("com.quadro.task.di.**")
@@ -79,6 +78,7 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.mockk)
+    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
 }
 
 kotlin {

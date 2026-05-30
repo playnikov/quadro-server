@@ -18,7 +18,11 @@ class ProjectController(
 ) {
     suspend fun createProject(call: ApplicationCall) {
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
-        val request = call.receive<ProjectCreateRequest>()
+        val request = try {
+            call.receive<ProjectCreateRequest>()
+        }  catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val projectCreate = ProjectCreate(
             name = request.name,
             key = request.key,
@@ -33,7 +37,11 @@ class ProjectController(
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Project ID is invalid")
-        val request = call.receive<ProjectUpdateRequest>()
+        val request = try {
+            call.receive<ProjectUpdateRequest>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val projectUpdate = ProjectUpdate(
             name = request.name,
             description = request.description,
@@ -109,7 +117,11 @@ class ProjectController(
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Project ID is invalid")
         val targetId = call.parameters["targetId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Target ID is invalid")
-        val request = call.receive<UpdateMemberRole>()
+        val request = try {
+            call.receive<UpdateMemberRole>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
 
         projectService.updateMemberRole(projectId, userId, targetId, request.role)
         call.respond(HttpStatusCode.OK, ApiResponse.ok("Update successful"))

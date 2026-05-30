@@ -19,7 +19,11 @@ class InvitationController(
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val projectId = call.parameters["id"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Project ID is invalid")
-        val request = call.receive<CreateInvitationRequest>()
+        val request = try {
+            call.receive<CreateInvitationRequest>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val invitationCreate = InvitationCreate(
             role = request.role,
             type = request.type,

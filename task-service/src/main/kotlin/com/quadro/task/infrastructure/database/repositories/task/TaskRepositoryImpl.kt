@@ -6,6 +6,8 @@ import com.quadro.task.domain.models.task.DurationPercentiles
 import com.quadro.task.domain.models.task.Task
 import com.quadro.task.domain.models.task.TaskStatus
 import com.quadro.task.domain.repositories.task.TaskRepository
+import com.quadro.task.infrastructure.database.entities.task.ProjectTaskSequenceEntity
+import com.quadro.task.infrastructure.database.entities.task.ProjectTaskSequenceTable
 import com.quadro.task.infrastructure.database.entities.task.TaskEntity
 import com.quadro.task.infrastructure.database.entities.task.TasksTable
 import com.quadro.task.infrastructure.database.mappers.task.TaskMapper
@@ -29,6 +31,7 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.slice
+import java.sql.Connection
 
 class TaskRepositoryImpl : TaskRepository {
     override suspend fun findById(id: UUID): Task? = newSuspendedTransaction {
@@ -72,7 +75,9 @@ class TaskRepositoryImpl : TaskRepository {
         TaskMapper.toDomain(entity)
     }
 
-    override suspend fun delete(id: UUID): Unit = newSuspendedTransaction {
+    override suspend fun delete(id: UUID): Unit = newSuspendedTransaction(
+        transactionIsolation = Connection.TRANSACTION_READ_COMMITTED
+    ) {
         TaskEntity.findById(id)?.delete()
     }
 
@@ -83,8 +88,17 @@ class TaskRepositoryImpl : TaskRepository {
     }
 
     override suspend fun nextNumber(projectId: UUID): Int = newSuspendedTransaction {
-        TaskEntity.find { TasksTable.projectId eq projectId }
-            .maxOfOrNull { it.number }?.plus(1) ?: 1
+        val seq = ProjectTaskSequenceEntity
+            .find { ProjectTaskSequenceTable.projectId eq projectId }
+            .forUpdate()
+            .firstOrNull()
+            ?: ProjectTaskSequenceEntity.new(UUID.randomUUID()) {
+                this.projectId = projectId
+                lastNumber = 0
+            }
+        seq.lastNumber += 1
+        seq.flush()
+        seq.lastNumber
     }
 
     override suspend fun findUpcomingDeadlines(

@@ -29,7 +29,11 @@ class AuthController(private val authService: AuthService) {
         val clientIp = call.request.origin.remoteHost
         logger.info("[$requestId] Registration attempt from: $clientIp")
 
-        val request = call.receive<RegisterRequest>()
+        val request = try {
+            call.receive<RegisterRequest>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val result = authService.register(
             UserCreate(
                 username = request.username,
@@ -56,19 +60,20 @@ class AuthController(private val authService: AuthService) {
     }
 
     suspend fun login(call: ApplicationCall) {
-        val requestId = call.request.headers["X-Request-ID"] ?: UUID.randomUUID().toString()
         val userAgent = call.request.headers["User-Agent"]
-        val clientIp = call.request.origin.remoteHost
-        logger.info("[$requestId] Login attempt from: $clientIp")
 
-        val request = call.receive<LoginRequest>()
+        val request = try {
+            call.receive<LoginRequest>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
 
         val userLogin = UserLogin(
             name = request.name,
             password = request.password
         )
 
-        val result = authService.login(userLogin, clientIp, userAgent)
+        val result = authService.login(userLogin, userAgent)
         call.response.cookies.append(
             Cookie(
                 name = "refresh_token",
@@ -101,7 +106,11 @@ class AuthController(private val authService: AuthService) {
 
     suspend fun changePassword(call: ApplicationCall) {
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
-        val request = call.receive<ChangePasswordRequest>()
+        val request = try {
+            call.receive<ChangePasswordRequest>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
 
         if (request.currentPassword == null) {
             authService.changePassword(userId, request.newPassword)

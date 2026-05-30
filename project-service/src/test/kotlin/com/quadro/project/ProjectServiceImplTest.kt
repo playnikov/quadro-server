@@ -12,7 +12,6 @@ import com.quadro.project.domain.repositories.ProjectMemberRepository
 import com.quadro.project.domain.repositories.ProjectRepository
 import com.quadro.project.domain.repositories.UserRepository
 import com.quadro.project.domain.services.ProjectServiceImpl
-import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.shared.dto.DomainException
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -32,7 +31,6 @@ class ProjectServiceImplTest {
     private lateinit var projectRepository: ProjectRepository
     private lateinit var userRepository: UserRepository
     private lateinit var projectMemberRepository: ProjectMemberRepository
-    private lateinit var eventProducer: EventProducer
     private lateinit var projectService: ProjectServiceImpl
 
     private val testUserId = UUID.randomUUID()
@@ -75,12 +73,11 @@ class ProjectServiceImplTest {
         projectRepository = mockk(relaxed = true)
         userRepository = mockk(relaxed = true)
         projectMemberRepository = mockk(relaxed = true)
-        eventProducer = mockk(relaxed = true)
         projectService = ProjectServiceImpl(
             projectRepository,
             userRepository,
             projectMemberRepository,
-            eventProducer
+            eventProducer = mockk(relaxed = true)
         )
     }
 

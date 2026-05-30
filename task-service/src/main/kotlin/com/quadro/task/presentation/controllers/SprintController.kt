@@ -21,7 +21,11 @@ class SprintController(
     suspend fun createSprint(call: ApplicationCall) {
         val userId = call.getUserId()
             ?: throw DomainException.Forbidden("Not authorized")
-        val request = call.receive<SprintCreateRequest>()
+        val request = try {
+            call.receive<SprintCreateRequest>()
+        }  catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val sprintCreate = SprintCreate(
             projectId = UUID.fromString(request.projectId),
             name = request.name,
@@ -39,7 +43,11 @@ class SprintController(
     suspend fun updateSprint(call: ApplicationCall) {
         val sprintId = call.parameters["sprintId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Sprint ID is invalid")
-        val request = call.receive<SprintUpdateRequest>()
+        val request = try {
+            call.receive<SprintUpdateRequest>()
+        }  catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val sprintUpdate = SprintUpdate(
             name = request.name,
             goal = request.goal,

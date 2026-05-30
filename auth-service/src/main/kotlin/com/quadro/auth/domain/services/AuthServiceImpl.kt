@@ -32,16 +32,16 @@ class AuthServiceImpl(
 
     override suspend fun register(
         request: UserCreate,
-        ipAddress: String?
+        userAgent: String?
     ): AuthResult {
         validateRegistration(request)
 
         if (userRepository.existsByEmail(request.email)) {
-            logger.warn("Registration attempt with existing email: ${request.email}, IP: $ipAddress")
+            logger.warn("Registration attempt with existing email: ${request.email}, User-Agent: $userAgent")
             throw DomainException.AlreadyExists("Email '${request.email}'")
         }
         if (userRepository.existsByUsername(request.username)) {
-            logger.warn("Registration attempt with existing username: ${request.username}, IP: $ipAddress")
+            logger.warn("Registration attempt with existing username: ${request.username}, User-Agent: $userAgent")
             throw DomainException.AlreadyExists("Username '${request.username}'")
         }
 
@@ -60,7 +60,7 @@ class AuthServiceImpl(
         )
 
         val createdUser = userRepository.upsert(user)
-        logger.info("User registered: ${createdUser.email}, IP: $ipAddress")
+        logger.info("User registered: ${createdUser.email}, User-Agent: $userAgent")
 
         eventProducer.publish(
             topic = KafkaTopics.USER_CREATED,
@@ -89,7 +89,6 @@ class AuthServiceImpl(
 
     override suspend fun login(
         request: UserLogin,
-        ipAddress: String?,
         userAgent: String?
     ): AuthResult {
         val user = if (request.name.contains('@') && request.name.contains(".")) {
@@ -99,18 +98,18 @@ class AuthServiceImpl(
         }
 
         if (user == null || !passwordEncoder.verify(request.password, user.passwordHash)) {
-            logger.warn("Failed login attempt for: ${request.name}, IP: $ipAddress, User-Agent: $userAgent")
+            logger.warn("Failed login attempt for: ${request.name}, User-Agent: $userAgent")
             throw DomainException.ValidationError("Invalid login or password")
         }
         if (!user.isActive) {
-            logger.warn("Login attempt for deactivated user: ${user.email}, IP: $ipAddress, User-Agent: $userAgent")
+            logger.warn("Login attempt for deactivated user: ${user.email}, User-Agent: $userAgent")
             throw DomainException.BusinessRule("User is deactivated")
         }
 
         val accessToken = jwtProvider.generateAccessToken(user)
         val refreshToken = jwtProvider.generateRefreshToken(user)
 
-        logger.info("Successful login for user: ${user.email}, IP: $ipAddress, User-Agent: $userAgent")
+        logger.info("Successful login for user: ${user.email}, User-Agent: $userAgent")
 
         userRepository.upsert(user.copy(
             lastLoginAt = Clock.System.now()

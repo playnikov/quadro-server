@@ -1,5 +1,6 @@
 networks:
   quadro-net:
+    name: quadro-net
     driver: bridge
 
 volumes:

@@ -71,7 +71,11 @@ class UserController(
     suspend fun updateUser(call: ApplicationCall) {
         val requesterId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val userId = call.parameters["id"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("User ID is invalid")
-        val request = call.receive<UpdateAdminUserRequest>()
+        val request = try {
+            call.receive<UpdateAdminUserRequest>()
+        } catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
 
         val user = userService.updateUserByAdmin(requesterId, userId, request)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(UserResponse.from(user)))

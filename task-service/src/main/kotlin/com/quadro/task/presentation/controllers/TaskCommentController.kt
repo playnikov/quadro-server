@@ -21,7 +21,11 @@ class TaskCommentController(
     suspend fun createComment(call: ApplicationCall) {
         val userId = call.getUserId()
             ?: throw DomainException.Forbidden("Not authorized")
-        val request = call.receive<TaskCommentCreateRequest>()
+        val request = try {
+            call.receive<TaskCommentCreateRequest>()
+        }  catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val commentCreate = TaskCommentCreate(
             taskId = UUID.fromString(request.taskId),
             authorId = userId,
@@ -38,7 +42,11 @@ class TaskCommentController(
             ?: throw DomainException.Forbidden("Not authorized")
         val commentId = call.parameters["commentId"]?.let { UUID.fromString(it) }
             ?: throw DomainException.ValidationError("Comment ID is invalid")
-        val request = call.receive<TaskCommentUpdateRequest>()
+        val request = try {
+            call.receive<TaskCommentUpdateRequest>()
+        }  catch (e: Exception) {
+            throw DomainException.ValidationError("Invalid request body: ${e.message}")
+        }
         val update = TaskCommentUpdate(
             content = request.content
         )

@@ -34,10 +34,6 @@ class AuthRoutes(
             route("/refresh") {
                 proxyTo(client, authServiceBaseUrl)
             }
-
-            route("/change-password") {
-                proxyTo(client, authServiceBaseUrl)
-            }
         }
     }
 
@@ -67,6 +63,12 @@ class AuthRoutes(
             }
 
             route("/create") {
+                proxyTo(client, authServiceBaseUrl)
+            }
+        }
+
+        routing.route("/api/auth") {
+            route("/change-password") {
                 proxyTo(client, authServiceBaseUrl)
             }
         }

@@ -138,6 +138,9 @@ jobs:
           MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
           MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
+          SEED_USERNAME: ${{ secrets.SEED_USERNAME }}
+          SEED_EMAIL: ${{ secrets.SEED_EMAIL }}
+          SEED_PASSWORD: ${{ secrets.SEED_PASSWORD }}
           EOF
           echo "Done!"
 
@@ -157,6 +160,7 @@ jobs:
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/quadro-deploy/
           ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
             "cd /home/${{ secrets.DEPLOY_USER }}/quadro-deploy/ && tar --overwrite -xzf configs.tar.gz && rm configs.tar.gz"
+          rm -rf configs.tar.gz .env
 
       - name: Deploy to VM via SSH
         run: |

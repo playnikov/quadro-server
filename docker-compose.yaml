@@ -110,6 +110,9 @@ services:
       <<: *common-env
       APP_DATABASE: auth_schema
       PORT: 8081
+      SEED_USERNAME: ${SEED_USERNAME}
+      SEED_EMAIL: ${SEED_EMAIL}
+      SEED_PASSWORD: ${SEED_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy

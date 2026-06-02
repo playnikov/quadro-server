@@ -49,14 +49,14 @@ class AuthController(private val authService: AuthService) {
         call.response.cookies.append(
             Cookie(
                 name = "refresh_token",
-                value = result.refreshToken,
+                value = result.second,
                 httpOnly = true,
                 secure = true,
                 path = "/api/auth/refresh",
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
-        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("token" to result.token)))
+        call.respond(HttpStatusCode.Created, ApiResponse.ok(mapOf("token" to result.first)))
     }
 
     suspend fun login(call: ApplicationCall) {
@@ -77,14 +77,14 @@ class AuthController(private val authService: AuthService) {
         call.response.cookies.append(
             Cookie(
                 name = "refresh_token",
-                value = result.refreshToken,
+                value = result.second,
                 httpOnly = true,
                 secure = true,
                 path = "/api/auth/refresh",
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
-        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("token" to result.token)))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("token" to result.first)))
     }
 
     suspend fun refreshToken(call: ApplicationCall) {
@@ -94,14 +94,14 @@ class AuthController(private val authService: AuthService) {
         call.response.cookies.append(
             Cookie(
                 name = "refresh_token",
-                value = result.refreshToken,
+                value = result.second,
                 httpOnly = true,
                 secure = true,
                 path = "/api/auth/refresh",
                 maxAge = 30.days.inWholeSeconds.toInt()
             )
         )
-        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("token" to result.token)))
+        call.respond(HttpStatusCode.OK, ApiResponse.ok(mapOf("token" to result.first)))
     }
 
     suspend fun changePassword(call: ApplicationCall) {

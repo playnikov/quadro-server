@@ -1,17 +1,14 @@
 package com.quadro.auth.domain.services
 
-import com.quadro.auth.domain.models.AuthResult
 import com.quadro.auth.domain.models.User
 import com.quadro.auth.domain.models.UserCreate
 import com.quadro.auth.domain.models.UserLogin
-import com.quadro.auth.domain.models.UserResponse
 import com.quadro.auth.domain.models.UserRole
 import com.quadro.auth.domain.repositories.UserRepository
-import com.quadro.auth.domain.utils.validateEmail
-import com.quadro.auth.domain.utils.validatePassword
-import com.quadro.auth.domain.utils.validateUsername
 import com.quadro.auth.infrastructure.security.JwtProvider
 import com.quadro.auth.infrastructure.security.PasswordEncoder
+import com.quadro.auth.utils.validate
+import com.quadro.auth.utils.validatePassword
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.data.messaging.events.UserCreatedEvent
 import com.quadro.shared.data.messaging.EventProducer
@@ -33,8 +30,12 @@ class AuthServiceImpl(
     override suspend fun register(
         request: UserCreate,
         userAgent: String?
-    ): AuthResult {
-        validateRegistration(request)
+    ): Pair<String, String> {
+        validate(
+            email = request.email,
+            username = request.username,
+            password = request.password
+        )
 
         if (userRepository.existsByEmail(request.email)) {
             logger.warn("Registration attempt with existing email: ${request.email}, User-Agent: $userAgent")
@@ -80,17 +81,13 @@ class AuthServiceImpl(
         val accessToken = jwtProvider.generateAccessToken(createdUser)
         val refreshToken = jwtProvider.generateRefreshToken(createdUser)
 
-        return AuthResult(
-            token = accessToken,
-            refreshToken = refreshToken,
-            userInfo = UserResponse.from(createdUser)
-        )
+        return accessToken to refreshToken
     }
 
     override suspend fun login(
         request: UserLogin,
         userAgent: String?
-    ): AuthResult {
+    ): Pair<String, String> {
         val user = if (request.name.contains('@') && request.name.contains(".")) {
             userRepository.findByEmail(request.name)
         } else {
@@ -114,14 +111,10 @@ class AuthServiceImpl(
         userRepository.upsert(user.copy(
             lastLoginAt = Clock.System.now()
         ))
-        return AuthResult(
-            token = accessToken,
-            refreshToken = refreshToken,
-            userInfo = UserResponse.from(user)
-        )
+        return accessToken to refreshToken
     }
 
-    override suspend fun refreshToken(refreshToken: String): AuthResult {
+    override suspend fun refreshToken(refreshToken: String): Pair<String, String> {
         val validation = jwtValidator.validateToken(refreshToken)
         if (!validation.isValid || validation.userId == null) {
             throw DomainException.ValidationError("Invalid refresh token")
@@ -136,15 +129,11 @@ class AuthServiceImpl(
         val newAccessToken = jwtProvider.generateAccessToken(user)
         val newRefreshToken = jwtProvider.generateRefreshToken(user)
 
-        return AuthResult(
-            token = newAccessToken,
-            refreshToken = newRefreshToken,
-            userInfo = UserResponse.from(user)
-        )
+        return newAccessToken to newRefreshToken
     }
 
 
-    override suspend fun validateToken(token: String): UserResponse {
+    override suspend fun validateToken(token: String): User {
         val validation = jwtValidator.validateToken(token)
         if (!validation.isValid || validation.userId == null) {
             throw DomainException.ValidationError(validation.error ?: "Invalid token")
@@ -156,7 +145,7 @@ class AuthServiceImpl(
             throw DomainException.BusinessRule("User is deactivated")
         }
 
-        return UserResponse.from(user)
+        return user
     }
 
     override suspend fun changePassword(
@@ -255,11 +244,5 @@ class AuthServiceImpl(
         userRepository.upsert(updatedUser)
 
         logger.info("Email verified for user: ${user.email}")
-    }
-
-    private fun validateRegistration(request: UserCreate) {
-        validateEmail(request.email)
-        validateUsername(request.username)
-        validatePassword(request.password)
     }
 }

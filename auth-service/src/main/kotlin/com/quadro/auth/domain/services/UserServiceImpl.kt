@@ -4,11 +4,11 @@ import com.quadro.auth.domain.models.User
 import com.quadro.auth.domain.models.UserCreate
 import com.quadro.auth.domain.models.UserRole
 import com.quadro.auth.domain.repositories.UserRepository
-import com.quadro.auth.domain.utils.validateEmail
-import com.quadro.auth.domain.utils.validatePassword
-import com.quadro.auth.domain.utils.validateUsername
 import com.quadro.auth.infrastructure.security.PasswordEncoder
 import com.quadro.auth.presentation.models.UpdateAdminUserRequest
+import com.quadro.auth.utils.validateEmail
+import com.quadro.auth.utils.validatePassword
+import com.quadro.auth.utils.validateUsername
 import com.quadro.shared.data.messaging.EventProducer
 import com.quadro.shared.data.messaging.KafkaTopics
 import com.quadro.shared.data.messaging.events.UserCreatedEvent

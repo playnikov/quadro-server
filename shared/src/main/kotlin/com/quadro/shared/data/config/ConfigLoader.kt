@@ -3,7 +3,7 @@ package com.quadro.shared.data.config
 import io.ktor.server.application.Application
 
 fun Application.configure() = DomainConfig(
-    domain = environment.config.propertyOrNull("app.domain")?.getString() ?: "localhost"
+    domain = environment.config.propertyOrNull("app.domain")?.getString() ?: "http://quadro-platform.ru"
 )
 fun Application.loadDatabaseConfig() = DatabaseConfig(
     url      = "${environment.config.property("app.database.url").getString()}/${environment.config.property("app.database.db_name").getString()}",

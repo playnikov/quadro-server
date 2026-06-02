@@ -12,7 +12,7 @@ if (isStress) {
   const maxVU = parseInt(__ENV.MAX_VU) || 100;
   stages = [
     { duration: '1m', target: maxVU },
-    { duration: '3m', target: maxVU },
+    { duration: '5m', target: maxVU },
     { duration: '30s', target: 0 },
   ];
   usersToCreate = maxVU * 2;
@@ -21,7 +21,7 @@ if (isStress) {
 } else {
   stages = [
     { duration: '30s', target: 30 },
-    { duration: '3m', target: 30 },
+    { duration: '10m', target: 30 },
     { duration: '30s', target: 0 },
   ];
   usersToCreate = 50;

@@ -1,10 +1,10 @@
 package com.quadro.auth.presentation.controllers
 
 import com.quadro.auth.domain.models.UserCreate
-import com.quadro.auth.domain.models.UserResponse
 import com.quadro.auth.domain.services.UserService
 import com.quadro.auth.presentation.models.RegisterRequest
 import com.quadro.auth.presentation.models.UpdateAdminUserRequest
+import com.quadro.auth.presentation.models.UserResponse
 import com.quadro.shared.dto.ApiResponse
 import com.quadro.shared.dto.DomainException
 import com.quadro.shared.security.getUserId

@@ -32,6 +32,7 @@ import kotlin.time.Instant
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.slice
 import java.sql.Connection
+import kotlin.random.Random
 
 class TaskRepositoryImpl : TaskRepository {
     override suspend fun findById(id: UUID): Task? = newSuspendedTransaction {
@@ -87,18 +88,32 @@ class TaskRepositoryImpl : TaskRepository {
         }
     }
 
+    private val maxRetries = 5
+    private val baseDelayMs = 100L
+
     override suspend fun nextNumber(projectId: UUID): Int = newSuspendedTransaction {
-        val seq = ProjectTaskSequenceEntity
-            .find { ProjectTaskSequenceTable.projectId eq projectId }
-            .forUpdate()
-            .firstOrNull()
-            ?: ProjectTaskSequenceEntity.new(UUID.randomUUID()) {
-                this.projectId = projectId
-                lastNumber = 0
+        for (attempt in 1..maxRetries) {
+            try {
+                val seq = ProjectTaskSequenceEntity
+                    .find { ProjectTaskSequenceTable.projectId eq projectId }
+                    .forUpdate()
+                    .firstOrNull()
+                    ?: ProjectTaskSequenceEntity.new(UUID.randomUUID()) {
+                        this.projectId = projectId
+                        lastNumber = 0
+                    }
+                seq.lastNumber += 1
+                seq.flush()
+                return@newSuspendedTransaction seq.lastNumber
+            } catch (e: Exception) {
+                if (attempt == maxRetries) throw e
+                // Экспоненциальная задержка с jitter
+                val delay = baseDelayMs * (1L shl (attempt - 1))
+                val jitter = Random.nextLong(0, delay / 2)
+                kotlinx.coroutines.delay(delay + jitter)
             }
-        seq.lastNumber += 1
-        seq.flush()
-        seq.lastNumber
+        }
+        throw IllegalStateException("Failed to get next number after $maxRetries attempts")
     }
 
     override suspend fun findUpcomingDeadlines(

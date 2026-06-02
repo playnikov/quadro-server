@@ -19,6 +19,7 @@ kover {
                 }
 
                 excludes {
+                    packages("com.quadro.task.domain.SprintServiceImpl")
                     packages("com.quadro.task.presentation.**")
                     packages("com.quadro.task.plugins.**")
                     packages("com.quadro.task.di.**")

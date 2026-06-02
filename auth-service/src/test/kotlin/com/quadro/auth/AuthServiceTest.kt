@@ -104,10 +104,10 @@ class AuthServiceTest {
         coEvery { jwtProvider.generateAccessToken(any()) } returns testAccessToken
         coEvery { jwtProvider.generateRefreshToken(any()) } returns testRefreshToken
 
-        val result = authService.register(request, "127.0.0.1")
+        val result = authService.register(request, "Quadro Test")
 
-        assertEquals(testAccessToken, result.token)
-        assertEquals(testRefreshToken, result.refreshToken)
+        assertEquals(testAccessToken, result.first)
+        assertEquals(testRefreshToken, result.second)
     }
 
     @Test
@@ -124,7 +124,7 @@ class AuthServiceTest {
         coEvery { userRepository.existsByEmail(testEmail) } returns true
 
         val exception = assertFailsWith<DomainException.AlreadyExists> {
-            authService.register(request, "127.0.0.1")
+            authService.register(request, "Quadro Test")
         }
         assertEquals("Email '$testEmail' already exists", exception.message)
     }
@@ -143,7 +143,7 @@ class AuthServiceTest {
         coEvery { userRepository.existsByUsername(testUsername) } returns true
 
         val exception = assertFailsWith<DomainException.AlreadyExists> {
-            authService.register(request, "127.0.0.1")
+            authService.register(request, "Quadro Test")
         }
         assertEquals("Username '$testUsername' already exists", exception.message)
     }
@@ -160,7 +160,7 @@ class AuthServiceTest {
         )
 
         val exception = assertFailsWith<DomainException.ValidationError> {
-            authService.register(request, "127.0.0.1")
+            authService.register(request, "Quadro Test")
         }
         assertEquals("Invalid email format", exception.message)
     }
@@ -177,7 +177,7 @@ class AuthServiceTest {
         )
 
         val exception = assertFailsWith<DomainException.ValidationError> {
-            authService.register(request, "127.0.0.1")
+            authService.register(request, "Quadro Test")
         }
         assertEquals("Username must be between 3 and 50 characters", exception.message)
     }
@@ -194,7 +194,7 @@ class AuthServiceTest {
         )
 
         val exception = assertFailsWith<DomainException.ValidationError> {
-            authService.register(request, "127.0.0.1")
+            authService.register(request, "Quadro Test")
         }
         assertEquals("Username contains invalid characters", exception.message)
     }
@@ -211,7 +211,7 @@ class AuthServiceTest {
         )
 
         val exception = assertFailsWith<DomainException.ValidationError> {
-            authService.register(request, "127.0.0.1")
+            authService.register(request, "Quadro Test")
         }
         assertEquals("Password must be at least 8 characters", exception.message)
     }
@@ -228,7 +228,7 @@ class AuthServiceTest {
         )
 
         val exception = assertFailsWith<DomainException.ValidationError> {
-            authService.register(request, "127.0.0.1")
+            authService.register(request, "Quadro Test")
         }
         assertEquals("Password must contain at least one digit", exception.message)
     }
@@ -245,7 +245,7 @@ class AuthServiceTest {
         )
 
         val exception = assertFailsWith<DomainException.ValidationError> {
-            authService.register(request, "127.0.0.1")
+            authService.register(request, "Quadro Test")
         }
         assertEquals("Password must contain at least one letter", exception.message)
     }
@@ -265,8 +265,8 @@ class AuthServiceTest {
 
         val result = authService.login(request, "Auth Test")
 
-        assertEquals(testAccessToken, result.token)
-        assertEquals(testRefreshToken, result.refreshToken)
+        assertEquals(testAccessToken, result.first)
+        assertEquals(testRefreshToken, result.second)
 
         coVerify { userRepository.upsert(match { it.lastLoginAt != null }) }
     }
@@ -284,8 +284,8 @@ class AuthServiceTest {
 
         val result = authService.login(request, "Auth Test")
 
-        assertEquals(testAccessToken, result.token)
-        assertEquals(testRefreshToken, result.refreshToken)
+        assertEquals(testAccessToken, result.first)
+        assertEquals(testRefreshToken, result.second)
     }
 
     @Test
@@ -349,8 +349,8 @@ class AuthServiceTest {
 
         val result = authService.refreshToken(refreshToken)
 
-        assertEquals("newAccessToken", result.token)
-        assertEquals("newRefreshToken", result.refreshToken)
+        assertEquals("newAccessToken", result.first)
+        assertEquals("newRefreshToken", result.second)
         coVerify { userRepository.findById(testUserId) }
     }
 
@@ -449,11 +449,11 @@ class AuthServiceTest {
         coEvery { jwtValidator.validateToken(token) } returns validationResult
         coEvery { userRepository.findById(testUserId) } returns user
 
-        val userResponse = authService.validateToken(token)
+        val result = authService.validateToken(token)
 
-        assertEquals(testEmail, userResponse.email)
-        assertEquals(testUsername, userResponse.username)
-        assertEquals(UserRole.ADMIN.name, userResponse.role)
+        assertEquals(testEmail, result.email)
+        assertEquals(testUsername, result.username)
+        assertEquals(UserRole.ADMIN.name, result.role.name)
     }
 
     @Test

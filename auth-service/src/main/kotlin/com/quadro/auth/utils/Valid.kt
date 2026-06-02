@@ -1,10 +1,15 @@
-package com.quadro.auth.domain.utils
+package com.quadro.auth.utils
 
 import com.quadro.shared.dto.DomainException
 
+fun validate(email: String, username: String, password: String) {
+    validateEmail(email)
+    validateUsername(username)
+    validatePassword(password)
+}
+
 fun validateEmail(email: String) {
-    val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
-    if (!email.matches(emailRegex.toRegex())) {
+    if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex())) {
         throw DomainException.ValidationError("Invalid email format")
     }
 }
@@ -13,7 +18,7 @@ fun validateUsername(username: String) {
     if (username.length !in 3..50) {
         throw DomainException.ValidationError("Username must be between 3 and 50 characters")
     }
-    if (!username.matches(Regex("^[a-zA-Z0-9._-]+$"))) {
+    if (!username.matches("^[a-zA-Z0-9._-]+$".toRegex())) {
         throw DomainException.ValidationError("Username contains invalid characters")
     }
 }

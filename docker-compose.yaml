@@ -196,6 +196,8 @@ services:
       APP_SERVICES_TASK: "http://task-service:8084"
       APP_SERVICES_NOTIFICATION: "http://notification-service:8085"
       PORT: 8080
+    ports:
+      - "8080:8080"
     depends_on:
       - auth-service
 #      - team-service

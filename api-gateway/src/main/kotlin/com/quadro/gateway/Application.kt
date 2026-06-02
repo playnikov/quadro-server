@@ -31,8 +31,8 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     install(CORS) {
-        allowHost("http://quadro-platform.online")
-        allowHost("http://quadro-platform.ru")
+        allowHost(host = "quadro-platform.ru", schemes = listOf("http", "https"))
+        allowHost(host = "quadro-platform.online", schemes = listOf("http", "https"))
         allowMethod(HttpMethod.Options)
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)

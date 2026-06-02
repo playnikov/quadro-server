@@ -5,6 +5,7 @@ import com.quadro.gateway.plugins.configureRouting
 import com.quadro.gateway.plugins.configureWebSocket
 import com.quadro.shared.di.sharedModule
 import com.quadro.shared.plugins.configureMonitoring
+import com.quadro.shared.plugins.configureSerialization
 import com.quadro.shared.plugins.configureStatusPages
 import com.quadro.shared.security.JwtValidator
 import com.quadro.shared.security.configureSecurity
@@ -50,6 +51,7 @@ fun Application.module() {
         )
     }
     configureSecurity(getKoin().get<JwtValidator>())
+    configureSerialization()
     configureMonitoring()
     configureStatusPages()
     configureWebSocket()

@@ -1,4 +1,4 @@
-package com.quadro.auth.plugins
+package com.quadro.shared.plugins
 
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application

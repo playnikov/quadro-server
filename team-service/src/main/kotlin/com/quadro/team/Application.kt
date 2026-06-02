@@ -2,6 +2,7 @@ package com.quadro.team
 
 import com.quadro.shared.di.sharedModule
 import com.quadro.shared.plugins.configureMonitoring
+import com.quadro.shared.plugins.configureSerialization
 import com.quadro.shared.plugins.configureStatusPages
 import com.quadro.shared.security.JwtValidator
 import com.quadro.shared.security.configureSecurity
@@ -10,7 +11,6 @@ import com.quadro.team.di.teamModules
 import com.quadro.team.plugins.configureDatabase
 import com.quadro.team.plugins.configureKafka
 import com.quadro.team.plugins.configureRouting
-import com.quadro.team.plugins.configureSerialization
 import io.ktor.server.application.*
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.plugin.Koin

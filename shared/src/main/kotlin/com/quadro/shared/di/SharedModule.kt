@@ -15,13 +15,4 @@ fun sharedModule(application: Application, serviceId: String) = module {
     single { application.loadJwtConfig() }
     single { application.loadKafkaConfig(serviceId) }
     single { application.loadRedisConfig() }
-    single {
-        Json {
-            ignoreUnknownKeys  = true
-            prettyPrint        = false
-            isLenient          = true
-            encodeDefaults     = true
-            coerceInputValues  = true
-        }
-    }
 }

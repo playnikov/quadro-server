@@ -11,8 +11,8 @@ import com.quadro.notification.infrastructure.messaging.listener.TaskEventListen
 import com.quadro.notification.plugins.configureDatabase
 import com.quadro.notification.plugins.configureKafka
 import com.quadro.notification.plugins.configureRouting
-import com.quadro.notification.plugins.configureSerialization
 import com.quadro.notification.plugins.configureWebSocket
+import com.quadro.shared.plugins.configureSerialization
 import io.ktor.server.application.*
 import kotlinx.coroutines.launch
 import org.koin.ktor.ext.getKoin

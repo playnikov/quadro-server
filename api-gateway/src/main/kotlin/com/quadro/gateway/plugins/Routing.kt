@@ -94,7 +94,7 @@ fun Route.proxyTo(client: HttpClient, targetBaseUrl: String) {
 suspend fun DefaultWebSocketSession.proxyTo(client: HttpClient, baseUrl: String, userId: String, path: String, queryParams: Map<String, String> = emptyMap()) {
     val wsBase = baseUrl
         .replace("http://", "ws://")
-        .replace("https://", "wss://")
+        .replace("https://", "ws://")
         .removeSuffix("/")
 
     val wsUrl = URLBuilder().apply {

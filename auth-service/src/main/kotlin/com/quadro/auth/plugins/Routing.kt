@@ -34,6 +34,7 @@ fun Application.configureRouting() {
 
         authenticate("auth-jwt") {
             userRoutes.protectedRoute(this)
+            authRoutes.protectedRoute(this)
         }
     }
 }

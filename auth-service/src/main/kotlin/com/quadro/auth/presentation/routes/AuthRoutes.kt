@@ -23,7 +23,11 @@ class AuthRoutes(
             post("/refresh") {
                 authController.refreshToken(call)
             }
+        }
+    }
 
+    fun protectedRoute(routing: Route) {
+        routing.route("/api/auth") {
             patch("/change-password") {
                 authController.changePassword(call)
             }

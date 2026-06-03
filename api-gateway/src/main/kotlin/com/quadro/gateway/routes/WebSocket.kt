@@ -49,15 +49,11 @@ class WebSocket(
             send(Frame.Text("""{"type":"auth_success"}"""))
 
             val path = call.request.path()
-            val projectIds = call.request.queryParameters["projectIds"] ?: ""
             proxyTo(
                 client = client,
                 baseUrl = baseNotificationUrl,
                 userId = userId.toString(),
-                path = path,
-                queryParams = mapOf(
-                    "projectIds" to projectIds
-                )
+                path = path
             )
         }
     }

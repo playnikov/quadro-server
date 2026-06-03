@@ -366,7 +366,7 @@ class ProjectServiceImplTest {
         coEvery { projectMemberRepository.findByProject(testProjectId, 10, 0) } returns members
         coEvery { userRepository.findByIds(listOf(testUserId)) } returns users
 
-        val result = projectService.getProjectMembers(testProjectId, testUserId, 1, 10)
+        val result = projectService.getProjectMembers(testProjectId, testUserId, 10, 0)
 
         assertEquals(1, result.size)
         assertEquals(testMember.userId.toString(), result.first().userId)

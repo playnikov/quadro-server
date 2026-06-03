@@ -248,18 +248,17 @@ class ProjectServiceImpl(
     override suspend fun getProjectMembers(
         projectId: UUID,
         userId: UUID,
-        page: Int,
-        size: Int
+        limit: Int,
+        offset: Int
     ): List<ProjectMemberResponse> {
-        require(page > 0) { "Page must be positive" }
-        require(size > 0) { "Size must be positive" }
+        require(limit > 0) { "Limit must be positive" }
+        require(offset >= 0) { "Offset must be non‑negative" }
         val user = getUserOrThrow(userId)
 
         projectMemberRepository.findByProjectAndUser(projectId, user.id)
             ?: throw DomainException.NotFound("Project", projectId.toString())
 
-        val offset = (page - 1) * size
-        val members = projectMemberRepository.findByProject(projectId, size, offset)
+        val members = projectMemberRepository.findByProject(projectId, limit, offset)
 
         if (members.isEmpty()) return emptyList()
 
@@ -267,7 +266,7 @@ class ProjectServiceImpl(
         val users = userRepository.findByIds(userIds)
         val userMap = users.associateBy { it.id }
 
-        logger.info("User $userId requested members of project ${projectId}, page: $page")
+        logger.info("User $userId requested members of project ${projectId}, limit: $limit")
         return members.mapNotNull { member ->
             val user = userMap[member.userId]
             if (user == null) {

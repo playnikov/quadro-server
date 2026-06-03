@@ -20,7 +20,7 @@ interface ProjectService {
 
     suspend fun updateStatus(userId: UUID, projectId: UUID, status: ProjectStatus): Boolean
 
-    suspend fun getProjectMembers(projectId: UUID, userId: UUID, page: Int, size: Int): List<ProjectMemberResponse>
+    suspend fun getProjectMembers(projectId: UUID, userId: UUID, limit: Int, offset: Int): List<ProjectMemberResponse>
     suspend fun updateMemberRole(projectId: UUID, userId: UUID, targetUserId: UUID, role: MemberRole)
     suspend fun removeMember(projectId: UUID, userId: UUID, targetUserId: UUID)
     suspend fun leaveProject(projectId: UUID, userId: UUID)

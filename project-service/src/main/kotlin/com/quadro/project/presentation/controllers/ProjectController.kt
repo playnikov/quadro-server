@@ -106,10 +106,10 @@ class ProjectController(
     suspend fun getProjectMembers(call: ApplicationCall) {
         val userId = call.getUserId() ?: throw DomainException.Forbidden("Not authorized")
         val projectId = call.parameters["projectId"]?.let { UUID.fromString(it) } ?: throw DomainException.ValidationError("Project ID is invalid")
-        val page = call.parameters["page"]?.toIntOrNull() ?: 1
-        val size = call.parameters["size"]?.toIntOrNull() ?: 50
+        val page = call.parameters["limit"]?.toIntOrNull() ?: 1
+        val offset = call.parameters["offset"]?.toIntOrNull() ?: 0
 
-        val result = projectService.getProjectMembers(projectId, userId, page, size)
+        val result = projectService.getProjectMembers(projectId, userId, page, offset)
         call.respond(HttpStatusCode.OK, ApiResponse.ok(result))
     }
 

@@ -54,7 +54,7 @@ const COMMENTS = [
 export function setup() {
   const baseUrl = __ENV.BASE_URL || 'http://localhost';
 
-  const adminUser = { username: 'admin', password: 'Admin123' };
+  const adminUser = { username: 'superadmin', password: 'Admin123' };
   let loginAdminRes = http.post(baseUrl + '/api/auth/login', JSON.stringify({
     name: adminUser.username,
     password: adminUser.password,
